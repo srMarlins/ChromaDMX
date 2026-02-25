@@ -3,6 +3,7 @@ package com.chromadmx.pipeline
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.engine.pipeline.EffectEngine
 import com.chromadmx.networking.output.DmxOutputService
+import kotlin.time.TimeSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -32,6 +33,7 @@ class DmxPipeline(
     private val fixturesProvider: () -> List<Fixture3D>,
     private val syncRateHz: Int = 40
 ) {
+    private val startMark = TimeSource.Monotonic.markNow()
     private var pipelineJob: Job? = null
 
     /** Interval between sync frames in milliseconds. */
@@ -68,6 +70,11 @@ class DmxPipeline(
         pipelineJob?.cancel()
         pipelineJob = null
     }
+
+    /**
+     * Platform-agnostic monotonic clock in milliseconds, relative to pipeline creation.
+     */
+    private fun monotonicTimeMs(): Long = startMark.elapsedNow().inWholeMilliseconds
 
     /**
      * Execute a single sync frame.
@@ -107,11 +114,3 @@ class DmxPipeline(
         }
     }
 }
-
-/**
- * Platform-agnostic monotonic clock in milliseconds.
- * In a full KMP project, this would be an 'expect' fun.
- * For now, we use a simple implementation or alias.
- */
-private fun monotonicTimeMs(): Long =
-    (kotlin.time.TimeSource.Monotonic.markNow().elapsedNow().inWholeMilliseconds)

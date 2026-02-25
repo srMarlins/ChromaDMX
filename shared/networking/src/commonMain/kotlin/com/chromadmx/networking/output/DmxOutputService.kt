@@ -4,7 +4,7 @@ import com.chromadmx.networking.protocol.ArtNetCodec
 import com.chromadmx.networking.protocol.ArtNetConstants
 import com.chromadmx.networking.protocol.SacnCodec
 import com.chromadmx.networking.protocol.SacnConstants
-import com.chromadmx.networking.transport.PlatformUdpTransport
+import com.chromadmx.networking.transport.UdpTransport
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.CancellationException
@@ -30,7 +30,7 @@ enum class DmxProtocol {
  *
  * Runs a 40Hz (25ms) broadcast loop that reads the latest frame data
  * from an atomic reference and sends one ArtDmx or sACN packet per
- * universe per frame via [PlatformUdpTransport].
+ * universe per frame via [UdpTransport].
  *
  * Usage:
  * ```
@@ -53,7 +53,7 @@ enum class DmxProtocol {
  * @param sacnPriority    sACN priority 0-200 (used only for sACN, default 100)
  */
 class DmxOutputService(
-    private val transport: PlatformUdpTransport,
+    private val transport: UdpTransport,
     private val targetAddress: String = ArtNetConstants.BROADCAST_ADDRESS,
     private val protocol: DmxProtocol = DmxProtocol.ART_NET,
     private val frameRateHz: Int = DEFAULT_FRAME_RATE_HZ,

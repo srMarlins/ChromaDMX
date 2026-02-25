@@ -4,7 +4,7 @@ import com.chromadmx.networking.model.DmxNode
 import com.chromadmx.networking.model.UdpPacket
 import com.chromadmx.networking.protocol.ArtNetCodec
 import com.chromadmx.networking.protocol.ArtNetConstants
-import com.chromadmx.networking.transport.PlatformUdpTransport
+import com.chromadmx.networking.transport.UdpTransport
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,7 +37,7 @@ import kotlinx.coroutines.launch
  * @param nodeTimeoutMs   Time before a node is considered offline (default 10000ms)
  */
 class NodeDiscovery(
-    private val transport: PlatformUdpTransport,
+    private val transport: UdpTransport,
     private val pollIntervalMs: Long = DEFAULT_POLL_INTERVAL_MS,
     private val nodeTimeoutMs: Long = DmxNode.DEFAULT_TIMEOUT_MS
 ) {

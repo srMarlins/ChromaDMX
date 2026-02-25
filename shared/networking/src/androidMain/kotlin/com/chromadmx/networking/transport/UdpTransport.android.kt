@@ -19,7 +19,7 @@ actual class PlatformUdpTransport actual constructor() : UdpTransport {
         broadcast = true
     }
 
-    actual suspend fun send(data: ByteArray, address: String, port: Int) {
+    actual override suspend fun send(data: ByteArray, address: String, port: Int) {
         withContext(Dispatchers.IO) {
             val inetAddress = InetAddress.getByName(address)
             val datagram = DatagramPacket(data, data.size, inetAddress, port)
@@ -27,7 +27,7 @@ actual class PlatformUdpTransport actual constructor() : UdpTransport {
         }
     }
 
-    actual suspend fun receive(buffer: ByteArray, timeoutMs: Long): UdpPacket? {
+    actual override suspend fun receive(buffer: ByteArray, timeoutMs: Long): UdpPacket? {
         return withContext(Dispatchers.IO) {
             try {
                 socket.soTimeout = timeoutMs.toInt()
@@ -48,7 +48,7 @@ actual class PlatformUdpTransport actual constructor() : UdpTransport {
         }
     }
 
-    actual fun close() {
+    actual override fun close() {
         socket.close()
     }
 }

@@ -27,17 +27,7 @@ class RealDmxController(
     private var wasRunning: Boolean = false
 
     override suspend fun fireFixture(fixtureId: String) = mutex.withLock {
-        prepareForCalibration()
-
-        val fixtures = fixturesProvider()
-        val index = fixtures.indexOfFirst { it.fixture.fixtureId == fixtureId }
-
-        if (index != -1) {
-            val writeSlot = engine.colorOutput.writeSlot()
-            writeSlot.fill(Color.BLACK)
-            writeSlot[index] = Color.WHITE
-            engine.colorOutput.swapWrite()
-        }
+        fireFixtureInternal(fixtureId)
     }
 
     override suspend fun turnOffFixture(fixtureId: String) = mutex.withLock {
@@ -50,7 +40,25 @@ class RealDmxController(
         // For simple integration tests, we treat this the same as fireFixture.
         // In a full implementation, this would look up the fixture's pixel count
         // and only set the first/last elements if it's a pixel bar.
-        fireFixture(fixtureId)
+        fireFixtureInternal(fixtureId)
+    }
+
+    /**
+     * Internal helper that fires a single fixture without acquiring the mutex.
+     * Must only be called while the mutex is already held.
+     */
+    private fun fireFixtureInternal(fixtureId: String) {
+        prepareForCalibration()
+
+        val fixtures = fixturesProvider()
+        val index = fixtures.indexOfFirst { it.fixture.fixtureId == fixtureId }
+
+        if (index != -1) {
+            val writeSlot = engine.colorOutput.writeSlot()
+            writeSlot.fill(Color.BLACK)
+            writeSlot[index] = Color.WHITE
+            engine.colorOutput.swapWrite()
+        }
     }
 
     override suspend fun blackout() = mutex.withLock {

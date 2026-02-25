@@ -22,6 +22,7 @@ kotlin {
             api(project(":shared:networking"))
             api(project(":shared:tempo"))
             api(project(":shared:simulation"))
+            api(project(":shared:vision"))
             api(project(":shared:agent"))
             implementation(libs.koin.core)
             implementation(libs.koin.compose)

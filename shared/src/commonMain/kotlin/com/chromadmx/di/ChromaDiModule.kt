@@ -16,6 +16,7 @@ import com.chromadmx.engine.pipeline.EffectEngine
 import com.chromadmx.networking.discovery.NodeDiscovery
 import com.chromadmx.networking.output.DmxOutputService
 import com.chromadmx.networking.transport.PlatformUdpTransport
+import com.chromadmx.networking.transport.UdpTransport
 import com.chromadmx.pipeline.DmxPipeline
 import com.chromadmx.tempo.clock.BeatClock
 import com.chromadmx.tempo.tap.TapTempoClock
@@ -44,7 +45,7 @@ val chromaDiModule = module {
     single<BeatClock> { TapTempoClock(scope = get()) }
 
     // --- Networking ---
-    single { PlatformUdpTransport() }
+    single<UdpTransport> { PlatformUdpTransport() }
     single { NodeDiscovery(transport = get()) }
     single { DmxOutputService(transport = get()) }
 
@@ -74,7 +75,8 @@ val chromaDiModule = module {
     single { MutableStateFlow<List<Fixture3D>>(emptyList()) }
     single<() -> List<Fixture3D>> {
         val state = get<MutableStateFlow<List<Fixture3D>>>()
-        { state.value }
+        val provider: () -> List<Fixture3D> = { state.value }
+        provider
     }
 
     // --- DMX Pipeline (bridging engine to networking) ---
