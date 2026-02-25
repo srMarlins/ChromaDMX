@@ -2,6 +2,7 @@ package com.chromadmx.ui.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -9,7 +10,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.input.pointer.pointerInput
 import com.chromadmx.core.model.BuiltInProfiles
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.core.model.RenderHint
@@ -42,11 +45,15 @@ fun AudienceView(
     fixtures: List<Fixture3D>,
     fixtureColors: List<DmxColor>,
     modifier: Modifier = Modifier,
+    onBackgroundTapped: () -> Unit = {},
 ) {
     Canvas(
         modifier = modifier
             .fillMaxSize()
-            .background(StageBackground),
+            .background(StageBackground)
+            .pointerInput(Unit) {
+                detectTapGestures { onBackgroundTapped() }
+            },
     ) {
         val stageTop = size.height * 0.08f
         val stageBottom = size.height * 0.55f
@@ -80,12 +87,8 @@ fun AudienceView(
         if (fixtures.isEmpty()) return@Canvas
 
         // Compute horizontal bounds for distributing fixtures
-        var minX = Float.MAX_VALUE
-        var maxX = Float.MIN_VALUE
-        for (f in fixtures) {
-            if (f.position.x < minX) minX = f.position.x
-            if (f.position.x > maxX) maxX = f.position.x
-        }
+        val minX = fixtures.minOf { it.position.x }
+        val maxX = fixtures.maxOf { it.position.x }
         val rangeX = (maxX - minX).coerceAtLeast(1f)
 
         val padding = 60f
@@ -97,6 +100,9 @@ fun AudienceView(
         val trussY2 = stageTop + stageH * 0.45f
         drawTruss(padding - 20f, trussY1, availableW + 40f)
         drawTruss(padding - 20f, trussY2, availableW + 40f)
+
+        // Reusable Path to avoid allocations inside the fixture loop
+        val reusablePath = Path()
 
         // Render each fixture
         for ((index, fixture) in fixtures.withIndex()) {
@@ -114,13 +120,13 @@ fun AudienceView(
             val fixtureY = if (fixture.position.z > 0.5f) trussY1 else trussY2
 
             when (renderHint) {
-                RenderHint.POINT -> drawAudiencePoint(fx, fixtureY, composeColor, floorTop)
+                RenderHint.POINT -> drawAudiencePoint(fx, fixtureY, composeColor, floorTop, reusablePath)
                 RenderHint.BAR -> {
                     val pixelCount = profile?.physical?.pixelCount ?: 8
                     drawAudienceBar(fx, fixtureY, composeColor, pixelCount)
                 }
                 RenderHint.BEAM_CONE -> {
-                    drawAudienceBeamCone(fx, fixtureY, composeColor, floorTop)
+                    drawAudienceBeamCone(fx, fixtureY, composeColor, floorTop, reusablePath)
                 }
             }
 
@@ -161,6 +167,7 @@ private fun DrawScope.drawAudiencePoint(
     fy: Float,
     color: Color,
     floorY: Float,
+    reusablePath: Path,
 ) {
     // Glow halo
     drawCircle(
@@ -182,15 +189,14 @@ private fun DrawScope.drawAudiencePoint(
     )
 
     // Downward light wash
-    val washPath = androidx.compose.ui.graphics.Path().apply {
-        moveTo(fx - 5f, fy + 10f)
-        lineTo(fx - 25f, floorY)
-        lineTo(fx + 25f, floorY)
-        lineTo(fx + 5f, fy + 10f)
-        close()
-    }
+    reusablePath.reset()
+    reusablePath.moveTo(fx - 5f, fy + 10f)
+    reusablePath.lineTo(fx - 25f, floorY)
+    reusablePath.lineTo(fx + 25f, floorY)
+    reusablePath.lineTo(fx + 5f, fy + 10f)
+    reusablePath.close()
     drawPath(
-        path = washPath,
+        path = reusablePath,
         color = color.copy(alpha = 0.06f),
     )
 }
@@ -243,21 +249,21 @@ private fun DrawScope.drawAudienceBeamCone(
     fy: Float,
     color: Color,
     floorY: Float,
+    reusablePath: Path,
 ) {
     val beamLength = floorY - fy - 10f
     val beamTopWidth = 6f
     val beamBottomWidth = 35f
 
     // Beam cone
-    val beamPath = androidx.compose.ui.graphics.Path().apply {
-        moveTo(fx - beamTopWidth, fy + 10f)
-        lineTo(fx - beamBottomWidth, fy + beamLength)
-        lineTo(fx + beamBottomWidth, fy + beamLength)
-        lineTo(fx + beamTopWidth, fy + 10f)
-        close()
-    }
+    reusablePath.reset()
+    reusablePath.moveTo(fx - beamTopWidth, fy + 10f)
+    reusablePath.lineTo(fx - beamBottomWidth, fy + beamLength)
+    reusablePath.lineTo(fx + beamBottomWidth, fy + beamLength)
+    reusablePath.lineTo(fx + beamTopWidth, fy + 10f)
+    reusablePath.close()
     drawPath(
-        path = beamPath,
+        path = reusablePath,
         color = color.copy(alpha = 0.08f),
     )
 

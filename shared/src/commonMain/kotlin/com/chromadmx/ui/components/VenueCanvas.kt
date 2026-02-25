@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.pointerInput
@@ -22,7 +23,6 @@ import com.chromadmx.core.model.BuiltInProfiles
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.core.model.RenderHint
 import com.chromadmx.core.model.Color as DmxColor
-import kotlin.math.sqrt
 
 /** Scanline color for the subtle CRT-like horizontal lines. */
 private val ScanlineColor = Color.White.copy(alpha = 0.015f)
@@ -83,15 +83,17 @@ fun VenueCanvas(
             .pointerInput(fixtures.size, zoom, panOffset) {
                 detectTapGestures { tapOffset ->
                     // Hit test: find the closest fixture within touch radius
+                    // Compare squared distances to avoid sqrt overhead
                     val touchRadius = 40f * zoom
+                    val touchRadiusSq = touchRadius * touchRadius
                     var closestIndex = -1
-                    var closestDist = Float.MAX_VALUE
+                    var closestDistSq = Float.MAX_VALUE
                     for ((i, pos) in fixtureScreenPositions.withIndex()) {
                         val dx = tapOffset.x - pos.x
                         val dy = tapOffset.y - pos.y
-                        val dist = sqrt(dx * dx + dy * dy)
-                        if (dist < touchRadius && dist < closestDist) {
-                            closestDist = dist
+                        val distSq = dx * dx + dy * dy
+                        if (distSq < touchRadiusSq && distSq < closestDistSq) {
+                            closestDistSq = distSq
                             closestIndex = i
                         }
                     }
@@ -129,6 +131,9 @@ fun VenueCanvas(
         val rangeX = (maxX - minX).coerceAtLeast(1f)
         val rangeY = (maxY - minY).coerceAtLeast(1f)
 
+        // Reusable Path to avoid allocations inside the fixture loop
+        val reusablePath = Path()
+
         // Apply zoom and pan transform
         withTransform({
             translate(panOffset.x, panOffset.y)
@@ -157,7 +162,7 @@ fun VenueCanvas(
                         val pixelCount = profile?.physical?.pixelCount ?: 8
                         drawBarFixture(cx, cy, composeColor, pixelCount, isSelected)
                     }
-                    RenderHint.BEAM_CONE -> drawBeamConeFixture(cx, cy, composeColor, isSelected)
+                    RenderHint.BEAM_CONE -> drawBeamConeFixture(cx, cy, composeColor, isSelected, reusablePath)
                 }
             }
 
@@ -268,18 +273,18 @@ private fun DrawScope.drawBeamConeFixture(
     cy: Float,
     color: Color,
     isSelected: Boolean,
+    reusablePath: Path,
 ) {
     // Beam cone (downward triangle-like glow)
     val beamLength = 30f
     val beamHalfWidth = 12f
-    val beamPath = androidx.compose.ui.graphics.Path().apply {
-        moveTo(cx, cy)
-        lineTo(cx - beamHalfWidth, cy + beamLength)
-        lineTo(cx + beamHalfWidth, cy + beamLength)
-        close()
-    }
+    reusablePath.reset()
+    reusablePath.moveTo(cx, cy)
+    reusablePath.lineTo(cx - beamHalfWidth, cy + beamLength)
+    reusablePath.lineTo(cx + beamHalfWidth, cy + beamLength)
+    reusablePath.close()
     drawPath(
-        path = beamPath,
+        path = reusablePath,
         color = color.copy(alpha = 0.2f),
     )
 

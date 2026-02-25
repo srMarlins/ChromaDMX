@@ -26,6 +26,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -76,6 +77,14 @@ fun StagePreviewScreen(
         pageCount = { 2 },
     )
 
+    // Sync pager swipe back to ViewModel so isTopDownView stays in sync
+    LaunchedEffect(pagerState.currentPage) {
+        val shouldBeTopDown = pagerState.currentPage == 0
+        if (viewModel.isTopDownView.value != shouldBeTopDown) {
+            viewModel.toggleViewMode()
+        }
+    }
+
     Box(modifier = modifier.fillMaxSize().background(Color(0xFF060612))) {
         // --- Main canvas area (dual view with swipe) ---
         HorizontalPager(
@@ -95,6 +104,7 @@ fun StagePreviewScreen(
                     fixtures = fixtures,
                     fixtureColors = fixtureColors,
                     modifier = Modifier.fillMaxSize(),
+                    onBackgroundTapped = { viewModel.selectFixture(null) },
                 )
             }
         }
