@@ -60,23 +60,19 @@ object ColorUtils {
      * Supports both 3-digit and 6-digit hex formats.
      */
     fun parseHex(hex: String): Color {
-        return try {
-            val s = hex.removePrefix("#")
-            when (s.length) {
-                6 -> Color(
-                    (s.substring(0, 2).toInt(16) / 255f),
-                    (s.substring(2, 4).toInt(16) / 255f),
-                    (s.substring(4, 6).toInt(16) / 255f)
-                )
-                3 -> Color(
-                    (s.substring(0, 1).repeat(2).toInt(16) / 255f),
-                    (s.substring(1, 2).repeat(2).toInt(16) / 255f),
-                    (s.substring(2, 3).repeat(2).toInt(16) / 255f)
-                )
-                else -> Color.WHITE
-            }
-        } catch (_: Exception) {
-            Color.WHITE
+        val s = hex.removePrefix("#")
+        return when (s.length) {
+            6 -> Color(
+                (s.substring(0, 2).toInt(16) / 255f),
+                (s.substring(2, 4).toInt(16) / 255f),
+                (s.substring(4, 6).toInt(16) / 255f)
+            )
+            3 -> Color(
+                (s.substring(0, 1).repeat(2).toInt(16) / 255f),
+                (s.substring(1, 2).repeat(2).toInt(16) / 255f),
+                (s.substring(2, 3).repeat(2).toInt(16) / 255f)
+            )
+            else -> Color.WHITE
         }
     }
 

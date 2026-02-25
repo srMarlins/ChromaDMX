@@ -27,7 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-
+import com.chromadmx.agent.scene.ScenePreset
 
 /**
  * Horizontal row of scene preset buttons.

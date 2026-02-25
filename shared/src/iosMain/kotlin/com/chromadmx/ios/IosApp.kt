@@ -21,7 +21,7 @@ import com.chromadmx.Greeting
  *         IosApp.shared.initialize()
  *     }
  *
- *     var body: some Scene {
+ *     var body: some ScenePreset {
  *         WindowGroup {
  *             ComposeView()
  *                 .ignoresSafeArea()

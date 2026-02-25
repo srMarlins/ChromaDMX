@@ -44,7 +44,7 @@ class PreGenerationServiceTest {
         val scenes = service.generate("techno", 2)
         scenes.forEach { scene ->
             assertTrue(scene.name.contains("techno", ignoreCase = true),
-                "Scene name '${scene.name}' should contain genre 'techno'")
+                "ScenePreset name '${scene.name}' should contain genre 'techno'")
         }
     }
 

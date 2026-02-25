@@ -77,10 +77,10 @@ class SceneToolsTest {
     @Test
     fun createSceneSavesToStore() = runTest {
         val tool = CreateSceneTool(controller, sceneStore)
-        val result = tool.execute(CreateSceneTool.Args(name = "Test Scene"))
-        val saved = sceneStore.load("Test Scene")
+        val result = tool.execute(CreateSceneTool.Args(name = "Test ScenePreset"))
+        val saved = sceneStore.load("Test ScenePreset")
         assertTrue(saved != null)
-        assertContains(result, "Test Scene")
+        assertContains(result, "Test ScenePreset")
     }
 
     @Test
