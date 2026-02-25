@@ -2,6 +2,7 @@ package com.chromadmx.networking.discovery
 
 import com.chromadmx.networking.protocol.ArtNetCodec
 import com.chromadmx.networking.transport.PlatformUdpTransport
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -9,6 +10,11 @@ import kotlin.test.assertTrue
 class NodeDiscoverySecurityTest {
 
     private val transport = PlatformUdpTransport()
+
+    @AfterTest
+    fun tearDown() {
+        transport.close()
+    }
 
     @Test
     fun processReply_respectsMaxNodes() {
