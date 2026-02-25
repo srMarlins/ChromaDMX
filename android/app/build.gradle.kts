@@ -33,5 +33,7 @@ dependencies {
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
 
+    implementation(libs.androidx.navigation.compose)
+
     debugImplementation("androidx.compose.ui:ui-tooling")
 }
