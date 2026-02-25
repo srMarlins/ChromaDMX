@@ -60,7 +60,8 @@ import com.chromadmx.ui.viewmodel.SettingsViewModel
 fun SettingsScreen(
     viewModel: SettingsViewModel,
     onClose: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onOpenProvisioning: () -> Unit = {},
 ) {
     val pollInterval by viewModel.pollInterval.collectAsState()
     val protocol by viewModel.protocol.collectAsState()
@@ -146,6 +147,13 @@ fun SettingsScreen(
                         status = agentStatus,
                         onConfigChange = { viewModel.updateAgentConfig(it) },
                         onTestConnection = { viewModel.testAgentConnection() }
+                    )
+                }
+
+                // BLE Provisioning Section
+                item {
+                    BleProvisioningSection(
+                        onOpenProvisioning = onOpenProvisioning
                     )
                 }
 
@@ -520,6 +528,30 @@ fun AppSettingsSection(
                 ) {
                     Text("IMPORT DATA")
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun BleProvisioningSection(
+    onOpenProvisioning: () -> Unit
+) {
+    PixelCard(title = { SectionTitle("BLE PROVISIONING") }) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                "Configure ESP32 DMX nodes over Bluetooth Low Energy. " +
+                    "Set Wi-Fi credentials and Art-Net addressing for each node.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Button(
+                onClick = onOpenProvisioning,
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.small
+            ) {
+                Text("OPEN BLE PROVISIONING")
             }
         }
     }
