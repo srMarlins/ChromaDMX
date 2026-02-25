@@ -13,6 +13,7 @@ import com.chromadmx.engine.pipeline.EffectEngine
 import com.chromadmx.engine.preset.PresetLibrary
 import com.chromadmx.tempo.clock.BeatClock
 import com.chromadmx.tempo.tap.TapTempoClock
+import com.chromadmx.core.model.Color as DmxColor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -65,10 +66,19 @@ class StageViewModel(
     private val _selectedFixtureIndex = MutableStateFlow<Int?>(null)
     val selectedFixtureIndex: StateFlow<Int?> = _selectedFixtureIndex.asStateFlow()
 
+    // --- Fixture colors (from engine output) ---
+    private val _fixtureColors = MutableStateFlow<List<DmxColor>>(emptyList())
+    val fixtureColors: StateFlow<List<DmxColor>> = _fixtureColors.asStateFlow()
+
+    // --- Active scene name ---
+    private val _activeSceneName = MutableStateFlow<String?>(null)
+    val activeSceneName: StateFlow<String?> = _activeSceneName.asStateFlow()
+
     // --- Stage view mode ---
     private val _isTopDownView = MutableStateFlow(true)
     val isTopDownView: StateFlow<Boolean> = _isTopDownView.asStateFlow()
 
+    /** Syncs engine state (layers, scenes, dimmer) at a moderate rate. */
     private val syncJob: Job = scope.launch {
         while (isActive) {
             syncFromEngine()
@@ -76,9 +86,30 @@ class StageViewModel(
         }
     }
 
+    /** Reads fixture colors from the engine triple buffer at ~30fps for smooth visuals. */
+    private val colorSyncJob: Job = scope.launch {
+        while (isActive) {
+            syncColorsFromEngine()
+            delay(33L) // ~30fps
+        }
+    }
+
     fun onCleared() {
         syncJob.cancel()
+        colorSyncJob.cancel()
         scope.coroutineContext[Job]?.cancel()
+    }
+
+    /**
+     * Read the latest fixture colors from the engine's triple buffer.
+     * The reader calls swapRead() to get the most recent data, then
+     * reads from readSlot().
+     */
+    private fun syncColorsFromEngine() {
+        val buffer = engine.colorOutput
+        buffer.swapRead()
+        val colors = buffer.readSlot()
+        _fixtureColors.value = colors.toList()
     }
 
     private fun syncFromEngine() {
@@ -170,6 +201,7 @@ class StageViewModel(
         layersBeforePreview = null
         masterDimmerBeforePreview = null
         presetLibrary.loadPreset(preset.id)
+        _activeSceneName.value = name
         syncFromEngine()
     }
 
