@@ -138,6 +138,11 @@ class StageViewModel(
         _selectedFixtureIndex.value = index
     }
 
+    /**
+     * Update a fixture's position in the UI model.
+     * Note: Does not propagate to EffectEngine — engine integration
+     * requires support for mutable fixture lists (future work).
+     */
     fun updateFixturePosition(index: Int, newPosition: Vec3) {
         val current = _fixtures.value.toMutableList()
         if (index in current.indices) {
@@ -146,10 +151,20 @@ class StageViewModel(
         }
     }
 
+    /**
+     * Add a fixture to the UI model.
+     * Note: Does not propagate to EffectEngine — engine integration
+     * requires support for mutable fixture lists (future work).
+     */
     fun addFixture(fixture: Fixture3D) {
         _fixtures.value = _fixtures.value + fixture
     }
 
+    /**
+     * Remove a fixture from the UI model by index.
+     * Note: Does not propagate to EffectEngine — engine integration
+     * requires support for mutable fixture lists (future work).
+     */
     fun removeFixture(index: Int) {
         val current = _fixtures.value.toMutableList()
         if (index in current.indices) {

@@ -24,6 +24,10 @@ class AppStateManager(isFirstLaunch: Boolean) {
         _currentState.value = state
     }
 
+    /**
+     * Navigate back one level. Only supports single-level overlay depth
+     * (e.g., StagePreview -> Settings -> back to StagePreview).
+     */
     fun navigateBack() {
         _currentState.value = previousState
         previousState = AppState.StagePreview
