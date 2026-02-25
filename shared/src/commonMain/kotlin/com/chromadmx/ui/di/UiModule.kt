@@ -12,9 +12,12 @@ import org.koin.dsl.module
 /**
  * Koin module for UI ViewModels.
  *
- * Each ViewModel is scoped as a factory so a new instance is created
- * per screen composition. A child [SupervisorJob] is created per ViewModel
- * so its coroutines can be cancelled independently via [onCleared].
+ * [StageViewModel] and [SettingsViewModel] are scoped as singletons so
+ * they survive navigation round-trips (e.g., StagePreview -> Settings -> back).
+ * [AgentViewModel] remains a factory — each chat session can be independent.
+ *
+ * A child [SupervisorJob] is created per ViewModel so its coroutines can be
+ * cancelled independently via [onCleared].
  *
  * Dependencies:
  * - StageViewModel requires: EffectEngine, EffectRegistry, BeatClock
@@ -24,7 +27,7 @@ import org.koin.dsl.module
 val uiModule = module {
     // CoroutineScope provided by chromaDiModule
 
-    factory {
+    single {
         val parentScope: CoroutineScope = get()
         val childJob = SupervisorJob(parentScope.coroutineContext[Job])
         val vmScope = CoroutineScope(Dispatchers.Default + childJob)
@@ -36,7 +39,7 @@ val uiModule = module {
         )
     }
 
-    factory {
+    single {
         val parentScope: CoroutineScope = get()
         val childJob = SupervisorJob(parentScope.coroutineContext[Job])
         val vmScope = CoroutineScope(Dispatchers.Default + childJob)

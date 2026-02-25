@@ -7,7 +7,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -50,9 +49,6 @@ fun ChromaDmxApp() {
                 is AppState.StagePreview -> {
                     val stageVm = resolveOrNull<StageViewModel>()
                     if (stageVm != null) {
-                        DisposableEffect(stageVm) {
-                            onDispose { stageVm.onCleared() }
-                        }
                         StagePreviewScreen(
                             viewModel = stageVm,
                             onSettingsClick = { appStateManager.navigateTo(AppState.Settings) },
@@ -64,9 +60,6 @@ fun ChromaDmxApp() {
                 is AppState.Settings -> {
                     val settingsVm = resolveOrNull<SettingsViewModel>()
                     if (settingsVm != null) {
-                        DisposableEffect(settingsVm) {
-                            onDispose { settingsVm.onCleared() }
-                        }
                         SettingsScreen(
                             viewModel = settingsVm,
                             onClose = { appStateManager.navigateBack() },
