@@ -25,17 +25,28 @@ import kotlin.time.TimeSource
  */
 class EffectEngine(
     private val scope: CoroutineScope,
-    private val fixtures: List<Fixture3D>
+    private var fixtures: List<Fixture3D> = emptyList()
 ) {
     /** The compositing effect stack evaluated each frame. */
     val effectStack: EffectStack = EffectStack()
 
     /** Triple-buffered color output: one [Color] per fixture. */
-    val colorOutput: TripleBuffer<Array<Color>> = TripleBuffer(
-        initialA = Array(fixtures.size) { Color.BLACK },
-        initialB = Array(fixtures.size) { Color.BLACK },
-        initialC = Array(fixtures.size) { Color.BLACK }
-    )
+    private var _colorOutput: TripleBuffer<Array<Color>> = createBuffer(fixtures)
+
+    val colorOutput: TripleBuffer<Array<Color>> get() = _colorOutput
+
+    private fun createBuffer(fixtures: List<Fixture3D>): TripleBuffer<Array<Color>> =
+        TripleBuffer(
+            initialA = Array(fixtures.size) { Color.BLACK },
+            initialB = Array(fixtures.size) { Color.BLACK },
+            initialC = Array(fixtures.size) { Color.BLACK }
+        )
+
+    /** Update the fixture list and recreate the output buffers. */
+    fun updateFixtures(newFixtures: List<Fixture3D>) {
+        fixtures = newFixtures
+        _colorOutput = createBuffer(newFixtures)
+    }
 
     /** Provider for the current beat state. Defaults to [BeatState.IDLE]. */
     var beatStateProvider: () -> BeatState = { BeatState.IDLE }

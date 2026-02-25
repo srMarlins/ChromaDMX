@@ -30,7 +30,7 @@ enum class DmxProtocol {
  *
  * Runs a 40Hz (25ms) broadcast loop that reads the latest frame data
  * from an atomic reference and sends one ArtDmx or sACN packet per
- * universe per frame via [UdpTransport].
+ * universe per frame via [PlatformUdpTransport].
  *
  * Usage:
  * ```
@@ -56,7 +56,7 @@ class DmxOutputService(
     private val transport: UdpTransport,
     private val targetAddress: String = ArtNetConstants.BROADCAST_ADDRESS,
     private val protocol: DmxProtocol = DmxProtocol.ART_NET,
-    private val frameRateHz: Int = DEFAULT_FRAME_RATE_HZ,
+    val frameRateHz: Int = DEFAULT_FRAME_RATE_HZ,
     private val sourceName: String = "ChromaDMX",
     private val sacnCid: ByteArray = ByteArray(SacnConstants.CID_SIZE),
     private val sacnPriority: Int = SacnConstants.DEFAULT_PRIORITY
@@ -169,7 +169,7 @@ class DmxOutputService(
      * Send all universe data for one frame.
      * Called by the output loop and also exposed for testing.
      */
-    internal suspend fun sendFrame() {
+    suspend fun sendFrame() {
         val frame = frameRef.value
         if (frame.isEmpty()) return
 

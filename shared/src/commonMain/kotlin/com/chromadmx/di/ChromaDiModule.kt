@@ -16,7 +16,6 @@ import com.chromadmx.engine.pipeline.EffectEngine
 import com.chromadmx.networking.discovery.NodeDiscovery
 import com.chromadmx.networking.output.DmxOutputService
 import com.chromadmx.networking.transport.PlatformUdpTransport
-import com.chromadmx.networking.transport.UdpTransport
 import com.chromadmx.pipeline.DmxPipeline
 import com.chromadmx.tempo.clock.BeatClock
 import com.chromadmx.tempo.tap.TapTempoClock
@@ -26,6 +25,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
@@ -45,7 +45,7 @@ val chromaDiModule = module {
     single<BeatClock> { TapTempoClock(scope = get()) }
 
     // --- Networking ---
-    single<UdpTransport> { PlatformUdpTransport() }
+    single { PlatformUdpTransport() }
     single { NodeDiscovery(transport = get()) }
     single { DmxOutputService(transport = get()) }
 
@@ -66,6 +66,13 @@ val chromaDiModule = module {
     single {
         EffectEngine(scope = get(), fixtures = emptyList()).apply {
             beatStateProvider = { get<BeatClock>().beatState.value }
+
+            // Auto-update engine when fixtures change in the shared state
+            val fixturesState = get<MutableStateFlow<List<Fixture3D>>>()
+            get<CoroutineScope>().launch {
+                fixturesState.collect { updateFixtures(it) }
+            }
+
             start()
         }
     }
@@ -74,8 +81,8 @@ val chromaDiModule = module {
     // --- Fixture provider (shared state) ---
     single { MutableStateFlow<List<Fixture3D>>(emptyList()) }
     single<() -> List<Fixture3D>> {
-        val state = get<MutableStateFlow<List<Fixture3D>>>()
-        val provider: () -> List<Fixture3D> = { state.value }
+        val fixturesState = get<MutableStateFlow<List<Fixture3D>>>()
+        val provider: () -> List<Fixture3D> = { fixturesState.value }
         provider
     }
 
