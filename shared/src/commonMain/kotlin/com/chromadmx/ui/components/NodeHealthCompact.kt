@@ -11,8 +11,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.chromadmx.networking.model.DmxNode
-import com.chromadmx.ui.screen.network.HealthLevel
 import com.chromadmx.ui.screen.network.NodeHealthIndicator
+import com.chromadmx.ui.screen.network.healthLevel
 
 /**
  * Compact network health summary for the top bar.
@@ -42,8 +42,7 @@ fun NodeHealthCompact(
         val overflow = if (nodes.size > 3) nodes.size - 3 else 0
 
         displayNodes.forEach { node ->
-            val level = getNodeHealthLevel(node, currentTimeMs)
-            NodeHealthIndicator(level = level)
+            NodeHealthIndicator(level = node.healthLevel(currentTimeMs))
         }
 
         if (overflow > 0) {
@@ -62,14 +61,5 @@ fun NodeHealthCompact(
                 color = MaterialTheme.colorScheme.error
             )
         }
-    }
-}
-
-private fun getNodeHealthLevel(node: DmxNode, currentTimeMs: Long): HealthLevel {
-    val timeSinceLastSeen = currentTimeMs - node.lastSeenMs
-    return when {
-        timeSinceLastSeen >= DmxNode.LOST_TIMEOUT_MS -> HealthLevel.EMPTY
-        node.latencyMs >= DmxNode.LATENCY_THRESHOLD_MS || timeSinceLastSeen >= DmxNode.DEGRADED_TIMEOUT_MS -> HealthLevel.HALF
-        else -> HealthLevel.FULL
     }
 }
