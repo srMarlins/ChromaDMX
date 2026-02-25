@@ -9,6 +9,7 @@ import com.chromadmx.ui.viewmodel.NetworkViewModel
 import com.chromadmx.ui.viewmodel.PerformViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import org.koin.dsl.module
@@ -36,7 +37,7 @@ val uiModule = module {
         PerformViewModel(
             engine = get(),
             effectRegistry = get(),
-            sceneStore = get(),
+            presetLibrary = get(),
             beatClock = get(),
             nodeDiscovery = get(),
             scope = vmScope,

@@ -30,7 +30,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.chromadmx.agent.scene.Scene
+import com.chromadmx.core.model.ScenePreset
+import com.chromadmx.core.model.Genre
 import com.chromadmx.core.EffectParams
 import com.chromadmx.core.model.BeatState
 import com.chromadmx.core.model.BlendMode
@@ -49,7 +50,7 @@ import com.chromadmx.ui.theme.DmxSurface
  */
 @Composable
 fun ScenePresetRow(
-    scenes: List<Scene>,
+    scenes: List<ScenePreset>,
     activePreset: String? = null,
     fixtures: List<Fixture3D>,
     effectRegistry: EffectRegistry,
@@ -71,14 +72,14 @@ fun ScenePresetRow(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        items(scenes, key = { it.name }) { scene ->
+        items(scenes, key = { it.id }) { scene ->
             PresetThumbnailItem(
                 scene = scene,
-                isActive = scene.name == activePreset,
+                isActive = scene.id == activePreset,
                 fixtures = fixtures,
                 effectRegistry = effectRegistry,
-                onTap = { onPresetTap(scene.name) },
-                onLongPress = { onPresetLongPress(scene.name) },
+                onTap = { onPresetTap(scene.id) },
+                onLongPress = { onPresetLongPress(scene.id) },
                 onRelease = { onPresetLongPress(null) }
             )
         }
@@ -87,7 +88,7 @@ fun ScenePresetRow(
 
 @Composable
 fun PresetThumbnailItem(
-    scene: Scene,
+    scene: ScenePreset,
     isActive: Boolean,
     fixtures: List<Fixture3D>,
     effectRegistry: EffectRegistry,
@@ -153,7 +154,7 @@ fun PresetThumbnailItem(
 
 @Composable
 fun PresetThumbnail(
-    scene: Scene,
+    scene: ScenePreset,
     fixtures: List<Fixture3D>,
     effectRegistry: EffectRegistry,
     modifier: Modifier = Modifier,
@@ -164,9 +165,10 @@ fun PresetThumbnail(
                 val effect = effectRegistry.get(config.effectId) ?: return@mapNotNull null
                 EffectLayer(
                     effect = effect,
-                    params = EffectParams(config.params),
-                    blendMode = try { BlendMode.valueOf(config.blendMode.uppercase()) } catch(e: Exception) { BlendMode.NORMAL },
-                    opacity = config.opacity
+                    params = config.params,
+                    blendMode = config.blendMode,
+                    opacity = config.opacity,
+                    enabled = config.enabled
                 )
             })
             masterDimmer = scene.masterDimmer

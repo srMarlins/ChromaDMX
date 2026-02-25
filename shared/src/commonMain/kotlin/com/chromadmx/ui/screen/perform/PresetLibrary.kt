@@ -24,7 +24,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.chromadmx.agent.scene.Scene
+import com.chromadmx.core.model.ScenePreset
+import com.chromadmx.core.model.Genre
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.engine.effect.EffectRegistry
 import com.chromadmx.ui.theme.DmxBackground
@@ -34,7 +35,7 @@ import com.chromadmx.ui.theme.DmxBackground
  */
 @Composable
 fun PresetLibrary(
-    scenes: List<Scene>,
+    scenes: List<ScenePreset>,
     genres: List<String>,
     fixtures: List<Fixture3D>,
     effectRegistry: EffectRegistry,
@@ -42,12 +43,12 @@ fun PresetLibrary(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var selectedGenre by remember { mutableStateOf<String?>(null) }
+    var selectedGenre by remember { mutableStateOf<Genre?>(null) }
 
     val filteredScenes = if (selectedGenre == null) {
         scenes
     } else {
-        scenes.filter { it.name.startsWith(selectedGenre!!, ignoreCase = true) }
+        scenes.filter { it.genre == selectedGenre }
     }
 
     Column(
@@ -82,11 +83,11 @@ fun PresetLibrary(
                 onClick = { selectedGenre = null },
                 label = { Text("ALL") }
             )
-            genres.forEach { genre ->
+            Genre.entries.forEach { genre ->
                 FilterChip(
                     selected = selectedGenre == genre,
                     onClick = { selectedGenre = genre },
-                    label = { Text(genre.uppercase()) }
+                    label = { Text(genre.name) }
                 )
             }
         }
@@ -98,14 +99,14 @@ fun PresetLibrary(
             verticalArrangement = Arrangement.spacedBy(20.dp),
             modifier = Modifier.weight(1f)
         ) {
-            items(filteredScenes, key = { it.name }) { scene ->
+            items(filteredScenes, key = { it.id }) { scene ->
                 PresetThumbnailItem(
                     scene = scene,
                     isActive = false,
                     fixtures = fixtures,
                     effectRegistry = effectRegistry,
                     onTap = {
-                        onPresetTap(scene.name)
+                        onPresetTap(scene.id)
                         onClose()
                     },
                     onLongPress = {},
