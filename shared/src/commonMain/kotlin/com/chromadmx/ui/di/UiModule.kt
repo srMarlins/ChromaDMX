@@ -37,6 +37,7 @@ val uiModule = module {
         PerformViewModel(
             engine = get(),
             effectRegistry = get(),
+            presetLibrary = get(),
             beatClock = get(),
             scope = vmScope,
         )

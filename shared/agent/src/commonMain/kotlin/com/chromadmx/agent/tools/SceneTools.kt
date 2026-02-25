@@ -3,7 +3,7 @@ package com.chromadmx.agent.tools
 import ai.koog.agents.core.tools.SimpleTool
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import com.chromadmx.agent.controller.EngineController
-import com.chromadmx.agent.scene.SceneStore
+import com.chromadmx.engine.preset.PresetLibrary
 import kotlinx.serialization.Serializable
 
 class SetEffectTool(private val controller: EngineController) : SimpleTool<SetEffectTool.Args>(
@@ -111,7 +111,7 @@ class SetTempoMultiplierTool(private val controller: EngineController) : SimpleT
 
 class CreateSceneTool(
     private val controller: EngineController,
-    private val sceneStore: SceneStore
+    private val presetLibrary: PresetLibrary
 ) : SimpleTool<CreateSceneTool.Args>(
     argsSerializer = Args.serializer(),
     name = "createScene",
@@ -124,15 +124,15 @@ class CreateSceneTool(
     )
 
     override suspend fun execute(args: Args): String {
-        val scene = controller.captureScene().copy(name = args.name)
-        sceneStore.save(scene)
-        return "Created scene '${args.name}' with ${scene.layers.size} layers"
+        val preset = controller.capturePreset(args.name)
+        presetLibrary.savePreset(preset)
+        return "Created scene '${args.name}' with ${preset.layers.size} layers"
     }
 }
 
 class LoadSceneTool(
     private val controller: EngineController,
-    private val sceneStore: SceneStore
+    private val presetLibrary: PresetLibrary
 ) : SimpleTool<LoadSceneTool.Args>(
     argsSerializer = Args.serializer(),
     name = "loadScene",
@@ -145,9 +145,10 @@ class LoadSceneTool(
     )
 
     override suspend fun execute(args: Args): String {
-        val scene = sceneStore.load(args.name)
-            ?: return "Scene '${args.name}' not found. Available: ${sceneStore.list().joinToString(", ")}"
-        controller.applyScene(scene)
-        return "Loaded scene '${args.name}' with ${scene.layers.size} layers, dimmer=${scene.masterDimmer}"
+        val presets = presetLibrary.listPresets()
+        val preset = presets.find { it.name.equals(args.name, ignoreCase = true) }
+            ?: return "Scene '${args.name}' not found. Available: ${presets.joinToString(", ") { it.name }}"
+        controller.applyPreset(preset)
+        return "Loaded scene '${args.name}' with ${preset.layers.size} layers, dimmer=${preset.masterDimmer}"
     }
 }

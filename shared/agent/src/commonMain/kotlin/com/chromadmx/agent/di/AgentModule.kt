@@ -13,7 +13,6 @@ import com.chromadmx.agent.controller.RealNetworkController
 import com.chromadmx.agent.controller.RealStateController
 import com.chromadmx.agent.controller.StateController
 import com.chromadmx.agent.pregen.PreGenerationService
-import com.chromadmx.agent.scene.SceneStore
 import com.chromadmx.agent.tools.buildToolRegistry
 import com.chromadmx.core.model.Fixture3D
 import org.koin.core.module.Module
@@ -31,7 +30,6 @@ val agentModule: Module = module {
             else -> AgentConfig()
         }
     }
-    single { SceneStore() }
     single<EngineController> { RealEngineController(get(), get()) }
     single<NetworkController> { RealNetworkController(get()) }
     single<FixtureController> {
@@ -48,7 +46,7 @@ val agentModule: Module = module {
             networkController = get(),
             fixtureController = get(),
             stateController = get(),
-            sceneStore = get()
+            presetLibrary = get()
         )
     }
     single { LightingAgent(get(), get()) }
