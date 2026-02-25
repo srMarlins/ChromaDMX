@@ -1,5 +1,6 @@
 package com.chromadmx.ui.di
 
+import com.chromadmx.ui.components.network.NetworkHealthViewModel
 import com.chromadmx.ui.viewmodel.AgentViewModel
 import com.chromadmx.ui.viewmodel.MascotViewModel
 import com.chromadmx.ui.viewmodel.SettingsViewModel
@@ -26,6 +27,7 @@ import org.koin.dsl.module
  * - SettingsViewModel requires: NodeDiscovery
  * - AgentViewModel requires: LightingAgent, PreGenerationService
  * - MascotViewModel requires: BeatClock
+ * - NetworkHealthViewModel requires: NodeDiscovery, MascotViewModel (optional)
  */
 val uiModule = module {
     // CoroutineScope provided by chromaDiModule
@@ -71,6 +73,17 @@ val uiModule = module {
         MascotViewModel(
             scope = vmScope,
             beatClock = get(),
+        )
+    }
+
+    factory {
+        val parentScope: CoroutineScope = get()
+        val childJob = SupervisorJob(parentScope.coroutineContext[Job])
+        val vmScope = CoroutineScope(Dispatchers.Default + childJob)
+        NetworkHealthViewModel(
+            nodeDiscovery = get(),
+            mascotViewModel = getOrNull(),
+            scope = vmScope,
         )
     }
 }
