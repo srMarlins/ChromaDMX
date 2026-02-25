@@ -1,0 +1,22 @@
+name: Jules
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  jules:
+    if: github.event.label.name == 'jules'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dispatch to Jules
+        uses: google/jules-github-action@v1
+        with:
+          api_key: ${{ secrets.JULES_API_KEY }}
+          issue_number: ${{ github.event.issue.number }}
