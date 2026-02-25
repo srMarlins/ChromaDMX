@@ -1,7 +1,6 @@
 package com.chromadmx.tempo.clock
 
 import com.chromadmx.core.model.BeatState
-import com.chromadmx.core.model.BeatSyncSource
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -34,12 +33,12 @@ interface BeatClock {
     /** Whether the clock is actively advancing phase. */
     val isRunning: StateFlow<Boolean>
 
-    /** Current source of synchronization. */
-    val syncSource: StateFlow<BeatSyncSource>
-
     /**
      * Composite snapshot of the current timing state, suitable for
      * passing into the effect engine each frame.
+     *
+     * Note: sync source is available via [BeatState.syncSource] — there is
+     * no standalone `syncSource` property on this interface to avoid duplication.
      */
     val beatState: StateFlow<BeatState>
 

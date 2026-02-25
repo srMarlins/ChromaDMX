@@ -1,8 +1,8 @@
 package com.chromadmx.ui.screen.perform
 
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.Spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
@@ -14,9 +14,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -45,9 +42,12 @@ fun BpmDisplay(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Pulse animation: strongest at the start of the beat (beatPhase close to 0)
-    // We use a simple curve that peaks at 0 and decays.
-    val pulseScale = 1.0f + (1f - beatPhase).let { if (it > 0.8f) (it - 0.8f) * 0.5f else 0f }
+    // Pulse animation: sharp scale-up at the start of each beat, spring decay
+    val targetScale = if (beatPhase < 0.15f) 1.15f else 1.0f
+    val pulseScale by animateFloatAsState(
+        targetValue = targetScale,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
+    )
 
     val color = when (syncSource) {
         BeatSyncSource.LINK -> NodeOnline
@@ -61,14 +61,23 @@ fun BpmDisplay(
             .padding(8.dp),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = bpm.toInt().toString(),
-            color = color,
-            fontSize = 32.sp,
-            fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.scale(pulseScale)
-        )
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = bpm.toInt().toString(),
+                color = color,
+                fontSize = 32.sp,
+                fontFamily = FontFamily.Monospace,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.scale(pulseScale)
+            )
+            Text(
+                text = "BPM",
+                color = color.copy(alpha = 0.7f),
+                fontSize = 10.sp,
+                fontFamily = FontFamily.Monospace,
+                fontWeight = FontWeight.Medium,
+            )
+        }
     }
 }
 

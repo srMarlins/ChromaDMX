@@ -25,3 +25,6 @@ val NodeUnknown = Color(0xFF9E9E9E)
 // Beat visualization colors
 val BeatActive = Color(0xFF6C63FF)
 val BeatInactive = Color(0xFF2A2A3E)
+
+// Stage / venue background
+val StageBackground = Color(0xFF080818)

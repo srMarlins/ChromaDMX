@@ -54,7 +54,6 @@ actual class AbletonLinkClock actual constructor(
     override val isRunning: StateFlow<Boolean> = _isRunning.asStateFlow()
 
     private val _syncSource = MutableStateFlow(BeatSyncSource.LINK)
-    override val syncSource: StateFlow<BeatSyncSource> = _syncSource.asStateFlow()
 
     private val _beatState = MutableStateFlow(BeatState.IDLE.copy(syncSource = BeatSyncSource.LINK))
     override val beatState: StateFlow<BeatState> = _beatState.asStateFlow()

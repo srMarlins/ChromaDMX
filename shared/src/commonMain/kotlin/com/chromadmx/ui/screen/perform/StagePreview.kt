@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import com.chromadmx.core.model.BeatState
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.ui.components.VenueCanvas
+import com.chromadmx.ui.theme.StageBackground
 import com.chromadmx.core.model.Color as DmxColor
 
 /**
@@ -31,7 +31,7 @@ fun StagePreview(
     onTapTempo: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(modifier = modifier.background(Color(0xFF080818))) {
+    Box(modifier = modifier.background(StageBackground)) {
         // The venue visualization
         VenueCanvas(
             fixtures = fixtures,
