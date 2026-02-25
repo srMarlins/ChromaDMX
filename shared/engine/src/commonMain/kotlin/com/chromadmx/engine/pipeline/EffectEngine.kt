@@ -87,9 +87,13 @@ class EffectEngine(
         val time = mark.elapsedNow().inWholeMilliseconds / 1000f
         val beat = beatStateProvider()
 
+        // Prepare frame once (O(Layers * Params))
+        val evaluator = effectStack.buildFrame(time, beat)
+
         val writeSlot = colorOutput.writeSlot()
+        // Evaluate per fixture (O(Pixels * Layers)) - now faster!
         for (i in fixtures.indices) {
-            writeSlot[i] = effectStack.evaluate(fixtures[i].position, time, beat)
+            writeSlot[i] = evaluator.evaluate(fixtures[i].position)
         }
         colorOutput.swapWrite()
     }
@@ -100,8 +104,9 @@ class EffectEngine(
      * without involving the triple buffer.
      */
     fun evaluateFrame(time: Float, beat: BeatState): Array<Color> {
+        val evaluator = effectStack.buildFrame(time, beat)
         return Array(fixtures.size) { i ->
-            effectStack.evaluate(fixtures[i].position, time, beat)
+            evaluator.evaluate(fixtures[i].position)
         }
     }
 }

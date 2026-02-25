@@ -20,18 +20,27 @@ interface SpatialEffect {
     val name: String
 
     /**
-     * Compute the color contribution of this effect at [pos] in 3D space.
+     * Prepare data for the current frame.
+     * This is called once per frame (or update tick) for each active layer.
+     * Use this to pre-calculate values, extract parameters, or set up look-up tables
+     * that are constant for the entire frame but might depend on time or parameters.
      *
-     * @param pos    Fixture position in venue space.
+     * @param params Per-effect parameters.
      * @param time   Seconds elapsed since the engine was started.
      * @param beat   Current musical timing snapshot.
-     * @param params Per-effect parameters (colors, speeds, axes, etc.).
-     * @return The computed [Color] for this position/time.
+     * @return An opaque context object passed to [compute] for every pixel.
+     */
+    fun prepare(params: EffectParams, time: Float, beat: BeatState): Any? = null
+
+    /**
+     * Compute the color contribution of this effect at [pos] in 3D space.
+     *
+     * @param pos     Fixture position in venue space.
+     * @param context The context object returned by [prepare].
+     * @return The computed [Color] for this position.
      */
     fun compute(
         pos: Vec3,
-        time: Float,
-        beat: BeatState,
-        params: EffectParams
+        context: Any?
     ): Color
 }

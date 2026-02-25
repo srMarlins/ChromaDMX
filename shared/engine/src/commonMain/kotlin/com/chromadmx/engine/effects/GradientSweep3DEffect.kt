@@ -22,21 +22,35 @@ class GradientSweep3DEffect : SpatialEffect {
     override val id: String = ID
     override val name: String = "Gradient Sweep 3D"
 
-    override fun compute(pos: Vec3, time: Float, beat: BeatState, params: EffectParams): Color {
-        val axis = params.getString("axis", "x")
-        val speed = params.getFloat("speed", 1.0f)
-        val palette = params.getColorList("palette", DEFAULT_PALETTE)
+    private data class Context(
+        val axis: String,
+        val speed: Float,
+        val palette: List<Color>,
+        val time: Float
+    )
 
-        val axisValue = when (axis) {
+    override fun prepare(params: EffectParams, time: Float, beat: BeatState): Any {
+        return Context(
+            axis = params.getString("axis", "x"),
+            speed = params.getFloat("speed", 1.0f),
+            palette = params.getColorList("palette", DEFAULT_PALETTE),
+            time = time
+        )
+    }
+
+    override fun compute(pos: Vec3, context: Any?): Color {
+        val ctx = context as? Context ?: return Color.BLACK
+
+        val axisValue = when (ctx.axis) {
             "y" -> pos.y
             "z" -> pos.z
             else -> pos.x
         }
 
         // Scrolling normalized position (wraps 0..1)
-        val t = MathUtils.wrap(axisValue + time * speed, 1f)
+        val t = MathUtils.wrap(axisValue + ctx.time * ctx.speed, 1f)
 
-        return ColorUtils.samplePalette(palette, t)
+        return ColorUtils.samplePalette(ctx.palette, t)
     }
 
     companion object {

@@ -28,7 +28,14 @@ class RadialPulse3DEffect : SpatialEffect {
     override val id: String = ID
     override val name: String = "Radial Pulse 3D"
 
-    override fun compute(pos: Vec3, time: Float, beat: BeatState, params: EffectParams): Color {
+    private data class Context(
+        val center: Vec3,
+        val radius: Float,
+        val halfWidth: Float,
+        val color: Color
+    )
+
+    override fun prepare(params: EffectParams, time: Float, beat: BeatState): Any {
         val center = Vec3(
             params.getFloat("centerX", 0f),
             params.getFloat("centerY", 0f),
@@ -38,21 +45,28 @@ class RadialPulse3DEffect : SpatialEffect {
         val color = params.getColor("color", Color.WHITE)
         val width = params.getFloat("width", 0.3f).coerceAtLeast(0.001f)
 
-        val dist = pos.distanceTo(center)
         val radius = time * speed
+        val halfWidth = width * 0.5f
+
+        return Context(center, radius, halfWidth, color)
+    }
+
+    override fun compute(pos: Vec3, context: Any?): Color {
+        val ctx = context as? Context ?: return Color.BLACK
+
+        val dist = pos.distanceTo(ctx.center)
 
         // Distance of fixture from the expanding shell
-        val shellDist = abs(dist - radius)
+        val shellDist = abs(dist - ctx.radius)
 
         // Smooth falloff: 1 at shell center, 0 at width/2 from shell
-        val halfWidth = width * 0.5f
-        val brightness = if (shellDist < halfWidth) {
-            1f - (shellDist / halfWidth)
+        val brightness = if (shellDist < ctx.halfWidth) {
+            1f - (shellDist / ctx.halfWidth)
         } else {
             0f
         }
 
-        return color * brightness
+        return ctx.color * brightness
     }
 
     companion object {

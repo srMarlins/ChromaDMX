@@ -13,7 +13,7 @@ import kotlin.test.assertTrue
 class EffectRegistryTest {
 
     private class StubEffect(override val id: String, override val name: String) : SpatialEffect {
-        override fun compute(pos: Vec3, time: Float, beat: BeatState, params: EffectParams): Color = Color.BLACK
+        override fun compute(pos: Vec3, context: Any?): Color = Color.BLACK
     }
 
     @Test

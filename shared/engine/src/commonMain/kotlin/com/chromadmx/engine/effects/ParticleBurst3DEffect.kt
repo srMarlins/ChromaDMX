@@ -31,7 +31,14 @@ class ParticleBurst3DEffect : SpatialEffect {
     override val id: String = ID
     override val name: String = "Particle Burst 3D"
 
-    override fun compute(pos: Vec3, time: Float, beat: BeatState, params: EffectParams): Color {
+    private data class Context(
+        val particlePositions: List<Vec3>,
+        val color: Color,
+        val fade: Float,
+        val lifeMultiplier: Float
+    )
+
+    override fun prepare(params: EffectParams, time: Float, beat: BeatState): Any {
         val center = Vec3(
             params.getFloat("centerX", 0f),
             params.getFloat("centerY", 0f),
@@ -42,29 +49,35 @@ class ParticleBurst3DEffect : SpatialEffect {
         val fade = params.getFloat("fade", 0.5f).coerceAtLeast(0.001f)
         val color = params.getColor("color", Color.WHITE)
 
-        var brightness = 0f
+        val life = max(0f, 1f - (time * speed) / 5f)
 
-        for (i in 0 until count) {
-            // Deterministic direction using golden-angle spherical distribution
+        // Optimization: Pre-calculate particle positions
+        val positions = List(count) { i ->
             val dir = particleDirection(i, count)
+            center + dir * (time * speed)
+        }
 
-            // Particle position at current time
-            val particlePos = center + dir * (time * speed)
+        return Context(positions, color, fade, life)
+    }
 
-            // Distance from this fixture to the particle
+    override fun compute(pos: Vec3, context: Any?): Color {
+        val ctx = context as? Context ?: return Color.BLACK
+        if (ctx.lifeMultiplier <= 0f) return Color.BLACK
+
+        var totalBrightness = 0f
+
+        // Loop over pre-calculated particle positions
+        for (particlePos in ctx.particlePositions) {
             val dist = pos.distanceTo(particlePos)
 
-            // Brightness contribution (inverse distance with fade)
-            if (dist < fade) {
-                val contribution = (1f - dist / fade)
-                // Life fading: particle dims as it travels further from center
-                val life = max(0f, 1f - (time * speed) / 5f)
-                brightness += contribution * life
+            if (dist < ctx.fade) {
+                val contribution = (1f - dist / ctx.fade)
+                totalBrightness += contribution * ctx.lifeMultiplier
             }
         }
 
-        brightness = brightness.coerceIn(0f, 1f)
-        return color * brightness
+        totalBrightness = totalBrightness.coerceIn(0f, 1f)
+        return ctx.color * totalBrightness
     }
 
     companion object {

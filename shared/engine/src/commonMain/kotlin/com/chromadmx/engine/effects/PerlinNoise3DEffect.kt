@@ -25,18 +25,35 @@ class PerlinNoise3DEffect : SpatialEffect {
     override val id: String = ID
     override val name: String = "Perlin Noise 3D"
 
-    override fun compute(pos: Vec3, time: Float, beat: BeatState, params: EffectParams): Color {
+    private data class Context(
+        val scale: Float,
+        val zOffset: Float,
+        val palette: List<Color>
+    )
+
+    override fun prepare(params: EffectParams, time: Float, beat: BeatState): Any {
         val scale = params.getFloat("scale", 1.0f)
         val speed = params.getFloat("speed", 0.5f)
         val palette = params.getColorList("palette", DEFAULT_PALETTE)
 
+        // The time component is constant for the frame, so we pre-calculate it as a Z offset
+        // Note: The original formula was (pos.z * scale + time * speed).
+        // Here we pre-calculate (time * speed) as zOffset.
+        val zOffset = time * speed
+
+        return Context(scale, zOffset, palette)
+    }
+
+    override fun compute(pos: Vec3, context: Any?): Color {
+        val ctx = context as? Context ?: return Color.BLACK
+
         val noiseVal = PerlinNoise.noise01(
-            pos.x * scale,
-            pos.y * scale,
-            pos.z * scale + time * speed
+            pos.x * ctx.scale,
+            pos.y * ctx.scale,
+            pos.z * ctx.scale + ctx.zOffset
         )
 
-        return ColorUtils.samplePalette(palette, noiseVal.coerceIn(0f, 1f))
+        return ColorUtils.samplePalette(ctx.palette, noiseVal.coerceIn(0f, 1f))
     }
 
     companion object {

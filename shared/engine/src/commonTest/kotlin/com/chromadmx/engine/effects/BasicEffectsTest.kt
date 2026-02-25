@@ -4,6 +4,7 @@ import com.chromadmx.core.EffectParams
 import com.chromadmx.core.model.BeatState
 import com.chromadmx.core.model.Color
 import com.chromadmx.core.model.Vec3
+import com.chromadmx.engine.effect.SpatialEffect
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -181,4 +182,10 @@ class BasicEffectsTest {
         val c2 = effect.compute(pos, 1.5f, beat, params)
         assertEquals(c1, c2)
     }
+}
+
+// Helper for migration: calls prepare() then compute()
+private fun SpatialEffect.compute(pos: Vec3, time: Float, beat: BeatState, params: EffectParams): Color {
+    val ctx = this.prepare(params, time, beat)
+    return this.compute(pos, ctx)
 }
