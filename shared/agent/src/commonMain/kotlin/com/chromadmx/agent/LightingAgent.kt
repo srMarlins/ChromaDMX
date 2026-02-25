@@ -6,8 +6,10 @@ import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.ext.agent.reActStrategy
 import ai.koog.agents.features.eventHandler.feature.EventHandler
 import ai.koog.prompt.dsl.prompt
-import ai.koog.prompt.executor.llms.all.simpleAnthropicExecutor
 import ai.koog.prompt.executor.clients.anthropic.AnthropicModels
+import ai.koog.prompt.executor.clients.google.GoogleModels
+import ai.koog.prompt.executor.llms.all.simpleAnthropicExecutor
+import ai.koog.prompt.executor.llms.all.simpleGoogleAIExecutor
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.params.LLMParams
 import com.chromadmx.agent.config.AgentConfig
@@ -40,19 +42,28 @@ class LightingAgent(
     val isAvailable: Boolean get() = config.isAvailable
 
     private fun resolveModel(): LLModel = when (config.modelId) {
+        // Google Gemini
+        "gemini_2_0_flash" -> GoogleModels.Gemini2_0Flash
+        "gemini_2_5_flash" -> GoogleModels.Gemini2_5Flash
+        "gemini_2_5_pro" -> GoogleModels.Gemini2_5Pro
+        // Anthropic Claude
         "haiku_4_5" -> AnthropicModels.Haiku_4_5
         "sonnet_4" -> AnthropicModels.Sonnet_4
         "sonnet_4_5" -> AnthropicModels.Sonnet_4_5
         "opus_4" -> AnthropicModels.Opus_4
         "opus_4_1" -> AnthropicModels.Opus_4_1
         "opus_4_5" -> AnthropicModels.Opus_4_5
-        else -> AnthropicModels.Sonnet_4_5
+        else -> GoogleModels.Gemini2_5Flash
     }
 
     private val koogAgent: AIAgent<String, String>? by lazy {
         if (!config.isAvailable) return@lazy null
 
-        val executor = simpleAnthropicExecutor(config.apiKey)
+        val executor = if (config.isGoogleModel) {
+            simpleGoogleAIExecutor(config.apiKey)
+        } else {
+            simpleAnthropicExecutor(config.apiKey)
+        }
         val model = resolveModel()
 
         AIAgent(
@@ -110,7 +121,7 @@ class LightingAgent(
 
     suspend fun send(userMessage: String): String {
         if (!config.isAvailable) {
-            return "Agent unavailable - no API key configured. Use tools directly or configure an Anthropic API key."
+            return "Agent unavailable - no API key configured. Set GOOGLE_API_KEY or ANTHROPIC_API_KEY."
         }
 
         _isProcessing.value = true

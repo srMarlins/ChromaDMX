@@ -21,7 +21,16 @@ import org.koin.dsl.module
 
 val agentModule: Module = module {
     single { ApiKeyProvider() }
-    single { AgentConfig(apiKey = get<ApiKeyProvider>().getAnthropicKey() ?: "") }
+    single {
+        val provider = get<ApiKeyProvider>()
+        val googleKey = provider.getGoogleKey()
+        val anthropicKey = provider.getAnthropicKey()
+        when {
+            !googleKey.isNullOrBlank() -> AgentConfig(apiKey = googleKey, modelId = "gemini_2_5_flash")
+            !anthropicKey.isNullOrBlank() -> AgentConfig(apiKey = anthropicKey, modelId = "sonnet_4_5")
+            else -> AgentConfig()
+        }
+    }
     single { SceneStore() }
     single<EngineController> { RealEngineController(get(), get()) }
     single<NetworkController> { RealNetworkController(get()) }

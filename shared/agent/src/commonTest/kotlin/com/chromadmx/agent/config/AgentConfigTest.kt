@@ -11,7 +11,7 @@ class AgentConfigTest {
         val config = AgentConfig()
         assertEquals(30, config.maxIterations)
         assertEquals(0.7f, config.temperature)
-        assertEquals("sonnet_4_5", config.modelId)
+        assertEquals("gemini_2_5_flash", config.modelId)
         assertEquals(50, config.historyCompressionThreshold)
         assertFalse(config.isAvailable)
     }
@@ -53,5 +53,17 @@ class AgentConfigTest {
     fun configHistoryCompressionCanBeOverridden() {
         val config = AgentConfig(historyCompressionThreshold = 100)
         assertEquals(100, config.historyCompressionThreshold)
+    }
+
+    @Test
+    fun geminiModelDetectedAsGoogle() {
+        val config = AgentConfig(modelId = "gemini_2_5_flash")
+        assertTrue(config.isGoogleModel)
+    }
+
+    @Test
+    fun anthropicModelNotDetectedAsGoogle() {
+        val config = AgentConfig(modelId = "sonnet_4_5")
+        assertFalse(config.isGoogleModel)
     }
 }
