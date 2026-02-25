@@ -1,5 +1,6 @@
 package com.chromadmx.ui.screen.settings
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -45,7 +47,12 @@ import androidx.compose.ui.unit.sp
 import com.chromadmx.agent.config.AgentConfig
 import com.chromadmx.core.model.FixtureProfile
 import com.chromadmx.simulation.fixtures.RigPreset
+import com.chromadmx.simulation.fixtures.SimulatedFixtureRig
 import com.chromadmx.ui.components.PixelCard
+import com.chromadmx.ui.components.VirtualNodeBadge
+import com.chromadmx.ui.theme.NeonCyan
+import com.chromadmx.ui.theme.NeonGreen
+import com.chromadmx.ui.util.presetDisplayName
 import com.chromadmx.ui.viewmodel.AgentStatus
 import com.chromadmx.ui.viewmodel.SettingsViewModel
 
@@ -306,6 +313,7 @@ fun SimulationSettingsSection(
 ) {
     PixelCard(title = { SectionTitle("SIMULATION") }) {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            // Enable/disable toggle
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -315,30 +323,82 @@ fun SimulationSettingsSection(
                 Switch(checked = enabled, onCheckedChange = onToggleEnabled)
             }
 
+            // Current status summary
+            if (enabled) {
+                val rig = remember(selectedPreset) {
+                    SimulatedFixtureRig(selectedPreset)
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column {
+                        Text(
+                            text = "Active",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = NeonGreen,
+                        )
+                        Text(
+                            text = "${selectedPreset.presetDisplayName()} -- ${rig.fixtureCount} fixtures",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
+                    VirtualNodeBadge()
+                }
+            }
+
+            // Inline rig preset selector (cards, not just radio buttons)
             Column {
                 Text("Rig Preset", style = MaterialTheme.typography.labelLarge)
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(8.dp))
                 RigPreset.entries.forEach { preset ->
+                    val isSelected = selectedPreset == preset
+                    val rig = remember(preset) {
+                        SimulatedFixtureRig(preset)
+                    }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                if (isSelected) NeonCyan.copy(alpha = 0.08f)
+                                else Color.Transparent
+                            )
+                            .padding(vertical = 4.dp)
                     ) {
                         RadioButton(
-                            selected = selectedPreset == preset,
+                            selected = isSelected,
                             onClick = { onSelectPreset(preset) }
                         )
-                        Text(preset.name, style = MaterialTheme.typography.bodyMedium)
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                preset.presetDisplayName(),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                            )
+                            Text(
+                                "${rig.fixtureCount} fixtures, ${rig.universeCount} universe${if (rig.universeCount != 1) "s" else ""}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 }
             }
 
+            // Reset button
             Button(
                 onClick = onReset,
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
                 shape = MaterialTheme.shapes.small
             ) {
-                Text("RESET STATE")
+                Text("RESET SIMULATION")
             }
         }
     }
