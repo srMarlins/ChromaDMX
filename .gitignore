@@ -57,6 +57,9 @@ coverage/
 # Claude
 .claude/
 
+# Git worktrees
+.worktrees/
+
 # Playwright MCP
 .playwright-mcp/
 

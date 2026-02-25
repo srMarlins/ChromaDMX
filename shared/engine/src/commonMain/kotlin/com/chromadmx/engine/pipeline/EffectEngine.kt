@@ -25,7 +25,7 @@ import kotlin.time.TimeSource
  */
 class EffectEngine(
     private val scope: CoroutineScope,
-    private val fixtures: List<Fixture3D>
+    val fixtures: List<Fixture3D>
 ) {
     /** The compositing effect stack evaluated each frame. */
     val effectStack: EffectStack = EffectStack()

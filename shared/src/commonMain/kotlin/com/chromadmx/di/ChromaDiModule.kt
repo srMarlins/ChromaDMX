@@ -1,6 +1,8 @@
 package com.chromadmx.di
 
 import com.chromadmx.core.model.Fixture3D
+import com.chromadmx.engine.bridge.DmxBridge
+import com.chromadmx.engine.bridge.DmxOutputBridge
 import com.chromadmx.engine.effect.EffectRegistry
 import com.chromadmx.engine.effects.Chase3DEffect
 import com.chromadmx.engine.effects.GradientSweep3DEffect
@@ -65,6 +67,23 @@ val chromaDiModule = module {
         }
     }
     single { get<EffectEngine>().effectStack }
+
+    // --- Engine -> DMX Bridge ---
+    single {
+        val engine = get<EffectEngine>()
+        DmxBridge(engine.fixtures, emptyMap())
+    }
+    single {
+        val engine = get<EffectEngine>()
+        val bridge = get<DmxBridge>()
+        val outputService = get<DmxOutputService>()
+        DmxOutputBridge(
+            colorOutput = engine.colorOutput,
+            dmxBridge = bridge,
+            onFrame = { frame -> outputService.updateFrame(frame) },
+            scope = get()
+        ).apply { start() }
+    }
 
     // --- Presets ---
     single { PresetLibrary(get(), get(), get()) }

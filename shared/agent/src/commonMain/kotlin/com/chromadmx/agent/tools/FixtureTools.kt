@@ -3,6 +3,7 @@ package com.chromadmx.agent.tools
 import ai.koog.agents.core.tools.SimpleTool
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import com.chromadmx.agent.controller.FixtureController
+import com.chromadmx.core.model.BuiltInProfiles
 import kotlinx.serialization.Serializable
 
 class ListFixturesTool(private val controller: FixtureController) : SimpleTool<ListFixturesTool.Args>(
@@ -20,7 +21,10 @@ class ListFixturesTool(private val controller: FixtureController) : SimpleTool<L
         }
         val listing = fixtures.joinToString("\n") { f ->
             val pos = f.position
+            val profile = BuiltInProfiles.findById(f.fixture.profileId)
+            val profileInfo = profile?.let { "type=${it.type}, ${it.channelCount}ch" } ?: "profile=${f.fixture.profileId}"
             "  - ${f.fixture.name} (${f.fixture.fixtureId}): " +
+                "$profileInfo, " +
                 "pos=(${pos.x}, ${pos.y}, ${pos.z}), " +
                 "ch=${f.fixture.channelStart}-${f.fixture.channelStart + f.fixture.channelCount - 1}, " +
                 "universe=${f.fixture.universeId}" +

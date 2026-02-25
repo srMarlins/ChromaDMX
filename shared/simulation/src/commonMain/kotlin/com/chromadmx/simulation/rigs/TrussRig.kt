@@ -86,7 +86,8 @@ object TrussRig {
                         name = "Front Bar ${i + 1}",
                         channelStart = currentChannel,
                         channelCount = CHANNELS_PER_BAR,
-                        universeId = currentUniverse
+                        universeId = currentUniverse,
+                        profileId = "pixel-bar-8"
                     ),
                     position = Vec3(x = x, y = FRONT_TRUSS_DEPTH, z = FRONT_TRUSS_HEIGHT),
                     groupId = "front-truss"
@@ -112,7 +113,8 @@ object TrussRig {
                         name = "Rear Bar ${i + 1}",
                         channelStart = currentChannel,
                         channelCount = CHANNELS_PER_BAR,
-                        universeId = currentUniverse
+                        universeId = currentUniverse,
+                        profileId = "pixel-bar-8"
                     ),
                     position = Vec3(x = x, y = REAR_TRUSS_DEPTH, z = REAR_TRUSS_HEIGHT),
                     groupId = "rear-truss"
