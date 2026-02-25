@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -24,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.chromadmx.core.model.Fixture3D
-import com.chromadmx.ui.components.VenueCanvas
 import com.chromadmx.ui.viewmodel.PerformViewModel
 import com.chromadmx.core.model.Color as DmxColor
 
@@ -46,35 +44,18 @@ fun PerformScreen(
     Column(
         modifier = Modifier.fillMaxSize(),
     ) {
-        // Venue canvas visualization (when fixtures are mapped)
-        if (fixtures.isNotEmpty()) {
-            VenueCanvas(
-                fixtures = fixtures,
-                fixtureColors = fixtureColors,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(180.dp),
-            )
-        }
-
-        // Beat visualization + tap button
-        Row(
+        // Stage Preview with top-bar beat visualization
+        StagePreview(
+            beatState = beatState,
+            fixtures = fixtures,
+            fixtureColors = fixtureColors,
+            onTapTempo = { viewModel.tap() },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            BeatVisualization(
-                beatState = beatState,
-                modifier = Modifier.weight(1f),
-            )
-            FilledTonalButton(
-                onClick = { viewModel.tap() },
-                modifier = Modifier.padding(start = 16.dp),
-            ) {
-                Text("TAP")
-            }
-        }
+                .height(220.dp),
+        )
+
+        Spacer(Modifier.height(12.dp))
 
         // Master dimmer
         Row(

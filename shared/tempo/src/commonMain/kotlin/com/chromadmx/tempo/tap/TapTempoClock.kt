@@ -1,6 +1,7 @@
 package com.chromadmx.tempo.tap
 
 import com.chromadmx.core.model.BeatState
+import com.chromadmx.core.model.BeatSyncSource
 import com.chromadmx.tempo.clock.BeatClock
 import com.chromadmx.tempo.clock.BeatClockUtils
 import kotlin.time.TimeSource
@@ -86,6 +87,9 @@ class TapTempoClock(
     private val _isRunning = MutableStateFlow(false)
     override val isRunning: StateFlow<Boolean> = _isRunning.asStateFlow()
 
+    private val _syncSource = MutableStateFlow(BeatSyncSource.NONE)
+    override val syncSource: StateFlow<BeatSyncSource> = _syncSource.asStateFlow()
+
     private val _beatState = MutableStateFlow(BeatState.IDLE)
     override val beatState: StateFlow<BeatState> = _beatState.asStateFlow()
 
@@ -135,6 +139,7 @@ class TapTempoClock(
         }
 
         tapTimestamps.add(now)
+        _syncSource.value = BeatSyncSource.TAP
 
         // Trim to maxTapHistory
         while (tapTimestamps.size > maxTapHistory) {
@@ -176,6 +181,7 @@ class TapTempoClock(
         phaseOriginNanos = 0L
         accumulatedElapsedNanos = 0L
         phaseNudgeOffsetSec = 0.0
+        _syncSource.value = BeatSyncSource.NONE
         _bpm.value = BeatClockUtils.DEFAULT_BPM
         _beatPhase.value = 0f
         _barPhase.value = 0f
@@ -240,6 +246,14 @@ class TapTempoClock(
         val now = timeSource()
         val currentBpm = _bpm.value
 
+        // Update sync source if tap timeout reached
+        if (tapTimestamps.isNotEmpty()) {
+            val gap = now - tapTimestamps.last()
+            if (gap > TAP_TIMEOUT_NANOS) {
+                _syncSource.value = BeatSyncSource.NONE
+            }
+        }
+
         // Elapsed since phase origin, plus any nudge offset
         val elapsedSinceOriginSec =
             (now - phaseOriginNanos).toDouble() / NANOS_PER_SEC + phaseNudgeOffsetSec
@@ -263,7 +277,8 @@ class TapTempoClock(
             bpm = currentBpm,
             beatPhase = newBeatPhase,
             barPhase = newBarPhase,
-            elapsed = totalElapsedSec.toFloat()
+            elapsed = totalElapsedSec.toFloat(),
+            syncSource = _syncSource.value
         )
     }
 

@@ -1,6 +1,7 @@
 package com.chromadmx.tempo.link
 
 import com.chromadmx.core.model.BeatState
+import com.chromadmx.core.model.BeatSyncSource
 import com.chromadmx.tempo.clock.BeatClock
 import com.chromadmx.tempo.clock.BeatClockUtils
 import kotlinx.coroutines.CoroutineScope
@@ -52,7 +53,10 @@ actual class AbletonLinkClock actual constructor(
     private val _isRunning = MutableStateFlow(false)
     override val isRunning: StateFlow<Boolean> = _isRunning.asStateFlow()
 
-    private val _beatState = MutableStateFlow(BeatState.IDLE)
+    private val _syncSource = MutableStateFlow(BeatSyncSource.LINK)
+    override val syncSource: StateFlow<BeatSyncSource> = _syncSource.asStateFlow()
+
+    private val _beatState = MutableStateFlow(BeatState.IDLE.copy(syncSource = BeatSyncSource.LINK))
     override val beatState: StateFlow<BeatState> = _beatState.asStateFlow()
 
     override fun start() {
