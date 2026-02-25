@@ -23,7 +23,15 @@ class WaveEffect3DEffect : SpatialEffect {
     override val id: String = ID
     override val name: String = "Wave 3D"
 
-    override fun compute(pos: Vec3, time: Float, beat: BeatState, params: EffectParams): Color {
+    private data class Context(
+        val axis: String,
+        val wavelength: Float,
+        val timeOffset: Float,
+        val colorA: Color,
+        val colorB: Color
+    )
+
+    override fun prepare(params: EffectParams, time: Float, beat: BeatState): Any {
         val axis = params.getString("axis", "x")
         val wavelength = params.getFloat("wavelength", 1.0f).coerceAtLeast(0.001f)
         val speed = params.getFloat("speed", 1.0f)
@@ -32,7 +40,15 @@ class WaveEffect3DEffect : SpatialEffect {
         val colorA = colors.getOrElse(0) { Color.BLACK }
         val colorB = colors.getOrElse(1) { Color.WHITE }
 
-        val axisValue = when (axis) {
+        val timeOffset = time * speed
+
+        return Context(axis, wavelength, timeOffset, colorA, colorB)
+    }
+
+    override fun compute(pos: Vec3, context: Any?): Color {
+        val ctx = context as? Context ?: return Color.BLACK
+
+        val axisValue = when (ctx.axis) {
             "y" -> pos.y
             "z" -> pos.z
             else -> pos.x
@@ -40,10 +56,10 @@ class WaveEffect3DEffect : SpatialEffect {
 
         // Sinusoidal wave: sin(2*pi*(pos/wavelength - time*speed))
         // Remap from -1..1 to 0..1 for interpolation
-        val phase = (2.0 * PI * (axisValue / wavelength - time * speed)).toFloat()
+        val phase = (2.0 * PI * (axisValue / ctx.wavelength - ctx.timeOffset)).toFloat()
         val t = (sin(phase) + 1f) * 0.5f
 
-        return colorA.lerp(colorB, t)
+        return ctx.colorA.lerp(ctx.colorB, t)
     }
 
     companion object {

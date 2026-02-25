@@ -27,20 +27,35 @@ class Chase3DEffect : SpatialEffect {
     override val id: String = ID
     override val name: String = "Chase 3D"
 
-    override fun compute(pos: Vec3, time: Float, beat: BeatState, params: EffectParams): Color {
-        val axis = params.getString("axis", "x")
-        val speed = params.getFloat("speed", 2.0f)
-        val color = params.getColor("color", Color.WHITE)
-        val tail = params.getFloat("tail", 0.5f).coerceAtLeast(0.001f)
+    private data class Context(
+        val axis: String,
+        val speed: Float,
+        val color: Color,
+        val tail: Float,
+        val time: Float
+    )
 
-        val axisValue = when (axis) {
+    override fun prepare(params: EffectParams, time: Float, beat: BeatState): Any {
+        return Context(
+            axis = params.getString("axis", "x"),
+            speed = params.getFloat("speed", 2.0f),
+            color = params.getColor("color", Color.WHITE),
+            tail = params.getFloat("tail", 0.5f).coerceAtLeast(0.001f),
+            time = time
+        )
+    }
+
+    override fun compute(pos: Vec3, context: Any?): Color {
+        val ctx = context as? Context ?: return Color.BLACK
+
+        val axisValue = when (ctx.axis) {
             "y" -> pos.y
             "z" -> pos.z
             else -> pos.x
         }
 
         // Head position wraps through 0..1
-        val headPos = MathUtils.wrap(time * speed, 1f)
+        val headPos = MathUtils.wrap(ctx.time * ctx.speed, 1f)
 
         // Distance from head (wrapping aware)
         val rawDist = axisValue - headPos
@@ -48,13 +63,13 @@ class Chase3DEffect : SpatialEffect {
         val wrappedDist = MathUtils.wrap(rawDist, 1f)
 
         // Fixtures within the tail fade from full brightness to zero
-        val brightness = if (wrappedDist <= tail) {
-            1f - (wrappedDist / tail)
+        val brightness = if (wrappedDist <= ctx.tail) {
+            1f - (wrappedDist / ctx.tail)
         } else {
             0f
         }
 
-        return color * brightness
+        return ctx.color * brightness
     }
 
     companion object {

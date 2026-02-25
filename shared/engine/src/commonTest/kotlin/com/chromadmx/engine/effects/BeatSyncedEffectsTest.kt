@@ -4,6 +4,7 @@ import com.chromadmx.core.EffectParams
 import com.chromadmx.core.model.BeatState
 import com.chromadmx.core.model.Color
 import com.chromadmx.core.model.Vec3
+import com.chromadmx.engine.effect.SpatialEffect
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -218,4 +219,10 @@ class BeatSyncedEffectsTest {
         val diff = abs(c1.r - c2.r)
         assertTrue(diff > 0.01f, "Different times should produce different colors for moving wave")
     }
+}
+
+// Helper for migration
+private fun SpatialEffect.compute(pos: Vec3, time: Float, beat: BeatState, params: EffectParams): Color {
+    val ctx = this.prepare(params, time, beat)
+    return this.compute(pos, ctx)
 }

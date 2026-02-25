@@ -17,8 +17,12 @@ class SolidColorEffect : SpatialEffect {
     override val id: String = ID
     override val name: String = "Solid Color"
 
-    override fun compute(pos: Vec3, time: Float, beat: BeatState, params: EffectParams): Color {
+    override fun prepare(params: EffectParams, time: Float, beat: BeatState): Any {
         return params.getColor("color", Color.WHITE)
+    }
+
+    override fun compute(pos: Vec3, context: Any?): Color {
+        return context as? Color ?: Color.WHITE
     }
 
     companion object {
