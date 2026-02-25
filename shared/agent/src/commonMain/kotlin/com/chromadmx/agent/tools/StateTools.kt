@@ -2,6 +2,7 @@ package com.chromadmx.agent.tools
 
 import ai.koog.agents.core.tools.SimpleTool
 import com.chromadmx.agent.controller.StateController
+import com.chromadmx.core.model.BuiltInProfiles
 import kotlinx.serialization.Serializable
 
 class GetEngineStateTool(private val controller: StateController) : SimpleTool<GetEngineStateTool.Args>(
@@ -15,9 +16,11 @@ class GetEngineStateTool(private val controller: StateController) : SimpleTool<G
     override suspend fun execute(args: Args): String {
         val state = controller.getEngineState()
         val runStr = if (state.isRunning) "running" else "stopped"
+        val profileList = BuiltInProfiles.all().joinToString(", ") { "${it.profileId} (${it.type})" }
         return "Engine: $runStr, ${state.layerCount} layers, " +
             "${state.fixtureCount} fixtures, dimmer=${state.masterDimmer}, " +
-            "fps=${state.fps}. Active effects: ${state.effectIds.joinToString(", ").ifEmpty { "none" }}"
+            "fps=${state.fps}. Active effects: ${state.effectIds.joinToString(", ").ifEmpty { "none" }}. " +
+            "Available profiles: $profileList"
     }
 }
 
