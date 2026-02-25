@@ -29,6 +29,9 @@ import kotlinx.coroutines.launch
  * Merges responsibilities of the old PerformViewModel (effects, dimmer, beat)
  * and MapViewModel (fixture list, positions). This is the primary ViewModel
  * for the main screen.
+ *
+ * Also exposes [isSimulationMode] so the UI can render a simulation badge
+ * and adjust visual treatment when running with virtual fixtures.
  */
 class StageViewModel(
     private val engine: EffectEngine,
@@ -73,6 +76,16 @@ class StageViewModel(
     // --- Active scene name ---
     private val _activeSceneName = MutableStateFlow<String?>(null)
     val activeSceneName: StateFlow<String?> = _activeSceneName.asStateFlow()
+
+    // --- Simulation mode ---
+    private val _isSimulationMode = MutableStateFlow(false)
+    val isSimulationMode: StateFlow<Boolean> = _isSimulationMode.asStateFlow()
+
+    private val _simulationPresetName = MutableStateFlow<String?>(null)
+    val simulationPresetName: StateFlow<String?> = _simulationPresetName.asStateFlow()
+
+    private val _simulationFixtureCount = MutableStateFlow(0)
+    val simulationFixtureCount: StateFlow<Int> = _simulationFixtureCount.asStateFlow()
 
     // --- Stage view mode ---
     private val _isTopDownView = MutableStateFlow(true)
@@ -285,5 +298,26 @@ class StageViewModel(
     // --- View toggle ---
     fun toggleViewMode() {
         _isTopDownView.value = !_isTopDownView.value
+    }
+
+    // --- Simulation mode controls ---
+
+    /**
+     * Enable simulation mode with the given preset name and fixture count.
+     * Called when the user confirms a rig selection in the onboarding or settings flow.
+     */
+    fun enableSimulation(presetName: String, fixtureCount: Int) {
+        _isSimulationMode.value = true
+        _simulationPresetName.value = presetName
+        _simulationFixtureCount.value = fixtureCount
+    }
+
+    /**
+     * Disable simulation mode and clear associated metadata.
+     */
+    fun disableSimulation() {
+        _isSimulationMode.value = false
+        _simulationPresetName.value = null
+        _simulationFixtureCount.value = 0
     }
 }

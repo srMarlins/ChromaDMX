@@ -13,9 +13,8 @@ import org.koin.dsl.module
 /**
  * Koin module for UI ViewModels.
  *
- * [StageViewModel] and [SettingsViewModel] are scoped as singletons so
- * they survive navigation round-trips (e.g., StagePreview -> Settings -> back).
- * [AgentViewModel] remains a factory -- each chat session can be independent.
+ * [StageViewModel], [SettingsViewModel], and [AgentViewModel] are scoped as
+ * singletons so they survive navigation round-trips and panel open/close cycles.
  * [MascotViewModel] is a factory -- each composition gets its own instance.
  *
  * A child [SupervisorJob] is created per ViewModel so its coroutines can be
@@ -53,7 +52,7 @@ val uiModule = module {
         )
     }
 
-    factory {
+    single {
         val parentScope: CoroutineScope = get()
         val childJob = SupervisorJob(parentScope.coroutineContext[Job])
         val vmScope = CoroutineScope(Dispatchers.Default + childJob)

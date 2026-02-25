@@ -28,6 +28,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -38,6 +41,7 @@ import com.chromadmx.core.model.BuiltInProfiles
 import com.chromadmx.ui.components.AudienceView
 import com.chromadmx.ui.components.PresetStrip
 import com.chromadmx.ui.components.PixelSlider
+import com.chromadmx.ui.components.SimulationBadge
 import com.chromadmx.ui.components.VenueCanvas
 import com.chromadmx.ui.components.beat.BeatBar
 import com.chromadmx.ui.components.pixelBorder
@@ -53,6 +57,9 @@ import com.chromadmx.ui.viewmodel.StageViewModel
  * Features a dual-view stage preview (top-down grid and front-facing audience view)
  * with swipe toggle, enhanced top bar with BPM/dimmer/settings, bottom preset strip,
  * and fixture selection overlay.
+ *
+ * When simulation mode is active, a pulsing "SIMULATION" badge appears
+ * in the top-left corner. Tapping it shows an info tooltip.
  */
 @Composable
 fun StagePreviewScreen(
@@ -68,6 +75,11 @@ fun StagePreviewScreen(
     val scenes by viewModel.allScenes.collectAsState()
     val activeSceneName by viewModel.activeSceneName.collectAsState()
     val isTopDownView by viewModel.isTopDownView.collectAsState()
+    val isSimulationMode by viewModel.isSimulationMode.collectAsState()
+    val simPresetName by viewModel.simulationPresetName.collectAsState()
+    val simFixtureCount by viewModel.simulationFixtureCount.collectAsState()
+
+    var showSimTooltip by remember { mutableStateOf(false) }
 
     val pagerState = rememberPagerState(
         initialPage = if (isTopDownView) 0 else 1,
@@ -161,6 +173,41 @@ fun StagePreviewScreen(
             }
         }
 
+        // --- Simulation badge + tooltip (top-left, below top bar) ---
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(start = 16.dp, top = 56.dp)
+        ) {
+            AnimatedVisibility(
+                visible = isSimulationMode,
+                enter = fadeIn(),
+                exit = fadeOut(),
+            ) {
+                SimulationBadge(
+                    onTap = { showSimTooltip = !showSimTooltip },
+                )
+            }
+            AnimatedVisibility(
+                visible = showSimTooltip && isSimulationMode,
+                enter = fadeIn(),
+                exit = fadeOut(),
+            ) {
+                val tooltipText = buildString {
+                    append("Running with virtual fixtures")
+                    if (simPresetName != null) {
+                        append(" ($simPresetName, $simFixtureCount fixtures)")
+                    }
+                }
+                Text(
+                    text = tooltipText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(8.dp),
+                )
+            }
+        }
+
         // --- View mode indicator (two dots) ---
         Row(
             modifier = Modifier
@@ -190,7 +237,7 @@ fun StagePreviewScreen(
             exit = fadeOut() + slideOutVertically { it / 2 },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 80.dp), // Above the preset strip
+                .padding(bottom = 80.dp),
         ) {
             selectedFixtureIndex?.let { index ->
                 val fixture = fixtures.getOrNull(index)
