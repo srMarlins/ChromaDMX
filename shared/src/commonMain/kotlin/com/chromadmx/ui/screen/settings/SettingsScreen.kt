@@ -1,5 +1,6 @@
 package com.chromadmx.ui.screen.settings
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -306,6 +307,7 @@ fun SimulationSettingsSection(
 ) {
     PixelCard(title = { SectionTitle("SIMULATION") }) {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            // Enable/disable toggle
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -315,33 +317,94 @@ fun SimulationSettingsSection(
                 Switch(checked = enabled, onCheckedChange = onToggleEnabled)
             }
 
+            // Current status summary
+            if (enabled) {
+                val rig = remember(selectedPreset) {
+                    com.chromadmx.simulation.fixtures.SimulatedFixtureRig(selectedPreset)
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column {
+                        Text(
+                            text = "Active",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = com.chromadmx.ui.theme.NeonGreen,
+                        )
+                        Text(
+                            text = "${selectedPreset.presetDisplayName()} -- ${rig.fixtureCount} fixtures",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
+                    com.chromadmx.ui.components.VirtualNodeBadge()
+                }
+            }
+
+            // Inline rig preset selector (cards, not just radio buttons)
             Column {
                 Text("Rig Preset", style = MaterialTheme.typography.labelLarge)
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(8.dp))
                 RigPreset.entries.forEach { preset ->
+                    val isSelected = selectedPreset == preset
+                    val rig = remember(preset) {
+                        com.chromadmx.simulation.fixtures.SimulatedFixtureRig(preset)
+                    }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                if (isSelected) com.chromadmx.ui.theme.NeonCyan.copy(alpha = 0.08f)
+                                else androidx.compose.ui.graphics.Color.Transparent
+                            )
+                            .padding(vertical = 4.dp)
                     ) {
                         RadioButton(
-                            selected = selectedPreset == preset,
+                            selected = isSelected,
                             onClick = { onSelectPreset(preset) }
                         )
-                        Text(preset.name, style = MaterialTheme.typography.bodyMedium)
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                preset.presetDisplayName(),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                            )
+                            Text(
+                                "${rig.fixtureCount} fixtures, ${rig.universeCount} universe${if (rig.universeCount != 1) "s" else ""}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 }
             }
 
+            // Reset button
             Button(
                 onClick = onReset,
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
                 shape = MaterialTheme.shapes.small
             ) {
-                Text("RESET STATE")
+                Text("RESET SIMULATION")
             }
         }
     }
+}
+
+/**
+ * User-friendly display name for a [RigPreset].
+ */
+private fun RigPreset.presetDisplayName(): String = when (this) {
+    RigPreset.SMALL_DJ -> "Small DJ"
+    RigPreset.TRUSS_RIG -> "Truss Rig"
+    RigPreset.FESTIVAL_STAGE -> "Festival Stage"
 }
 
 @Composable
