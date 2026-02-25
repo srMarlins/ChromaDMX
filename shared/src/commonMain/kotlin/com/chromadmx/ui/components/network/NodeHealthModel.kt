@@ -17,13 +17,15 @@ enum class NodeHealth {
 /**
  * UI-facing status model for a single DMX node.
  *
- * @property name     Display name (shortName or IP fallback).
- * @property ip       Node IP address.
+ * @property nodeKey   Unique key from [DmxNode.nodeKey] (MAC or IP fallback).
+ * @property name      Display name (shortName or IP fallback).
+ * @property ip        Node IP address.
  * @property universes Universes handled by this node.
- * @property health   Derived health classification.
- * @property lastSeen Epoch milliseconds when the node was last seen.
+ * @property health    Derived health classification.
+ * @property lastSeen  Epoch milliseconds when the node was last seen.
  */
 data class NodeStatus(
+    val nodeKey: String,
     val name: String,
     val ip: String,
     val universes: List<Int>,
@@ -52,6 +54,7 @@ fun DmxNode.toNodeHealth(currentTimeMs: Long): NodeHealth {
  * Convert a [DmxNode] to a UI-friendly [NodeStatus].
  */
 fun DmxNode.toNodeStatus(currentTimeMs: Long): NodeStatus = NodeStatus(
+    nodeKey = nodeKey,
     name = shortName.ifEmpty { ipAddress },
     ip = ipAddress,
     universes = universes,

@@ -2,8 +2,6 @@ package com.chromadmx.ui.components.network
 
 import com.chromadmx.networking.discovery.NodeDiscovery
 import com.chromadmx.networking.model.DmxNode
-import com.chromadmx.ui.mascot.BubbleType
-import com.chromadmx.ui.mascot.SpeechBubble
 import com.chromadmx.ui.viewmodel.MascotViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -93,13 +91,13 @@ class NetworkHealthViewModel(
         // Mascot integration: alert for newly lost nodes.
         if (mascotViewModel != null) {
             for (lost in lostNodes) {
-                if (alertedNodeKeys.add(lost.ip)) {
+                if (alertedNodeKeys.add(lost.nodeKey)) {
                     mascotViewModel.triggerAlert("Node ${lost.name} lost connection!")
                 }
             }
             // Clear alert tracking for nodes that have recovered.
-            val currentIps = lostNodes.map { it.ip }.toSet()
-            alertedNodeKeys.removeAll { it !in currentIps }
+            val currentLostKeys = lostNodes.map { it.nodeKey }.toSet()
+            alertedNodeKeys.retainAll(currentLostKeys)
         }
     }
 

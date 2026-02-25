@@ -76,6 +76,25 @@ class NodeHealthModelTest {
         assertEquals(listOf(0, 1, 2), status.universes)
     }
 
+    @Test
+    fun toNodeStatus_uses_mac_as_nodeKey_when_present() {
+        val node = DmxNode(
+            ipAddress = "10.0.0.1",
+            macAddress = "aa:bb:cc:dd:ee:ff",
+            shortName = "Node1",
+            lastSeenMs = 100L,
+        )
+        val status = node.toNodeStatus(currentTimeMs = 200L)
+        assertEquals("aa:bb:cc:dd:ee:ff", status.nodeKey)
+    }
+
+    @Test
+    fun toNodeStatus_falls_back_to_ip_for_nodeKey_when_mac_empty() {
+        val node = makeNode(ipAddress = "192.168.1.50", lastSeenMs = 100L)
+        val status = node.toNodeStatus(currentTimeMs = 200L)
+        assertEquals("192.168.1.50", status.nodeKey)
+    }
+
     // ── Compact display logic ──────────────────────────────────────
 
     @Test

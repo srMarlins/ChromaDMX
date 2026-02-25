@@ -129,46 +129,26 @@ class NetworkHealthViewModelTest {
     @Test
     fun mixedNodes_summary_counts_only_healthy() = runTest {
         val discovery = makeDiscovery()
-        // Node A: healthy (lastSeen = 9500, current = 10000 => 500ms)
-        discovery.injectNode(
-            ip = byteArrayOf(192.toByte(), 168.toByte(), 1, 1),
-            shortName = "NodeA",
-            mac = byteArrayOf(0x01, 0x01, 0x01, 0x01, 0x01, 0x01),
-            lastSeenMs = 9500L,
-        )
-        // Node B: degraded (lastSeen = 3000, current = 10000 => 7s)
-        discovery.injectNode(
-            ip = byteArrayOf(192.toByte(), 168.toByte(), 1, 2),
-            shortName = "NodeB",
-            mac = byteArrayOf(0x02, 0x02, 0x02, 0x02, 0x02, 0x02),
-            lastSeenMs = 3000L,
-        )
-        // Node C: lost (lastSeen = 0, current = 10000 => 10s... wait that's degraded)
-        // Let's make lastSeen = -10000 to get lost at currentTime 10000
-        // Actually DmxNode lastSeenMs is Long, so use 0 and currentTime 20000
-        // But we need all three at the same "current time". Let's use currentTime = 20000.
-        // Node A: lastSeen 19500 => 500ms => healthy
-        // Node B: lastSeen 13000 => 7s => degraded
-        // Node C: lastSeen 1000 => 19s => lost
-        discovery.injectNode(
-            ip = byteArrayOf(192.toByte(), 168.toByte(), 1, 3),
-            shortName = "NodeC",
-            mac = byteArrayOf(0x03, 0x03, 0x03, 0x03, 0x03, 0x03),
-            lastSeenMs = 1000L,
-        )
-
-        // Re-inject A and B with adjusted times for our chosen currentTime
+        // Node A: lastSeen 19500, current = 20000 => 500ms => HEALTHY
         discovery.injectNode(
             ip = byteArrayOf(192.toByte(), 168.toByte(), 1, 1),
             shortName = "NodeA",
             mac = byteArrayOf(0x01, 0x01, 0x01, 0x01, 0x01, 0x01),
             lastSeenMs = 19500L,
         )
+        // Node B: lastSeen 13000, current = 20000 => 7s => DEGRADED
         discovery.injectNode(
             ip = byteArrayOf(192.toByte(), 168.toByte(), 1, 2),
             shortName = "NodeB",
             mac = byteArrayOf(0x02, 0x02, 0x02, 0x02, 0x02, 0x02),
             lastSeenMs = 13000L,
+        )
+        // Node C: lastSeen 1000, current = 20000 => 19s => LOST
+        discovery.injectNode(
+            ip = byteArrayOf(192.toByte(), 168.toByte(), 1, 3),
+            shortName = "NodeC",
+            mac = byteArrayOf(0x03, 0x03, 0x03, 0x03, 0x03, 0x03),
+            lastSeenMs = 1000L,
         )
 
         val vm = NetworkHealthViewModel(

@@ -77,7 +77,7 @@ fun NodeListOverlay(
                 .padding(vertical = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            items(nodes, key = { it.ip }) { node ->
+            items(nodes, key = { it.nodeKey }) { node ->
                 NodeCard(
                     node = node,
                     onDiagnose = { onDiagnose(node.ip) },
