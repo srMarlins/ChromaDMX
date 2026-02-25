@@ -1,7 +1,10 @@
 package com.chromadmx.agent
 
 import com.chromadmx.agent.config.AgentConfig
-import com.chromadmx.agent.scene.SceneStore
+import com.chromadmx.core.persistence.FileStorage
+import com.chromadmx.engine.effect.EffectRegistry
+import com.chromadmx.engine.effect.EffectStack
+import com.chromadmx.engine.preset.PresetLibrary
 import com.chromadmx.agent.tools.FakeEngineController
 import com.chromadmx.agent.tools.FakeFixtureController
 import com.chromadmx.agent.tools.FakeNetworkController
@@ -19,10 +22,10 @@ class LightingAgentTest {
     private val network = FakeNetworkController()
     private val fixture = FakeFixtureController()
     private val state = FakeStateController()
-    private val sceneStore = SceneStore()
+    private val library = PresetLibrary(FakeFileStorage(), EffectRegistry(), EffectStack())
 
     private fun createAgent(apiKey: String = ""): LightingAgent {
-        val registry = buildToolRegistry(engine, network, fixture, state, sceneStore)
+        val registry = buildToolRegistry(engine, network, fixture, state, library)
         return LightingAgent(
             config = AgentConfig(apiKey = apiKey),
             toolRegistry = registry,
