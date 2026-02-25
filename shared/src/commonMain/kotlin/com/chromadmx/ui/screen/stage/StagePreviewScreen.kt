@@ -18,7 +18,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.chromadmx.ui.components.NodeHealthCompact
 import com.chromadmx.ui.components.VenueCanvas
+import com.chromadmx.ui.screen.network.NodeListOverlay
 import com.chromadmx.ui.viewmodel.StageViewModel
 
 /**
@@ -36,6 +38,9 @@ fun StagePreviewScreen(
     val fixtures by viewModel.fixtures.collectAsState()
     val bpm by viewModel.bpm.collectAsState()
     val masterDimmer by viewModel.masterDimmer.collectAsState()
+    val nodes by viewModel.nodes.collectAsState()
+    val currentTimeMs by viewModel.currentTimeMs.collectAsState()
+    val isNodeListOpen by viewModel.isNodeListOpen.collectAsState()
 
     Box(modifier = modifier.fillMaxSize()) {
         // Main venue canvas
@@ -57,6 +62,12 @@ fun StagePreviewScreen(
                 color = MaterialTheme.colorScheme.primary,
             )
 
+            NodeHealthCompact(
+                nodes = nodes,
+                currentTimeMs = currentTimeMs,
+                onClick = { viewModel.toggleNodeList() }
+            )
+
             IconButton(onClick = onSettingsClick) {
                 Icon(
                     imageVector = Icons.Default.Settings,
@@ -73,5 +84,15 @@ fun StagePreviewScreen(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.align(Alignment.BottomStart).padding(16.dp),
         )
+
+        // Node list overlay
+        if (isNodeListOpen) {
+            NodeListOverlay(
+                nodes = nodes,
+                currentTimeMs = currentTimeMs,
+                onDiagnose = { viewModel.diagnoseNode(it) },
+                onClose = { viewModel.toggleNodeList() }
+            )
+        }
     }
 }

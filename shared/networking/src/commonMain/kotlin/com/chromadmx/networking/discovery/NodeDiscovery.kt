@@ -46,6 +46,9 @@ class NodeDiscovery(
 
     private val _nodes = MutableStateFlow<Map<String, DmxNode>>(emptyMap())
 
+    /** Timestamp of the last ArtPoll broadcast for latency calculation. */
+    private var lastPollSentMs: Long = 0L
+
     /** Live registry of discovered nodes, keyed by [DmxNode.nodeKey]. */
     val nodes: StateFlow<Map<String, DmxNode>> = _nodes.asStateFlow()
 
@@ -96,6 +99,7 @@ class NodeDiscovery(
      * Send a single ArtPoll broadcast immediately.
      */
     suspend fun sendPoll() {
+        lastPollSentMs = currentTimeMillis()
         val pollPacket = ArtNetCodec.encodeArtPoll(
             flags = 0x02  // Request ArtPollReply from targeted nodes and diagnostics
         )
@@ -124,19 +128,27 @@ class NodeDiscovery(
             }
         }
 
-        val node = DmxNode(
-            ipAddress = reply.ipString,
-            macAddress = reply.macString,
-            shortName = reply.shortName,
-            longName = reply.longName,
-            firmwareVersion = reply.firmwareVersion,
-            numPorts = reply.numPorts,
-            universes = universes,
-            style = reply.style.toInt() and 0xFF,
-            lastSeenMs = currentTimeMs
-        )
-
+        var resultNode: DmxNode? = null
         _nodes.update { currentNodes ->
+            val existing = currentNodes[reply.macString.ifEmpty { reply.ipString }]
+            val firstSeen = existing?.firstSeenMs ?: currentTimeMs
+            val latency = if (lastPollSentMs > 0) (currentTimeMs - lastPollSentMs) else 0L
+
+            val node = DmxNode(
+                ipAddress = reply.ipString,
+                macAddress = reply.macString,
+                shortName = reply.shortName,
+                longName = reply.longName,
+                firmwareVersion = reply.firmwareVersion,
+                numPorts = reply.numPorts,
+                universes = universes,
+                style = reply.style.toInt() and 0xFF,
+                lastSeenMs = currentTimeMs,
+                firstSeenMs = firstSeen,
+                latencyMs = latency
+            )
+            resultNode = node
+
             val mutableNodes = currentNodes.toMutableMap()
 
             // If this is a new node and we've reached the capacity limit,
@@ -152,7 +164,7 @@ class NodeDiscovery(
             mutableNodes
         }
 
-        return node
+        return resultNode
     }
 
     /**
@@ -217,4 +229,4 @@ class NodeDiscovery(
  * Uses `kotlinx.datetime` epoch milliseconds if available,
  * falls back to a reasonable default.
  */
-internal expect fun currentTimeMillis(): Long
+expect fun currentTimeMillis(): Long

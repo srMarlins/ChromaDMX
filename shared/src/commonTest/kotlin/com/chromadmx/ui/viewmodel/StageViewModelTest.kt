@@ -11,6 +11,8 @@ import com.chromadmx.engine.effect.EffectRegistry
 import com.chromadmx.engine.effects.SolidColorEffect
 import com.chromadmx.engine.pipeline.EffectEngine
 import com.chromadmx.engine.preset.PresetLibrary
+import com.chromadmx.networking.discovery.NodeDiscovery
+import com.chromadmx.networking.transport.PlatformUdpTransport
 import com.chromadmx.tempo.clock.BeatClock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -53,18 +55,20 @@ class StageViewModelTest {
     private fun makePresetLibrary(engine: EffectEngine): PresetLibrary =
         PresetLibrary(fakeStorage, registry, engine.effectStack)
 
+    private fun stubNodeDiscovery() = NodeDiscovery(PlatformUdpTransport())
+
     @Test
     fun exposesFixturesList() = runTest {
         val fixtures = makeFixtures(4)
         val engine = EffectEngine(backgroundScope, fixtures)
-        val vm = StageViewModel(engine, registry, makePresetLibrary(engine), stubBeatClock, backgroundScope)
+        val vm = StageViewModel(engine, registry, makePresetLibrary(engine), stubBeatClock, stubNodeDiscovery(), backgroundScope)
         assertEquals(4, vm.fixtures.value.size)
     }
 
     @Test
     fun exposesMasterDimmer() = runTest {
         val engine = EffectEngine(backgroundScope, emptyList())
-        val vm = StageViewModel(engine, registry, makePresetLibrary(engine), stubBeatClock, backgroundScope)
+        val vm = StageViewModel(engine, registry, makePresetLibrary(engine), stubBeatClock, stubNodeDiscovery(), backgroundScope)
         assertEquals(1.0f, vm.masterDimmer.value)
         vm.setMasterDimmer(0.5f)
         assertEquals(0.5f, vm.masterDimmer.value)
@@ -73,7 +77,7 @@ class StageViewModelTest {
     @Test
     fun exposesEffectLayers() = runTest {
         val engine = EffectEngine(backgroundScope, emptyList())
-        val vm = StageViewModel(engine, registry, makePresetLibrary(engine), stubBeatClock, backgroundScope)
+        val vm = StageViewModel(engine, registry, makePresetLibrary(engine), stubBeatClock, stubNodeDiscovery(), backgroundScope)
         assertTrue(vm.layers.value.isEmpty())
         vm.setEffect(0, "solid-color", EffectParams.EMPTY.with("color", Color.RED))
         assertEquals(1, vm.layers.value.size)
@@ -82,7 +86,7 @@ class StageViewModelTest {
     @Test
     fun addAndRemoveFixture() = runTest {
         val engine = EffectEngine(backgroundScope, emptyList())
-        val vm = StageViewModel(engine, registry, makePresetLibrary(engine), stubBeatClock, backgroundScope)
+        val vm = StageViewModel(engine, registry, makePresetLibrary(engine), stubBeatClock, stubNodeDiscovery(), backgroundScope)
         val fixture = Fixture3D(
             fixture = Fixture("new", "New", 0, 3, 0),
             position = Vec3.ZERO

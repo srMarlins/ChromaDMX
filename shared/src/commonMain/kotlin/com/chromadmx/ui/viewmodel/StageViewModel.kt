@@ -29,11 +29,21 @@ import kotlinx.coroutines.launch
  * and MapViewModel (fixture list, positions). This is the primary ViewModel
  * for the main screen.
  */
+import com.chromadmx.networking.discovery.NodeDiscovery
+import com.chromadmx.networking.model.DmxNode
+import com.chromadmx.networking.discovery.currentTimeMillis
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+
 class StageViewModel(
     private val engine: EffectEngine,
     val effectRegistry: EffectRegistry,
     private val presetLibrary: PresetLibrary,
     private val beatClock: BeatClock,
+    private val nodeDiscovery: NodeDiscovery,
     private val scope: CoroutineScope,
 ) {
     private val effectStack: EffectStack get() = engine.effectStack
@@ -69,9 +79,25 @@ class StageViewModel(
     private val _isTopDownView = MutableStateFlow(true)
     val isTopDownView: StateFlow<Boolean> = _isTopDownView.asStateFlow()
 
+    // --- Network state ---
+    val nodes: StateFlow<List<DmxNode>> = nodeDiscovery.nodes
+        .map { it.values.toList() }
+        .stateIn(
+            scope = scope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    private val _currentTimeMs = MutableStateFlow(0L)
+    val currentTimeMs: StateFlow<Long> = _currentTimeMs.asStateFlow()
+
+    private val _isNodeListOpen = MutableStateFlow(false)
+    val isNodeListOpen: StateFlow<Boolean> = _isNodeListOpen.asStateFlow()
+
     private val syncJob: Job = scope.launch {
         while (isActive) {
             syncFromEngine()
+            _currentTimeMs.value = currentTimeMillis()
             delay(500L)
         }
     }
@@ -254,4 +280,32 @@ class StageViewModel(
     fun toggleViewMode() {
         _isTopDownView.value = !_isTopDownView.value
     }
+
+    // --- Network actions ---
+    fun toggleNodeList() {
+        _isNodeListOpen.value = !_isNodeListOpen.value
+    }
+
+    fun diagnoseNode(node: DmxNode) {
+        // In a real app, this would send a message to AgentViewModel
+        // or trigger the DiagnoseConnectionTool directly.
+        // For now, we'll close the overlay and let the Mascot handle it if needed,
+        // or just log the intent.
+        _isNodeListOpen.value = false
+        // TODO: Wire to agent
+    }
+}
+
+/**
+ * Extension to convert Flow to StateFlow with a scope.
+ */
+private fun <T> kotlinx.coroutines.flow.Flow<T>.collectAsStateFlow(
+    initialValue: T,
+    scope: CoroutineScope = CoroutineScope(Dispatchers.Default)
+): StateFlow<T> {
+    val state = MutableStateFlow(initialValue)
+    scope.launch {
+        collect { state.value = it }
+    }
+    return state.asStateFlow()
 }
