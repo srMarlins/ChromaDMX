@@ -16,6 +16,8 @@ import kotlinx.serialization.Serializable
  * @property universes   List of universe numbers this node handles
  * @property style       Node style code (0 = Node, 1 = Controller)
  * @property lastSeenMs  System time (ms) when this node was last seen
+ * @property firstSeenMs System time (ms) when this node was first discovered
+ * @property latencyMs   Round-trip time (ms) from last ArtPoll/Reply exchange
  */
 @Serializable
 data class DmxNode(
@@ -27,7 +29,9 @@ data class DmxNode(
     val numPorts: Int = 0,
     val universes: List<Int> = emptyList(),
     val style: Int = 0,
-    val lastSeenMs: Long = 0L
+    val lastSeenMs: Long = 0L,
+    val firstSeenMs: Long = 0L,
+    val latencyMs: Long = 0L
 ) {
     /**
      * Unique key for this node in the device registry.
@@ -46,5 +50,14 @@ data class DmxNode(
     companion object {
         /** Default timeout for considering a node "alive" (10 seconds). */
         const val DEFAULT_TIMEOUT_MS: Long = 10_000L
+
+        /** Latency threshold (ms) for "degraded" health status. */
+        const val LATENCY_THRESHOLD_MS: Long = 150L
+
+        /** Time since last seen (ms) before marking health as "degraded". */
+        const val DEGRADED_TIMEOUT_MS: Long = 5_000L
+
+        /** Time since last seen (ms) before marking health as "lost". */
+        const val LOST_TIMEOUT_MS: Long = 8_000L
     }
 }

@@ -39,12 +39,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.chromadmx.core.model.BuiltInProfiles
 import com.chromadmx.ui.components.AudienceView
-import com.chromadmx.ui.components.PresetStrip
+import com.chromadmx.ui.components.NodeHealthCompact
 import com.chromadmx.ui.components.PixelSlider
+import com.chromadmx.ui.components.PresetStrip
 import com.chromadmx.ui.components.SimulationBadge
 import com.chromadmx.ui.components.VenueCanvas
 import com.chromadmx.ui.components.beat.BeatBar
 import com.chromadmx.ui.components.pixelBorder
+import com.chromadmx.ui.screen.network.NodeListOverlay
 import com.chromadmx.ui.theme.NeonCyan
 import com.chromadmx.ui.theme.NeonMagenta
 import com.chromadmx.ui.theme.NeonYellow
@@ -78,6 +80,9 @@ fun StagePreviewScreen(
     val isSimulationMode by viewModel.isSimulationMode.collectAsState()
     val simPresetName by viewModel.simulationPresetName.collectAsState()
     val simFixtureCount by viewModel.simulationFixtureCount.collectAsState()
+    val nodes by viewModel.nodes.collectAsState()
+    val currentTimeMs by viewModel.currentTimeMs.collectAsState()
+    val isNodeListOpen by viewModel.isNodeListOpen.collectAsState()
 
     var showSimTooltip by remember { mutableStateOf(false) }
 
@@ -157,7 +162,13 @@ fun StagePreviewScreen(
                         modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
                     )
 
-                    // Right: Settings gear
+                    // Right: Node health + Settings gear
+                    NodeHealthCompact(
+                        nodes = nodes,
+                        currentTimeMs = currentTimeMs,
+                        onClick = { viewModel.toggleNodeList() }
+                    )
+
                     IconButton(
                         onClick = onSettingsClick,
                         modifier = Modifier.size(36.dp),
@@ -250,6 +261,16 @@ fun StagePreviewScreen(
                     )
                 }
             }
+        }
+
+        // --- Node list overlay ---
+        if (isNodeListOpen) {
+            NodeListOverlay(
+                nodes = nodes,
+                currentTimeMs = currentTimeMs,
+                onDiagnose = { viewModel.diagnoseNode(it) },
+                onClose = { viewModel.toggleNodeList() }
+            )
         }
     }
 }

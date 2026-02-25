@@ -40,6 +40,7 @@ val uiModule = module {
             effectRegistry = get(),
             presetLibrary = get(),
             beatClock = get(),
+            nodeDiscovery = get(),
             scope = vmScope,
         )
     }
@@ -72,6 +73,7 @@ val uiModule = module {
         MascotViewModel(
             scope = vmScope,
             beatClock = get(),
+            nodeDiscovery = get(),
         )
     }
 

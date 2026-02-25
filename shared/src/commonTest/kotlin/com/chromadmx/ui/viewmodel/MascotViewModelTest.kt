@@ -1,6 +1,8 @@
 package com.chromadmx.ui.viewmodel
 
 import com.chromadmx.core.model.BeatState
+import com.chromadmx.networking.discovery.NodeDiscovery
+import com.chromadmx.networking.transport.PlatformUdpTransport
 import com.chromadmx.tempo.clock.BeatClock
 import com.chromadmx.ui.mascot.BubbleType
 import com.chromadmx.ui.mascot.MascotState
@@ -29,15 +31,17 @@ class MascotViewModelTest {
         override fun stop() {}
     }
 
+    private fun stubNodeDiscovery() = NodeDiscovery(PlatformUdpTransport())
+
     @Test
     fun startsInIdleState() = runTest {
-        val vm = MascotViewModel(scope = backgroundScope, beatClock = stubBeatClock())
+        val vm = MascotViewModel(scope = backgroundScope, beatClock = stubBeatClock(), nodeDiscovery = stubNodeDiscovery())
         assertEquals(MascotState.IDLE, vm.mascotState.first())
     }
 
     @Test
     fun showBubbleDisplaysBubble() = runTest {
-        val vm = MascotViewModel(scope = backgroundScope, beatClock = stubBeatClock())
+        val vm = MascotViewModel(scope = backgroundScope, beatClock = stubBeatClock(), nodeDiscovery = stubNodeDiscovery())
         val bubble = SpeechBubble("Hello!", BubbleType.INFO)
         vm.showBubble(bubble)
         assertEquals(bubble, vm.currentBubble.first())
@@ -45,7 +49,7 @@ class MascotViewModelTest {
 
     @Test
     fun dismissBubbleClearsBubble() = runTest {
-        val vm = MascotViewModel(scope = backgroundScope, beatClock = stubBeatClock())
+        val vm = MascotViewModel(scope = backgroundScope, beatClock = stubBeatClock(), nodeDiscovery = stubNodeDiscovery())
         vm.showBubble(SpeechBubble("Hello!", BubbleType.INFO))
         vm.dismissBubble()
         assertNull(vm.currentBubble.first())
@@ -53,14 +57,14 @@ class MascotViewModelTest {
 
     @Test
     fun triggerHappyState() = runTest {
-        val vm = MascotViewModel(scope = backgroundScope, beatClock = stubBeatClock())
+        val vm = MascotViewModel(scope = backgroundScope, beatClock = stubBeatClock(), nodeDiscovery = stubNodeDiscovery())
         vm.triggerHappy()
         assertEquals(MascotState.HAPPY, vm.mascotState.first())
     }
 
     @Test
     fun triggerAlert() = runTest {
-        val vm = MascotViewModel(scope = backgroundScope, beatClock = stubBeatClock())
+        val vm = MascotViewModel(scope = backgroundScope, beatClock = stubBeatClock(), nodeDiscovery = stubNodeDiscovery())
         vm.triggerAlert("Node disconnected!")
         assertEquals(MascotState.ALERT, vm.mascotState.first())
         assertEquals("Node disconnected!", vm.currentBubble.first()?.text)
@@ -68,14 +72,14 @@ class MascotViewModelTest {
 
     @Test
     fun triggerThinking() = runTest {
-        val vm = MascotViewModel(scope = backgroundScope, beatClock = stubBeatClock())
+        val vm = MascotViewModel(scope = backgroundScope, beatClock = stubBeatClock(), nodeDiscovery = stubNodeDiscovery())
         vm.triggerThinking()
         assertEquals(MascotState.THINKING, vm.mascotState.first())
     }
 
     @Test
     fun autoDismissBubble() = runTest {
-        val vm = MascotViewModel(scope = backgroundScope, beatClock = stubBeatClock())
+        val vm = MascotViewModel(scope = backgroundScope, beatClock = stubBeatClock(), nodeDiscovery = stubNodeDiscovery())
         vm.showBubble(SpeechBubble("Temp", BubbleType.INFO, autoDismissMs = 1000L))
         advanceTimeBy(1100L)
         assertNull(vm.currentBubble.first())
@@ -86,7 +90,7 @@ class MascotViewModelTest {
     @Test
     fun beatClockRunningTriggersDancing() = runTest {
         val clock = stubBeatClock()
-        val vm = MascotViewModel(scope = backgroundScope, beatClock = clock)
+        val vm = MascotViewModel(scope = backgroundScope, beatClock = clock, nodeDiscovery = stubNodeDiscovery())
 
         // Initially idle
         assertEquals(MascotState.IDLE, vm.mascotState.first())
@@ -101,7 +105,7 @@ class MascotViewModelTest {
     @Test
     fun beatClockStopReturnsToIdle() = runTest {
         val clock = stubBeatClock()
-        val vm = MascotViewModel(scope = backgroundScope, beatClock = clock)
+        val vm = MascotViewModel(scope = backgroundScope, beatClock = clock, nodeDiscovery = stubNodeDiscovery())
 
         // Start running → DANCING
         clock.isRunning.value = true
@@ -116,7 +120,7 @@ class MascotViewModelTest {
 
     @Test
     fun triggerDancingMethod() = runTest {
-        val vm = MascotViewModel(scope = backgroundScope, beatClock = stubBeatClock())
+        val vm = MascotViewModel(scope = backgroundScope, beatClock = stubBeatClock(), nodeDiscovery = stubNodeDiscovery())
         vm.triggerDancing()
         assertEquals(MascotState.DANCING, vm.mascotState.first())
     }
@@ -125,7 +129,7 @@ class MascotViewModelTest {
 
     @Test
     fun currentFrameIndexExposedFromController() = runTest {
-        val vm = MascotViewModel(scope = backgroundScope, beatClock = stubBeatClock())
+        val vm = MascotViewModel(scope = backgroundScope, beatClock = stubBeatClock(), nodeDiscovery = stubNodeDiscovery())
         // Frame index starts at 0
         assertEquals(0, vm.currentFrameIndex.first())
     }
@@ -134,7 +138,7 @@ class MascotViewModelTest {
 
     @Test
     fun idleTimerShowsBubbleAfterTimeout() = runTest {
-        val vm = MascotViewModel(scope = backgroundScope, beatClock = stubBeatClock())
+        val vm = MascotViewModel(scope = backgroundScope, beatClock = stubBeatClock(), nodeDiscovery = stubNodeDiscovery())
 
         // No bubble initially
         assertNull(vm.currentBubble.first())
@@ -153,7 +157,7 @@ class MascotViewModelTest {
 
     @Test
     fun idleTimerResetsOnStateChange() = runTest {
-        val vm = MascotViewModel(scope = backgroundScope, beatClock = stubBeatClock())
+        val vm = MascotViewModel(scope = backgroundScope, beatClock = stubBeatClock(), nodeDiscovery = stubNodeDiscovery())
 
         // Advance partway through idle timeout (20s of 30s)
         advanceTimeBy(20_000L)

@@ -26,9 +26,14 @@ import kotlinx.coroutines.launch
  * Includes a proactive idle timer that shows random tip bubbles after 30 seconds
  * of inactivity (no state changes or bubble activity).
  */
+import com.chromadmx.networking.discovery.NodeDiscovery
+import com.chromadmx.networking.model.DmxNode
+import com.chromadmx.networking.discovery.currentTimeMillis
+
 class MascotViewModel(
     private val scope: CoroutineScope,
     private val beatClock: BeatClock,
+    private val nodeDiscovery: NodeDiscovery,
 ) {
     internal val animationController = AnimationController(scope)
 
@@ -49,6 +54,10 @@ class MascotViewModel(
     private var idleTimerJob: Job? = null
     private var beatSyncJob: Job? = null
     private var stateSyncJob: Job? = null
+    private var nodeSyncJob: Job? = null
+
+    /** Previous node state for change detection. */
+    private var lastNodes: Map<String, DmxNode> = emptyMap()
 
     /** Whether the dancing state was auto-triggered by BeatClock (vs. manual). */
     private var beatDriven = false
@@ -68,6 +77,7 @@ class MascotViewModel(
         animationController.start()
         startBeatSync()
         startStateSync()
+        startNodeSync()
         resetIdleTimer()
     }
 
@@ -84,6 +94,67 @@ class MascotViewModel(
                 _mascotState.value = controllerState
             }
         }
+    }
+
+    // ── Node-reactive sync ──────────────────────────────────────────
+
+    /**
+     * Subscribe to node discovery updates.
+     * Detects new nodes, disconnections, and health changes to trigger mascot alerts.
+     */
+    private fun startNodeSync() {
+        nodeSyncJob = scope.launch {
+            nodeDiscovery.nodes.collect { currentNodes ->
+                detectNodeChanges(currentNodes)
+                lastNodes = currentNodes
+            }
+        }
+    }
+
+    private fun detectNodeChanges(currentNodes: Map<String, DmxNode>) {
+        if (lastNodes.isEmpty() && currentNodes.isNotEmpty()) {
+            // First time we see nodes - don't spam
+            return
+        }
+
+        // 1. Detect new nodes
+        val newNodes = currentNodes.keys - lastNodes.keys
+        if (newNodes.isNotEmpty()) {
+            triggerHappy()
+            showBubble(SpeechBubble(
+                text = "New node found! Auto-configuring...",
+                type = BubbleType.INFO
+            ))
+            return
+        }
+
+        // 2. Detect disconnected nodes
+        val lostNodes = lastNodes.keys - currentNodes.keys
+        if (lostNodes.isNotEmpty()) {
+            val nodeName = lastNodes[lostNodes.first()]?.shortName ?: "Node"
+            triggerAlert("$nodeName disconnected — diagnose?")
+            // Set action for the bubble
+            _currentBubble.value = _currentBubble.value?.copy(
+                actionLabel = "DIAGNOSE",
+                actionId = "diagnose_connection",
+                type = BubbleType.ACTION
+            )
+            return
+        }
+
+        // 3. Detect all healthy
+        val wasAllHealthy = lastNodes.values.all { isHealthy(it) }
+        val isAllHealthy = currentNodes.values.all { isHealthy(it) }
+        if (!wasAllHealthy && isAllHealthy && currentNodes.isNotEmpty()) {
+            triggerHappy()
+            showBubble(SpeechBubble(text = "All nodes healthy ✓", type = BubbleType.INFO))
+        }
+    }
+
+    private fun isHealthy(node: DmxNode): Boolean {
+        val currentTime = currentTimeMillis()
+        return (currentTime - node.lastSeenMs) < DmxNode.DEGRADED_TIMEOUT_MS &&
+               node.latencyMs < DmxNode.LATENCY_THRESHOLD_MS
     }
 
     // ── Beat-reactive sync ──────────────────────────────────────────
@@ -155,7 +226,11 @@ class MascotViewModel(
      */
     fun onBubbleAction(actionId: String?) {
         when (actionId) {
-            // Extensible: add action handlers as features are wired
+            "diagnose_connection" -> {
+                // TODO: Route to agent's diagnoseConnection tool
+                triggerThinking()
+                showBubble(SpeechBubble(text = "Analyzing network...", autoDismissMs = 2000))
+            }
             else -> { /* unknown action — no-op */ }
         }
         dismissBubble()
@@ -209,5 +284,6 @@ class MascotViewModel(
         idleTimerJob?.cancel()
         beatSyncJob?.cancel()
         stateSyncJob?.cancel()
+        nodeSyncJob?.cancel()
     }
 }
