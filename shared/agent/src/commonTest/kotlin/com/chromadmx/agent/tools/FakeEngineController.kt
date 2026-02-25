@@ -2,6 +2,7 @@ package com.chromadmx.agent.tools
 
 import com.chromadmx.agent.controller.EngineController
 import com.chromadmx.agent.scene.Scene
+import com.chromadmx.core.model.*
 
 /**
  * Fake [EngineController] for testing tools without the real engine.
@@ -55,5 +56,19 @@ class FakeEngineController : EngineController {
         lastMasterDimmer = scene.masterDimmer
         lastPalette = scene.colorPalette
         lastTempoMultiplier = scene.tempoMultiplier
+    }
+
+    override fun capturePreset(name: String): ScenePreset = ScenePreset(
+        id = name,
+        name = name,
+        genre = Genre.CUSTOM,
+        layers = emptyList(),
+        masterDimmer = lastMasterDimmer,
+        createdAt = 0L,
+        thumbnailColors = emptyList()
+    )
+
+    override fun applyPreset(preset: ScenePreset) {
+        lastMasterDimmer = preset.masterDimmer
     }
 }

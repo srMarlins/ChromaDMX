@@ -1,7 +1,9 @@
 package com.chromadmx.agent.pregen
 
 import com.chromadmx.agent.scene.Scene
-import com.chromadmx.agent.scene.SceneStore
+import com.chromadmx.core.EffectParams
+import com.chromadmx.core.model.*
+import com.chromadmx.engine.preset.PresetLibrary
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,14 +26,14 @@ data class PreGenProgress(
  * Service for batch-generating scenes for a given genre.
  *
  * Orchestrates repeated "create a scene for [genre]" requests, using the
- * agent's createScene tool to build and save scenes to the [SceneStore].
+ * agent's createScene tool to build and save scenes to the [PresetLibrary].
  *
  * When the full LLM pipeline is wired, this will accept a LightingAgent
  * and send natural language prompts. For now, it generates deterministic
  * template scenes based on genre presets.
  */
 class PreGenerationService(
-    private val sceneStore: SceneStore,
+    private val presetLibrary: PresetLibrary,
 ) {
     private val _progress = MutableStateFlow(PreGenProgress())
     val progress: StateFlow<PreGenProgress> = _progress.asStateFlow()
@@ -42,7 +44,7 @@ class PreGenerationService(
     /**
      * Generate [count] scenes for the given [genre].
      *
-     * Each scene is saved to the [SceneStore] and returned.
+     * Each scene is saved to the [PresetLibrary] and returned.
      * Respects structured concurrency: cancelling the enclosing scope
      * or calling [cancel] stops generation via [ensureActive].
      *
@@ -51,13 +53,13 @@ class PreGenerationService(
      * @return List of generated scenes (may be partial if cancelled).
      * @throws IllegalStateException if generation is already in progress.
      */
-    suspend fun generate(genre: String, count: Int): List<Scene> {
+    suspend fun generate(genre: String, count: Int): List<ScenePreset> {
         if (count <= 0) return emptyList()
 
         check(!_progress.value.isRunning) { "Generation already in progress" }
         _progress.value = PreGenProgress(current = 0, total = count, isRunning = true)
 
-        val scenes = mutableListOf<Scene>()
+        val presets = mutableListOf<ScenePreset>()
 
         // Store the current coroutine's Job so cancel() can cancel it
         generationJob = coroutineContext[Job]
@@ -66,9 +68,9 @@ class PreGenerationService(
                 coroutineContext.ensureActive()
 
                 val sceneName = "${genre}_scene_$i"
-                val scene = generateSceneForGenre(genre, sceneName, i)
-                sceneStore.save(scene)
-                scenes.add(scene)
+                val preset = generateSceneForGenre(genre, sceneName, i)
+                presetLibrary.savePreset(preset)
+                presets.add(preset)
 
                 _progress.value = PreGenProgress(
                     current = i,
@@ -80,7 +82,7 @@ class PreGenerationService(
             generationJob = null
             _progress.value = _progress.value.copy(isRunning = false)
         }
-        return scenes
+        return presets
     }
 
     /**
@@ -103,16 +105,28 @@ class PreGenerationService(
      *
      * For now, uses deterministic genre-based presets.
      */
-    private fun generateSceneForGenre(genre: String, name: String, index: Int): Scene {
-        val presets = genrePresets[genre.lowercase()] ?: genrePresets["default"]!!
-        val preset = presets[index % presets.size]
+    private fun generateSceneForGenre(genre: String, name: String, index: Int): ScenePreset {
+        val templates = genrePresets[genre.lowercase()] ?: genrePresets["default"]!!
+        val template = templates[index % templates.size]
 
-        return Scene(
+        val layers = template.layers.map { layer ->
+            EffectLayerConfig(
+                effectId = layer.effectId,
+                params = layer.params.entries.fold(EffectParams.EMPTY) { acc, (k, v) -> acc.with(k, v) },
+                blendMode = BlendMode.valueOf(layer.blendMode),
+                opacity = layer.opacity,
+                enabled = true
+            )
+        }
+
+        return ScenePreset(
+            id = "${genre.lowercase()}_${index}_${(hashCode() % 1000)}",
             name = name,
-            layers = preset.layers,
-            masterDimmer = preset.masterDimmer,
-            colorPalette = preset.colorPalette,
-            tempoMultiplier = preset.tempoMultiplier
+            genre = try { Genre.valueOf(genre.uppercase()) } catch (e: Exception) { Genre.CUSTOM },
+            layers = layers,
+            masterDimmer = template.masterDimmer,
+            createdAt = 0L,
+            thumbnailColors = listOf(Color.WHITE)
         )
     }
 

@@ -1,5 +1,7 @@
 package com.chromadmx.di
 
+import com.chromadmx.core.persistence.FileStorage
+import com.chromadmx.core.persistence.IosFileStorage
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -25,6 +27,8 @@ import org.koin.dsl.module
  * ```
  */
 val iosPlatformModule: Module = module {
+    single<FileStorage> { IosFileStorage() }
+
     // TODO: Register iOS platform implementations as modules are created
     //
     // single<UdpTransport> { IosUdpTransport() }

@@ -1,6 +1,7 @@
 package com.chromadmx.agent.controller
 
 import com.chromadmx.agent.scene.Scene
+import com.chromadmx.core.model.ScenePreset
 
 /**
  * Abstraction over the effect engine for agent tool operations.
@@ -29,4 +30,10 @@ interface EngineController {
 
     /** Apply a saved [Scene] to the engine. */
     fun applyScene(scene: Scene)
+
+    /** Capture the current engine state as a [ScenePreset]. */
+    fun capturePreset(name: String): ScenePreset
+
+    /** Apply a [ScenePreset] to the engine. */
+    fun applyPreset(preset: ScenePreset)
 }

@@ -31,6 +31,30 @@ class EffectStackTest {
     }
 
     @Test
+    fun moveLayerChangesOrder() {
+        val stack = EffectStack()
+        stack.addLayer(EffectLayer(effect = ConstantEffect("a", "A", Color.RED)))
+        stack.addLayer(EffectLayer(effect = ConstantEffect("b", "B", Color.GREEN)))
+        stack.addLayer(EffectLayer(effect = ConstantEffect("c", "C", Color.BLUE)))
+
+        assertEquals("a", stack.layers[0].effect.id)
+        assertEquals("b", stack.layers[1].effect.id)
+        assertEquals("c", stack.layers[2].effect.id)
+
+        // Move 'a' from bottom to top
+        stack.moveLayer(0, 2)
+        assertEquals("b", stack.layers[0].effect.id)
+        assertEquals("c", stack.layers[1].effect.id)
+        assertEquals("a", stack.layers[2].effect.id)
+
+        // Move 'a' back to middle
+        stack.moveLayer(2, 1)
+        assertEquals("b", stack.layers[0].effect.id)
+        assertEquals("a", stack.layers[1].effect.id)
+        assertEquals("c", stack.layers[2].effect.id)
+    }
+
+    @Test
     fun singleLayerNormalBlend() {
         val stack = EffectStack(
             layers = listOf(
