@@ -2,6 +2,7 @@ package com.chromadmx.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -21,29 +22,38 @@ fun PixelCard(
     borderColor: Color = MaterialTheme.colorScheme.outline,
     glowColor: Color? = null,
     pixelSize: Dp = LocalPixelTheme.current.pixelSize,
+    title: (@Composable () -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
-    Box(
-        modifier = modifier
-            .then(
-                if (glowColor != null) {
-                    Modifier.drawBehind {
-                        drawRect(
-                            brush = Brush.radialGradient(
-                                colors = listOf(glowColor.copy(alpha = 0.3f), Color.Transparent),
-                                center = Offset(size.width / 2f, size.height / 2f),
-                                radius = size.minDimension
-                            ),
-                            size = size
-                        )
-                    }
-                } else Modifier
-            )
-            .pixelBorder(color = borderColor, pixelSize = pixelSize)
-            .background(backgroundColor)
-            .padding(pixelSize)
-            .padding(12.dp)
-    ) {
-        content()
+    Column(modifier = modifier) {
+        if (title != null) {
+            Box(modifier = Modifier.padding(bottom = 8.dp)) {
+                title()
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .then(
+                    if (glowColor != null) {
+                        Modifier.drawBehind {
+                            drawRect(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(glowColor.copy(alpha = 0.3f), Color.Transparent),
+                                    center = Offset(size.width / 2f, size.height / 2f),
+                                    radius = size.minDimension
+                                ),
+                                size = size
+                            )
+                        }
+                    } else Modifier
+                )
+                .pixelBorder(color = borderColor, pixelSize = pixelSize)
+                .background(backgroundColor)
+                .padding(pixelSize)
+                .padding(12.dp)
+        ) {
+            content()
+        }
     }
 }

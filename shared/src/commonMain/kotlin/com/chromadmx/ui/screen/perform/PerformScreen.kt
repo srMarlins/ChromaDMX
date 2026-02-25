@@ -17,8 +17,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,8 +39,11 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.ui.components.VenueCanvas
+import com.chromadmx.ui.screen.settings.SettingsScreen
 import com.chromadmx.ui.theme.DmxBackground
 import com.chromadmx.ui.viewmodel.PerformViewModel
+import com.chromadmx.ui.viewmodel.SettingsViewModel
+import org.koin.compose.getKoin
 import com.chromadmx.core.model.Color as DmxColor
 
 /**
@@ -60,6 +68,7 @@ fun PerformScreen(
     var isLayerPanelVisible by remember { mutableStateOf(false) }
     var isLibraryVisible by remember { mutableStateOf(false) }
     var activePreset by remember { mutableStateOf<String?>(null) }
+    var showSettings by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -81,6 +90,21 @@ fun PerformScreen(
                     fixtureColors = fixtureColors,
                     modifier = Modifier.fillMaxSize(),
                 )
+
+                // Gear icon overlay for Settings
+                IconButton(
+                    onClick = { showSettings = true },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(8.dp)
+                        .size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Settings",
+                        tint = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                    )
+                }
 
                 // Master Dimmer (Vertical, Right Edge)
                 MasterDimmerSlider(
@@ -200,6 +224,21 @@ fun PerformScreen(
                     isLibraryVisible = false
                 },
                 onClose = { isLibraryVisible = false }
+            )
+        }
+
+        // Settings Overlay
+        AnimatedVisibility(
+            visible = showSettings,
+            enter = slideInHorizontally(initialOffsetX = { it }),
+            exit = slideOutHorizontally(targetOffsetX = { it })
+        ) {
+            val koin = getKoin()
+            val settingsVm = remember { koin.get<SettingsViewModel>() }
+
+            SettingsScreen(
+                viewModel = settingsVm,
+                onClose = { showSettings = false }
             )
         }
     }
