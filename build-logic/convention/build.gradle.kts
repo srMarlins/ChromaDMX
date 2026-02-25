@@ -3,8 +3,24 @@ plugins {
 }
 
 dependencies {
-    // Convention plugin dependencies will be added in Issue #2
-    // compileOnly(libs.android.gradlePlugin)
-    // compileOnly(libs.kotlin.gradlePlugin)
-    // compileOnly(libs.compose.gradlePlugin)
+    compileOnly(libs.android.gradlePlugin)
+    compileOnly(libs.kotlin.gradlePlugin)
+    compileOnly(libs.compose.gradlePlugin)
+}
+
+gradlePlugin {
+    plugins {
+        register("kmpLibrary") {
+            id = "chromadmx.kmp.library"
+            implementationClass = "KmpLibraryConventionPlugin"
+        }
+        register("composeMultiplatform") {
+            id = "chromadmx.compose"
+            implementationClass = "ComposeMultiplatformConventionPlugin"
+        }
+        register("androidApplication") {
+            id = "chromadmx.android.application"
+            implementationClass = "AndroidApplicationConventionPlugin"
+        }
+    }
 }
