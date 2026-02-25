@@ -1,6 +1,5 @@
 package com.chromadmx.agent.pregen
 
-import com.chromadmx.agent.scene.Scene
 import com.chromadmx.engine.preset.PresetLibrary
 import com.chromadmx.engine.effect.EffectRegistry
 import com.chromadmx.engine.effect.EffectStack
@@ -21,19 +20,21 @@ class PreGenerationServiceTest {
     @Test
     fun generateScenesCreatesRequestedCount() = runTest {
         val (service, library) = createService()
+        val builtInCount = library.listPresets().size
         val presets = service.generate("techno", 3)
         assertEquals(3, presets.size)
-        assertEquals(3, library.listPresets().size)
+        assertEquals(builtInCount + 3, library.listPresets().size)
     }
 
     @Test
     fun generatedScenesAreSavedToStore() = runTest {
         val (service, library) = createService()
-        service.generate("ambient", 2)
-        val presets = library.listPresets()
-        assertEquals(2, presets.size)
-        // Each scene should be loadable
-        presets.forEach { preset ->
+        val builtInCount = library.listPresets().size
+        val generated = service.generate("ambient", 2)
+        val allPresets = library.listPresets()
+        assertEquals(builtInCount + 2, allPresets.size)
+        // Each generated scene should be loadable
+        generated.forEach { preset ->
             assertNotNull(library.getPreset(preset.id))
         }
     }

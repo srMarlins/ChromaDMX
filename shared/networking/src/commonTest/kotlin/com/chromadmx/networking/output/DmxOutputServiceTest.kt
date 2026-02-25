@@ -1,6 +1,5 @@
 package com.chromadmx.networking.output
 
-import com.chromadmx.networking.model.UdpPacket
 import com.chromadmx.networking.protocol.ArtNetCodec
 import com.chromadmx.networking.protocol.ArtNetConstants
 import com.chromadmx.networking.protocol.SacnCodec
@@ -124,20 +123,26 @@ class DmxOutputServiceTest {
         val transport = PlatformUdpTransport()
         val service = DmxOutputService(transport, frameRateHz = 40)
 
-        // Manually invoke sendFrame to simulate frames (avoids Dispatchers.Default issues in tests)
+        // First session: start the loop with frame data so frames actually send
         service.updateFrame(mapOf(0 to ByteArray(512)))
         service.start()
-        // Call sendFrame directly to increment frame count deterministically
-        service.sendFrame()
-        service.sendFrame()
+        // Give the output loop time to send at least one frame
+        delay(100)
         service.stop()
 
-        // frameCount is only incremented by the internal loop, not by direct sendFrame calls.
-        // Instead, test that start() resets frameCount to 0.
-        val afterStop = service.frameCount
-        // frameCount may or may not have incremented depending on timing.
-        // The important thing is that start() resets it.
+        val afterFirstSession = service.frameCount
+        // Verify the loop actually ran (may be 0+ depending on transport errors,
+        // but the important assertion below is that start() resets it)
+
+        // Clear frame data so the second start() loop won't send frames,
+        // preventing the background coroutine from incrementing frameCount
+        // between start() and our assertion.
+        service.updateFrame(emptyMap())
         service.start()
+
+        // With no frame data, sendFrame() returns early without incrementing
+        // frameCount, so this assertion is deterministic even though the
+        // output loop runs on Dispatchers.Default.
         assertEquals(0L, service.frameCount)
         service.stop()
     }

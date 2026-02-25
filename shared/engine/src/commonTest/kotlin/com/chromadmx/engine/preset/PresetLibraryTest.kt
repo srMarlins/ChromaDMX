@@ -85,13 +85,20 @@ class PresetLibraryTest {
 
     @Test
     fun testListAndFilter() {
+        // Account for 6 built-in presets auto-installed at construction:
+        // 1 TECHNO, 2 AMBIENT, 1 DNB, 1 HOUSE, 1 CUSTOM
+        val builtIns = builtInPresets()
+        val builtInCount = builtIns.size
+        val builtInTechno = builtIns.count { it.genre == Genre.TECHNO }
+        val builtInHouse = builtIns.count { it.genre == Genre.HOUSE }
+
         library.savePreset(createPreset("p1", Genre.TECHNO))
         library.savePreset(createPreset("p2", Genre.HOUSE))
         library.savePreset(createPreset("p3", Genre.TECHNO))
 
-        assertEquals(3, library.listPresets().size)
-        assertEquals(2, library.listPresets(Genre.TECHNO).size)
-        assertEquals(1, library.listPresets(Genre.HOUSE).size)
+        assertEquals(builtInCount + 3, library.listPresets().size)
+        assertEquals(builtInTechno + 2, library.listPresets(Genre.TECHNO).size)
+        assertEquals(builtInHouse + 1, library.listPresets(Genre.HOUSE).size)
     }
 
     @Test

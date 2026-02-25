@@ -148,8 +148,9 @@ class DmxOutputService(
             val startTime = monotonicTimeMs()
 
             try {
-                sendFrame()
-                frameCount++
+                if (sendFrame()) {
+                    frameCount++
+                }
             } catch (_: CancellationException) {
                 break
             } catch (_: Exception) {
@@ -168,10 +169,12 @@ class DmxOutputService(
     /**
      * Send all universe data for one frame.
      * Called by the output loop and also exposed for testing.
+     *
+     * @return `true` if data was actually sent, `false` if skipped (no frame data).
      */
-    internal suspend fun sendFrame() {
+    internal suspend fun sendFrame(): Boolean {
         val frame = frameRef.value
-        if (frame.isEmpty()) return
+        if (frame.isEmpty()) return false
 
         for ((universe, data) in frame) {
             when (protocol) {
@@ -179,6 +182,7 @@ class DmxOutputService(
                 DmxProtocol.SACN -> sendSacn(universe, data)
             }
         }
+        return true
     }
 
     private suspend fun sendArtDmx(universe: Int, data: ByteArray) {
