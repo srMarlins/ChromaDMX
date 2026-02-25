@@ -10,6 +10,10 @@ import androidx.compose.ui.unit.dp
 
 /**
  * Draws a pixelated border around a component.
+ *
+ * Note: This is a non-composable Modifier extension, so it cannot read from
+ * LocalPixelTheme.current. Callers in @Composable contexts should pass
+ * LocalPixelTheme.current.pixelSize explicitly if they want theme-driven sizing.
  */
 fun Modifier.pixelBorder(
     width: Dp = 4.dp,
@@ -18,18 +22,17 @@ fun Modifier.pixelBorder(
 ): Modifier = drawBehind {
     val w = width.toPx()
     val ps = pixelSize.toPx()
+    val layers = (w / ps).toInt().coerceAtLeast(1)
 
-    // Top border
-    drawRect(color, Offset(ps, 0f), Size(size.width - 2 * ps, ps))
-    // Bottom border
-    drawRect(color, Offset(ps, size.height - ps), Size(size.width - 2 * ps, ps))
-    // Left border
-    drawRect(color, Offset(0f, ps), Size(ps, size.height - 2 * ps))
-    // Right border
-    drawRect(color, Offset(size.width - ps, ps), Size(ps, size.height - 2 * ps))
-
-    // Inset border if width > pixelSize
-    if (w > ps) {
-        // Additional layers could be added for thicker borders
+    for (i in 0 until layers) {
+        val inset = i * ps
+        // Top border
+        drawRect(color, Offset(ps + inset, inset), Size(size.width - 2 * (ps + inset), ps))
+        // Bottom border
+        drawRect(color, Offset(ps + inset, size.height - ps - inset), Size(size.width - 2 * (ps + inset), ps))
+        // Left border
+        drawRect(color, Offset(inset, ps + inset), Size(ps, size.height - 2 * (ps + inset)))
+        // Right border
+        drawRect(color, Offset(size.width - ps - inset, ps + inset), Size(ps, size.height - 2 * (ps + inset)))
     }
 }

@@ -11,6 +11,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.chromadmx.ui.theme.LocalPixelTheme
 
 /**
  * A stepped pixel-art divider line.
@@ -19,7 +20,7 @@ import androidx.compose.ui.unit.dp
 fun PixelDivider(
     modifier: Modifier = Modifier,
     color: Color = MaterialTheme.colorScheme.outlineVariant,
-    pixelSize: Dp = 4.dp,
+    pixelSize: Dp = LocalPixelTheme.current.pixelSize,
     stepped: Boolean = true
 ) {
     Canvas(

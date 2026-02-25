@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.chromadmx.ui.theme.LocalPixelTheme
 
 @Composable
 fun PixelCard(
@@ -19,7 +20,7 @@ fun PixelCard(
     backgroundColor: Color = MaterialTheme.colorScheme.surface,
     borderColor: Color = MaterialTheme.colorScheme.outline,
     glowColor: Color? = null,
-    pixelSize: Dp = 4.dp,
+    pixelSize: Dp = LocalPixelTheme.current.pixelSize,
     content: @Composable () -> Unit
 ) {
     Box(

@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.chromadmx.ui.theme.LocalPixelTheme
 import com.chromadmx.ui.theme.PixelFontFamily
 import kotlin.math.roundToInt
 
@@ -31,7 +32,7 @@ fun PixelButton(
     backgroundColor: Color = MaterialTheme.colorScheme.primary,
     contentColor: Color = MaterialTheme.colorScheme.onPrimary,
     borderColor: Color = Color.White,
-    pixelSize: Dp = 4.dp,
+    pixelSize: Dp = LocalPixelTheme.current.pixelSize,
     contentPadding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
     content: @Composable () -> Unit
 ) {

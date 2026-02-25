@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.chromadmx.ui.theme.LocalPixelTheme
 import kotlin.math.roundToInt
 
 @Composable
@@ -33,7 +34,7 @@ fun PixelSlider(
     enabled: Boolean = true,
     valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
     accentColor: Color = MaterialTheme.colorScheme.primary,
-    pixelSize: Dp = 4.dp
+    pixelSize: Dp = LocalPixelTheme.current.pixelSize
 ) {
     var width by remember { mutableStateOf(0) }
     val density = LocalDensity.current
@@ -46,6 +47,7 @@ fun PixelSlider(
             .pointerInput(enabled) {
                 if (!enabled) return@pointerInput
                 detectTapGestures { offset ->
+                    if (width <= 0) return@detectTapGestures
                     val newValue = (offset.x / width).coerceIn(0f, 1f)
                     onValueChange(valueRange.start + newValue * (valueRange.endInclusive - valueRange.start))
                 }
@@ -53,6 +55,7 @@ fun PixelSlider(
             .pointerInput(enabled) {
                 if (!enabled) return@pointerInput
                 detectDragGestures { change, _ ->
+                    if (width <= 0) return@detectDragGestures
                     val newValue = (change.position.x / width).coerceIn(0f, 1f)
                     onValueChange(valueRange.start + newValue * (valueRange.endInclusive - valueRange.start))
                 }

@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.chromadmx.ui.theme.LocalPixelTheme
 
 /**
  * A chunky segmented progress bar.
@@ -25,7 +26,7 @@ fun PixelProgressBar(
     modifier: Modifier = Modifier,
     containerColor: Color = MaterialTheme.colorScheme.surfaceVariant,
     progressColor: Color = MaterialTheme.colorScheme.primary,
-    pixelSize: Dp = 4.dp,
+    pixelSize: Dp = LocalPixelTheme.current.pixelSize,
     segments: Int = 10
 ) {
     Box(

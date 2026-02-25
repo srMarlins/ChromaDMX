@@ -2,9 +2,6 @@ package com.chromadmx.ui.util
 
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.AnimationSpec
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -24,6 +21,10 @@ import kotlin.math.sin
 /**
  * Pixel-art animation utilities for ChromaDMX.
  * These utilities provide chunky, deliberate movements and transitions.
+ *
+ * Note: These are non-composable Modifier extensions, so they cannot read from
+ * LocalPixelTheme.current. Callers in @Composable contexts should pass
+ * LocalPixelTheme.current.pixelSize explicitly if they want theme-driven sizing.
  */
 object PixelAnimations {
 
@@ -95,7 +96,7 @@ object PixelAnimations {
         val invProgress = 1f - progress
 
         // Use a simple sine-based scatter that converges to 0
-        val offsetX = sin(alpha * 10f) * scatter * invProgress
+        val offsetX = sin(progress * 10f) * scatter * invProgress
         val offsetY = scatter * invProgress
 
         translationX = floor(offsetX / pixelSizePx) * pixelSizePx
