@@ -7,8 +7,8 @@
   "labels": ["dependencies"],
   "packageRules": [
     {
-      "description": "Auto-merge minor and patch updates after CI passes",
-      "matchUpdateTypes": ["minor", "patch"],
+      "description": "Auto-merge patch updates after CI passes",
+      "matchUpdateTypes": ["patch"],
       "automerge": true,
       "automergeType": "pr"
     },
@@ -16,6 +16,11 @@
       "description": "Group Kotlin-related updates together",
       "matchPackagePrefixes": ["org.jetbrains.kotlin"],
       "groupName": "kotlin"
+    },
+    {
+      "description": "Group KotlinX updates together",
+      "matchPackagePrefixes": ["org.jetbrains.kotlinx"],
+      "groupName": "kotlinx"
     },
     {
       "description": "Group Compose Multiplatform updates together",
@@ -26,6 +31,16 @@
       "description": "Group Koin updates together",
       "matchPackagePrefixes": ["io.insert-koin"],
       "groupName": "koin"
+    },
+    {
+      "description": "Group AndroidX updates together",
+      "matchPackagePrefixes": ["androidx."],
+      "groupName": "androidx"
+    },
+    {
+      "description": "Group Ktor updates together",
+      "matchPackagePrefixes": ["io.ktor"],
+      "groupName": "ktor"
     },
     {
       "description": "Group GitHub Actions updates together",
