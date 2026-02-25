@@ -17,7 +17,7 @@ class EffectStackTest {
         override val name: String,
         private val color: Color
     ) : SpatialEffect {
-        override fun compute(pos: Vec3, time: Float, beat: BeatState, params: EffectParams): Color = color
+        override fun compute(pos: Vec3, context: Any?): Color = color
     }
 
     private val origin = Vec3.ZERO

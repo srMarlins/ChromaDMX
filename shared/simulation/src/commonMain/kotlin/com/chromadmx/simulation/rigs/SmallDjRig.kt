@@ -57,7 +57,8 @@ object SmallDjRig {
                         name = "DJ PAR ${i + 1}",
                         channelStart = channelStart,
                         channelCount = CHANNELS_PER_FIXTURE,
-                        universeId = 0
+                        universeId = 0,
+                        profileId = "generic-rgb-par"
                     ),
                     position = Vec3(x = x, y = TRUSS_DEPTH, z = TRUSS_HEIGHT),
                     groupId = "dj-truss"

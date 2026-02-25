@@ -8,6 +8,7 @@ import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import com.chromadmx.engine.effect.SpatialEffect
 
 class AdvancedEffectsTest {
 
@@ -225,4 +226,10 @@ class AdvancedEffectsTest {
             }
         }
     }
+}
+
+// Helper for migration: calls prepare() then compute()
+private fun SpatialEffect.compute(pos: Vec3, time: Float, beat: BeatState, params: EffectParams): Color {
+    val ctx = this.prepare(params, time, beat)
+    return this.compute(pos, ctx)
 }

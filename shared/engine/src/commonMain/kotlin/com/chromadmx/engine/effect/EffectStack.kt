@@ -93,29 +93,60 @@ class EffectStack(
     /* ------------------------------------------------------------------ */
 
     /**
+     * Prepares the entire stack for evaluation for a given frame.
+     * This captures the current layer snapshot and prepares each effect.
+     * The returned [FrameEvaluator] can then be used to compute colors for
+     * multiple positions very efficiently.
+     */
+    fun buildFrame(time: Float, beat: BeatState): FrameEvaluator {
+        val snapshot = _layersRef.value
+        val contexts = snapshot.map { layer ->
+            if (layer.enabled) layer.effect.prepare(layer.params, time, beat) else null
+        }
+        return FrameEvaluator(snapshot, contexts, _masterDimmer.value)
+    }
+
+    /**
+     * Evaluator for a single frame. Contains pre-calculated contexts for all layers.
+     */
+    class FrameEvaluator(
+        private val layers: List<EffectLayer>,
+        private val contexts: List<Any?>,
+        private val masterDimmer: Float
+    ) {
+        fun evaluate(pos: Vec3): Color {
+            var result = Color.BLACK
+
+            // Using indices loop to avoid iterator allocation
+            for (i in layers.indices) {
+                val layer = layers[i]
+                if (!layer.enabled) continue
+
+                val layerColor = layer.effect.compute(pos, contexts[i])
+                result = ColorBlending.blend(
+                    base = result,
+                    overlay = layerColor,
+                    mode = layer.blendMode,
+                    opacity = layer.opacity
+                )
+            }
+
+            // Apply master dimmer
+            return (result * masterDimmer).clamped()
+        }
+    }
+
+    /**
      * Evaluate the full stack for a single 3D position.
      *
      * Reads the atomic layer snapshot without locking (wait-free).
      *
+     * Note: For bulk evaluation (e.g. all fixtures), prefer [buildFrame] and
+     * then [FrameEvaluator.evaluate] inside the loop to avoid redundant preparation.
+     *
      * @return The final composited and dimmed color.
      */
     fun evaluate(pos: Vec3, time: Float, beat: BeatState): Color {
-        val snapshot = _layersRef.value  // single atomic read
-        var result = Color.BLACK
-
-        for (layer in snapshot) {
-            if (!layer.enabled) continue
-
-            val layerColor = layer.effect.compute(pos, time, beat, layer.params)
-            result = ColorBlending.blend(
-                base = result,
-                overlay = layerColor,
-                mode = layer.blendMode,
-                opacity = layer.opacity
-            )
-        }
-
-        // Apply master dimmer
-        return (result * _masterDimmer.value).clamped()
+        return buildFrame(time, beat).evaluate(pos)
     }
 }

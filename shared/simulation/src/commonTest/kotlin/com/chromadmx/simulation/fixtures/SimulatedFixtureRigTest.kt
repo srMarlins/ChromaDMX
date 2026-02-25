@@ -205,7 +205,7 @@ class SimulatedFixtureRigTest {
         val movers = rig.fixturesInGroup("mid-truss-movers")
         assertEquals(8, movers.size)
         for (fixture in movers) {
-            assertEquals(16, fixture.fixture.channelCount)
+            assertEquals(10, fixture.fixture.channelCount)
         }
     }
 

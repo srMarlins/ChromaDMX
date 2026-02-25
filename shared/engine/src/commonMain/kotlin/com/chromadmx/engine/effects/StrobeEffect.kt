@@ -21,11 +21,15 @@ class StrobeEffect : SpatialEffect {
     override val id: String = ID
     override val name: String = "Strobe"
 
-    override fun compute(pos: Vec3, time: Float, beat: BeatState, params: EffectParams): Color {
+    override fun prepare(params: EffectParams, time: Float, beat: BeatState): Any {
         val color = params.getColor("color", Color.WHITE)
         val dutyCycle = params.getFloat("dutyCycle", 0.5f).coerceIn(0f, 1f)
 
         return if (beat.beatPhase < dutyCycle) color else Color.BLACK
+    }
+
+    override fun compute(pos: Vec3, context: Any?): Color {
+        return context as? Color ?: Color.BLACK
     }
 
     companion object {
