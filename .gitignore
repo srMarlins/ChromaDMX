@@ -56,3 +56,9 @@ coverage/
 
 # Claude
 .claude/
+
+# Playwright MCP
+.playwright-mcp/
+
+# Build logic output
+build-logic/convention/bin/
