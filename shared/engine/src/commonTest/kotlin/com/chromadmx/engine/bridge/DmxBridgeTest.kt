@@ -82,8 +82,10 @@ class DmxBridgeTest {
         val data = result[0]!!
         // Dimmer at offset 0 should be 128 (brightness = max of 0.5, 0.5, 0.5 = 0.5 -> 128)
         assertEquals(128, data[0].toInt() and 0xFF)
-        // RGB at offsets 1-3
-        assertEquals(128, data[1].toInt() and 0xFF, "Red should be ~128")
+        // RGB at offsets 1-3 should be normalized to 255 (dimmer handles brightness)
+        assertEquals(255, data[1].toInt() and 0xFF, "Red should be 255 (normalized)")
+        assertEquals(255, data[2].toInt() and 0xFF, "Green should be 255 (normalized)")
+        assertEquals(255, data[3].toInt() and 0xFF, "Blue should be 255 (normalized)")
     }
 
     @Test

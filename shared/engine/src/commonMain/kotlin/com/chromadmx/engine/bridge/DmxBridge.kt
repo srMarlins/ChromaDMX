@@ -54,18 +54,27 @@ class DmxBridge(
         color: Color
     ) {
         val clamped = color.clamped()
+        val hasDimmer = profile.channelByType(ChannelType.DIMMER) != null
+        val brightness = maxOf(clamped.r, clamped.g, clamped.b)
 
         for (channel in profile.channels) {
             val addr = channelStart + channel.offset
             if (addr < 0 || addr >= 512) continue
 
             data[addr] = when (channel.type) {
-                ChannelType.RED -> (clamped.r * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
-                ChannelType.GREEN -> (clamped.g * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
-                ChannelType.BLUE -> (clamped.b * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
+                ChannelType.RED -> {
+                    val value = if (hasDimmer && brightness > 0f) clamped.r / brightness else clamped.r
+                    (value * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
+                }
+                ChannelType.GREEN -> {
+                    val value = if (hasDimmer && brightness > 0f) clamped.g / brightness else clamped.g
+                    (value * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
+                }
+                ChannelType.BLUE -> {
+                    val value = if (hasDimmer && brightness > 0f) clamped.b / brightness else clamped.b
+                    (value * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
+                }
                 ChannelType.DIMMER -> {
-                    // Set dimmer based on the brightest color component
-                    val brightness = maxOf(clamped.r, clamped.g, clamped.b)
                     (brightness * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
                 }
                 ChannelType.WHITE -> {
