@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
@@ -40,13 +39,11 @@ import com.chromadmx.ui.components.AudienceView
 import com.chromadmx.ui.components.PresetStrip
 import com.chromadmx.ui.components.PixelSlider
 import com.chromadmx.ui.components.VenueCanvas
+import com.chromadmx.ui.components.beat.BeatBar
 import com.chromadmx.ui.components.pixelBorder
 import com.chromadmx.ui.theme.NeonCyan
-import com.chromadmx.ui.theme.NeonGreen
 import com.chromadmx.ui.theme.NeonMagenta
 import com.chromadmx.ui.theme.NeonYellow
-import com.chromadmx.ui.theme.NodeOnline
-import com.chromadmx.ui.theme.NodeWarning
 import com.chromadmx.ui.theme.PixelFontFamily
 import com.chromadmx.ui.viewmodel.StageViewModel
 
@@ -65,7 +62,7 @@ fun StagePreviewScreen(
 ) {
     val fixtures by viewModel.fixtures.collectAsState()
     val fixtureColors by viewModel.fixtureColors.collectAsState()
-    val bpm by viewModel.bpm.collectAsState()
+    val beatState by viewModel.beatState.collectAsState()
     val masterDimmer by viewModel.masterDimmer.collectAsState()
     val selectedFixtureIndex by viewModel.selectedFixtureIndex.collectAsState()
     val scenes by viewModel.allScenes.collectAsState()
@@ -134,8 +131,12 @@ fun StagePreviewScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    // Left: BPM display
-                    BpmDisplayCompact(bpm = bpm)
+                    // Left: Beat bar with BPM + phase indicators
+                    BeatBar(
+                        beatState = beatState,
+                        onTapTempo = { viewModel.tap() },
+                        modifier = Modifier.weight(1f),
+                    )
 
                     // Center: Master dimmer compact slider
                     MasterDimmerCompact(
@@ -144,23 +145,17 @@ fun StagePreviewScreen(
                         modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
                     )
 
-                    // Right: Network health indicator + settings
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    // Right: Settings gear
+                    IconButton(
+                        onClick = onSettingsClick,
+                        modifier = Modifier.size(36.dp),
                     ) {
-                        NetworkHealthIndicator()
-                        IconButton(
-                            onClick = onSettingsClick,
-                            modifier = Modifier.size(36.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Settings,
-                                contentDescription = "Settings",
-                                tint = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.size(20.dp),
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings",
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(20.dp),
+                        )
                     }
                 }
             }
@@ -213,34 +208,6 @@ fun StagePreviewScreen(
 }
 
 /**
- * Compact BPM display for the top bar.
- */
-@Composable
-private fun BpmDisplayCompact(bpm: Float) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Text(
-            text = "${bpm.toInt()}",
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontFamily = PixelFontFamily,
-                fontSize = 18.sp,
-            ),
-            color = NeonCyan,
-        )
-        Text(
-            text = "BPM",
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontFamily = PixelFontFamily,
-                fontSize = 8.sp,
-            ),
-            color = NeonCyan.copy(alpha = 0.6f),
-        )
-    }
-}
-
-/**
  * Compact master dimmer slider for the top bar.
  */
 @Composable
@@ -277,23 +244,6 @@ private fun MasterDimmerCompact(
             color = NeonMagenta.copy(alpha = 0.8f),
         )
     }
-}
-
-/**
- * Simple network health indicator — a small colored dot.
- * Green = connected, yellow = degraded, red = offline.
- * For now, defaults to green (connected state).
- */
-@Composable
-private fun NetworkHealthIndicator() {
-    // TODO: Wire to actual network health status from NetworkModule
-    val healthColor = NodeOnline
-
-    Box(
-        modifier = Modifier
-            .size(8.dp)
-            .background(healthColor),
-    )
 }
 
 /**
