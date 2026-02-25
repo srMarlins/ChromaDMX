@@ -1,6 +1,10 @@
 package com.chromadmx.ui.screen.perform
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,13 +12,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,7 +35,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.ui.components.VenueCanvas
+import com.chromadmx.ui.screen.settings.SettingsScreen
 import com.chromadmx.ui.viewmodel.PerformViewModel
+import com.chromadmx.ui.viewmodel.SettingsViewModel
+import org.koin.compose.getKoin
 import com.chromadmx.core.model.Color as DmxColor
 
 /**
@@ -42,20 +55,41 @@ fun PerformScreen(
     val masterDimmer by viewModel.masterDimmer.collectAsState()
     val layers by viewModel.layers.collectAsState()
     var activePreset by remember { mutableStateOf<Int?>(null) }
+    var showSettings by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        // Venue canvas visualization (when fixtures are mapped)
-        if (fixtures.isNotEmpty()) {
-            VenueCanvas(
-                fixtures = fixtures,
-                fixtureColors = fixtureColors,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(180.dp),
-            )
-        }
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            // Venue canvas visualization (when fixtures are mapped)
+            if (fixtures.isNotEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                ) {
+                    VenueCanvas(
+                        fixtures = fixtures,
+                        fixtureColors = fixtureColors,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+
+                    // Gear icon overlay
+                    IconButton(
+                        onClick = { showSettings = true },
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(8.dp)
+                            .size(40.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings",
+                            tint = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                        )
+                    }
+                }
+            }
 
         // Beat visualization + tap button
         Row(
@@ -157,5 +191,24 @@ fun PerformScreen(
             onPresetTap = { activePreset = it },
             modifier = Modifier.padding(bottom = 8.dp),
         )
+    }
+
+        // Settings Overlay
+        AnimatedVisibility(
+            visible = showSettings,
+            enter = slideInHorizontally(initialOffsetX = { it }),
+            exit = slideOutHorizontally(targetOffsetX = { it })
+        ) {
+            val koin = getKoin()
+            val settingsVm = remember { koin.get<SettingsViewModel>() }
+            DisposableEffect(settingsVm) {
+                onDispose { settingsVm.onCleared() }
+            }
+
+            SettingsScreen(
+                viewModel = settingsVm,
+                onClose = { showSettings = false }
+            )
+        }
     }
 }

@@ -6,6 +6,7 @@ import com.chromadmx.ui.viewmodel.AgentViewModel
 import com.chromadmx.ui.viewmodel.MapViewModel
 import com.chromadmx.ui.viewmodel.NetworkViewModel
 import com.chromadmx.ui.viewmodel.PerformViewModel
+import com.chromadmx.ui.viewmodel.SettingsViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -66,6 +67,16 @@ val uiModule = module {
         AgentViewModel(
             agent = get(),
             preGenService = get(),
+            scope = vmScope,
+        )
+    }
+
+    single {
+        val parentScope: CoroutineScope = get()
+        val childJob = SupervisorJob(parentScope.coroutineContext[Job])
+        val vmScope = CoroutineScope(Dispatchers.Default + childJob)
+        SettingsViewModel(
+            nodeDiscovery = get(),
             scope = vmScope,
         )
     }
