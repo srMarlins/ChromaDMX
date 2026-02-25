@@ -53,6 +53,7 @@ class NodeDiscovery(
     private var scope: CoroutineScope? = null
     private var pollJob: Job? = null
     private var listenJob: Job? = null
+    private var lastPollSentMs: Long = 0L
 
     /** Whether discovery is currently running. */
     val isRunning: Boolean get() = scope != null
@@ -97,6 +98,7 @@ class NodeDiscovery(
         val pollPacket = ArtNetCodec.encodeArtPoll(
             flags = 0x02  // Request ArtPollReply from targeted nodes and diagnostics
         )
+        lastPollSentMs = currentTimeMillis()
         transport.send(pollPacket, ArtNetConstants.BROADCAST_ADDRESS, ArtNetConstants.PORT)
     }
 
@@ -122,6 +124,15 @@ class NodeDiscovery(
             }
         }
 
+        val current = _nodes.value.toMutableMap()
+        val existing = current[reply.macString.ifEmpty { reply.ipString }]
+
+        val latency = if (lastPollSentMs > 0) {
+            (currentTimeMs - lastPollSentMs).coerceAtLeast(0L)
+        } else {
+            existing?.latencyMs ?: 0L
+        }
+
         val node = DmxNode(
             ipAddress = reply.ipString,
             macAddress = reply.macString,
@@ -131,10 +142,11 @@ class NodeDiscovery(
             numPorts = reply.numPorts,
             universes = universes,
             style = reply.style.toInt() and 0xFF,
-            lastSeenMs = currentTimeMs
+            lastSeenMs = currentTimeMs,
+            firstSeenMs = existing?.firstSeenMs ?: currentTimeMs,
+            latencyMs = latency
         )
 
-        val current = _nodes.value.toMutableMap()
         current[node.nodeKey] = node
         _nodes.value = current
 

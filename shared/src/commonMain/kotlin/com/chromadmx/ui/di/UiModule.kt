@@ -3,6 +3,7 @@ package com.chromadmx.ui.di
 import com.chromadmx.agent.LightingAgent
 import com.chromadmx.agent.pregen.PreGenerationService
 import com.chromadmx.ui.viewmodel.AgentViewModel
+import com.chromadmx.ui.viewmodel.MascotViewModel
 import com.chromadmx.ui.viewmodel.MapViewModel
 import com.chromadmx.ui.viewmodel.NetworkViewModel
 import com.chromadmx.ui.viewmodel.PerformViewModel
@@ -37,6 +38,7 @@ val uiModule = module {
             effectRegistry = get(),
             sceneStore = get(),
             beatClock = get(),
+            nodeDiscovery = get(),
             scope = vmScope,
         )
     }
@@ -68,6 +70,22 @@ val uiModule = module {
             agent = get(),
             preGenService = get(),
             scope = vmScope,
+        )
+    }
+
+    factory {
+        val parentScope: CoroutineScope = get()
+        val childJob = SupervisorJob(parentScope.coroutineContext[Job])
+        val vmScope = CoroutineScope(Dispatchers.Default + childJob)
+        val agent: LightingAgent = get()
+        MascotViewModel(
+            nodeDiscovery = get(),
+            scope = vmScope,
+            onDiagnose = { ip ->
+                vmScope.launch {
+                    agent.dispatchTool("diagnoseConnection", "{\"ip\": \"$ip\"}")
+                }
+            }
         )
     }
 }

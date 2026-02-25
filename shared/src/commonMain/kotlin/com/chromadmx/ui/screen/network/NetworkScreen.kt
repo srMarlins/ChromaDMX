@@ -28,6 +28,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.chromadmx.ui.util.currentTimeMillis
 import com.chromadmx.ui.viewmodel.NetworkViewModel
+import com.chromadmx.ui.viewmodel.MascotViewModel
+import com.chromadmx.ui.components.MascotView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
@@ -40,6 +42,7 @@ import kotlinx.coroutines.isActive
 @Composable
 fun NetworkScreen(
     viewModel: NetworkViewModel,
+    mascotViewModel: MascotViewModel,
 ) {
     val nodesMap by viewModel.nodes.collectAsState()
     val nodes = nodesMap.values.toList()
@@ -136,9 +139,19 @@ fun NetworkScreen(
                     NodeCard(
                         node = node,
                         health = health,
+                        currentTimeMs = currentTimeMs,
+                        onDiagnose = { mascotViewModel.triggerDiagnosis(it.ipAddress) }
                     )
                 }
             }
         }
+
+        // Mascot Alerts
+        MascotView(
+            viewModel = mascotViewModel,
+            modifier = Modifier
+                .align(Alignment.Start)
+                .padding(start = 16.dp, bottom = 16.dp)
+        )
     }
 }

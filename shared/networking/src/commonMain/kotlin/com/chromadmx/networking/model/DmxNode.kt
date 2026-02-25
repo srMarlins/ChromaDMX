@@ -27,7 +27,9 @@ data class DmxNode(
     val numPorts: Int = 0,
     val universes: List<Int> = emptyList(),
     val style: Int = 0,
-    val lastSeenMs: Long = 0L
+    val lastSeenMs: Long = 0L,
+    val firstSeenMs: Long = 0L,
+    val latencyMs: Long = 0L
 ) {
     /**
      * Unique key for this node in the device registry.

@@ -33,6 +33,7 @@ import com.chromadmx.ui.screen.perform.PerformScreen
 import com.chromadmx.ui.theme.ChromaDmxTheme
 import com.chromadmx.ui.theme.pixelGrid
 import com.chromadmx.ui.viewmodel.AgentViewModel
+import com.chromadmx.ui.viewmodel.MascotViewModel
 import com.chromadmx.ui.viewmodel.MapViewModel
 import com.chromadmx.ui.viewmodel.NetworkViewModel
 import com.chromadmx.ui.viewmodel.PerformViewModel
@@ -79,22 +80,30 @@ fun ChromaDmxApp() {
                 when (currentScreen) {
                     Screen.PERFORM -> {
                         val vm = resolveOrNull<PerformViewModel>()
-                        if (vm != null) {
-                            DisposableEffect(vm) {
-                                onDispose { vm.onCleared() }
+                        val mascotVm = resolveOrNull<MascotViewModel>()
+                        if (vm != null && mascotVm != null) {
+                            DisposableEffect(vm, mascotVm) {
+                                onDispose {
+                                    vm.onCleared()
+                                    mascotVm.dismissAlert()
+                                }
                             }
-                            PerformScreen(viewModel = vm)
+                            PerformScreen(viewModel = vm, mascotViewModel = mascotVm)
                         } else {
                             ScreenPlaceholder("Perform", "Engine services not yet registered in DI.")
                         }
                     }
                     Screen.NETWORK -> {
                         val vm = resolveOrNull<NetworkViewModel>()
-                        if (vm != null) {
-                            DisposableEffect(vm) {
-                                onDispose { vm.onCleared() }
+                        val mascotVm = resolveOrNull<MascotViewModel>()
+                        if (vm != null && mascotVm != null) {
+                            DisposableEffect(vm, mascotVm) {
+                                onDispose {
+                                    vm.onCleared()
+                                    mascotVm.dismissAlert()
+                                }
                             }
-                            NetworkScreen(viewModel = vm)
+                            NetworkScreen(viewModel = vm, mascotViewModel = mascotVm)
                         } else {
                             ScreenPlaceholder("Network", "Networking services not yet registered in DI.")
                         }

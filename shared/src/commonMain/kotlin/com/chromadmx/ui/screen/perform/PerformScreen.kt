@@ -33,9 +33,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.chromadmx.core.model.Fixture3D
-import com.chromadmx.ui.components.VenueCanvas
+import com.chromadmx.ui.components.StagePreview
+import com.chromadmx.ui.components.NodeListOverlay
+import com.chromadmx.ui.components.MascotView
 import com.chromadmx.ui.theme.DmxBackground
 import com.chromadmx.ui.viewmodel.PerformViewModel
+import com.chromadmx.ui.viewmodel.MascotViewModel
+import com.chromadmx.ui.util.currentTimeMillis
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import androidx.compose.runtime.LaunchedEffect
 import com.chromadmx.core.model.Color as DmxColor
 
 /**
@@ -48,6 +55,7 @@ import com.chromadmx.core.model.Color as DmxColor
 @Composable
 fun PerformScreen(
     viewModel: PerformViewModel,
+    mascotViewModel: MascotViewModel,
     fixtures: List<Fixture3D> = emptyList(),
     fixtureColors: List<DmxColor> = emptyList(),
 ) {
@@ -55,11 +63,23 @@ fun PerformScreen(
     val masterDimmer by viewModel.masterDimmer.collectAsState()
     val layers by viewModel.layers.collectAsState()
     val scenes by viewModel.allScenes.collectAsState()
+    val nodesMap by viewModel.nodes.collectAsState()
+    val nodes = nodesMap.values.toList()
     val genres = viewModel.availableGenres()
 
     var isLayerPanelVisible by remember { mutableStateOf(false) }
     var isLibraryVisible by remember { mutableStateOf(false) }
+    var isNodeOverlayVisible by remember { mutableStateOf(false) }
     var activePreset by remember { mutableStateOf<String?>(null) }
+
+    // Real clock for health calculation
+    var currentTimeMs by remember { mutableStateOf(currentTimeMillis()) }
+    LaunchedEffect(Unit) {
+        while (isActive) {
+            currentTimeMs = currentTimeMillis()
+            delay(1000)
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -69,16 +89,21 @@ fun PerformScreen(
         Column(
             modifier = Modifier.fillMaxSize(),
         ) {
-            // Top section: Venue Canvas with Overlays
+            // Top section: Stage Preview with Top Bar
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
             ) {
                 // Background stage preview
-                VenueCanvas(
+                StagePreview(
                     fixtures = fixtures,
                     fixtureColors = fixtureColors,
+                    beatState = beatState,
+                    nodes = nodes,
+                    currentTimeMs = currentTimeMs,
+                    onSettingsClick = { /* TODO */ },
+                    onNodeHealthClick = { isNodeOverlayVisible = true },
                     modifier = Modifier.fillMaxSize(),
                 )
 
@@ -202,5 +227,23 @@ fun PerformScreen(
                 onClose = { isLibraryVisible = false }
             )
         }
+
+        // Node List Overlay
+        if (isNodeOverlayVisible) {
+            NodeListOverlay(
+                nodes = nodes,
+                currentTimeMs = currentTimeMs,
+                onDismiss = { isNodeOverlayVisible = false },
+                onDiagnose = { mascotViewModel.triggerDiagnosis(it.ipAddress) }
+            )
+        }
+
+        // Mascot Alerts
+        MascotView(
+            viewModel = mascotViewModel,
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(bottom = 80.dp) // Above preset strip
+        )
     }
 }

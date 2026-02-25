@@ -28,8 +28,19 @@ import com.chromadmx.networking.model.DmxNode
 fun NodeCard(
     node: DmxNode,
     health: NodeHealth,
+    currentTimeMs: Long,
+    onDiagnose: (DmxNode) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    val uptimeS = if (node.firstSeenMs > 0) (currentTimeMs - node.firstSeenMs) / 1000 else 0
+    val uptimeFormatted = if (uptimeS > 3600) {
+        "${uptimeS / 3600}h ${(uptimeS % 3600) / 60}m"
+    } else if (uptimeS > 60) {
+        "${uptimeS / 60}m ${uptimeS % 60}s"
+    } else {
+        "${uptimeS}s"
+    }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -77,6 +88,27 @@ fun NodeCard(
             }
             if (node.firmwareVersion > 0) {
                 DetailRow("Firmware", "v${node.firmwareVersion}")
+            }
+            DetailRow("Latency", "${node.latencyMs}ms")
+            DetailRow("Uptime", uptimeFormatted)
+
+            Spacer(Modifier.height(8.dp))
+
+            com.chromadmx.ui.components.PixelButton(
+                onClick = { onDiagnose(node) },
+                modifier = Modifier.fillMaxWidth(),
+                backgroundColor = when(health) {
+                    NodeHealth.ONLINE -> MaterialTheme.colorScheme.primaryContainer
+                    NodeHealth.WARNING -> com.chromadmx.ui.theme.NodeWarning.copy(alpha = 0.2f)
+                    else -> com.chromadmx.ui.theme.NodeOffline.copy(alpha = 0.2f)
+                },
+                contentColor = MaterialTheme.colorScheme.onSurface
+            ) {
+                Text(
+                    "DIAGNOSE",
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
             }
         }
     }
