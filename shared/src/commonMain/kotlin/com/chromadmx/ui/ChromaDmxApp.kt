@@ -14,11 +14,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
+import com.chromadmx.simulation.fixtures.RigPreset
+import com.chromadmx.simulation.fixtures.SimulatedFixtureRig
 import com.chromadmx.ui.mascot.MascotOverlay
 import com.chromadmx.ui.navigation.AppState
 import com.chromadmx.ui.navigation.AppStateManager
 import com.chromadmx.ui.screen.onboarding.OnboardingScreen
 import com.chromadmx.ui.screen.settings.SettingsScreen
+import com.chromadmx.ui.screen.simulation.RigPresetSelector
 import com.chromadmx.ui.screen.stage.StagePreviewScreen
 import com.chromadmx.ui.theme.ChromaDmxTheme
 import com.chromadmx.ui.viewmodel.MascotViewModel
@@ -31,6 +34,10 @@ import org.koin.compose.getKoin
  *
  * Uses [AppStateManager] for navigation: Onboarding -> StagePreview <-> Settings.
  * No tab bar. Single main screen with contextual overlays.
+ *
+ * Simulation mode is coordinated between [SettingsViewModel] (toggle/preset) and
+ * [StageViewModel] (badge visibility, fixture count). The rig selector is accessible
+ * from both the onboarding flow and the settings screen.
  */
 @Composable
 fun ChromaDmxApp() {
@@ -39,6 +46,13 @@ fun ChromaDmxApp() {
         val appStateManager = remember { AppStateManager(isFirstLaunch = false) }
         val currentState by appStateManager.currentState.collectAsState()
 
+        val settingsVm = resolveOrNull<SettingsViewModel>()
+        val stageVm = resolveOrNull<StageViewModel>()
+
+        // Read simulation state from SettingsViewModel
+        val simulationEnabled = settingsVm?.simulationEnabled?.collectAsState()?.value ?: false
+        val selectedRigPreset = settingsVm?.selectedRigPreset?.collectAsState()?.value ?: RigPreset.SMALL_DJ
+
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background,
@@ -46,13 +60,24 @@ fun ChromaDmxApp() {
             Box(modifier = Modifier.fillMaxSize()) {
                 when (val state = currentState) {
                     is AppState.Onboarding -> {
+                        val simFixtureCount = if (simulationEnabled) {
+                            SimulatedFixtureRig(selectedRigPreset).fixtureCount
+                        } else {
+                            0
+                        }
+
                         OnboardingScreen(
                             step = state.step,
                             onAdvance = { appStateManager.advanceOnboarding() },
+                            onVirtualStage = {
+                                // Navigate to rig selector, returning to onboarding afterward
+                                appStateManager.navigateTo(AppState.RigSelection(returnToOnboarding = true))
+                            },
+                            isSimulationMode = simulationEnabled,
+                            simulationFixtureCount = simFixtureCount,
                         )
                     }
                     is AppState.StagePreview -> {
-                        val stageVm = resolveOrNull<StageViewModel>()
                         if (stageVm != null) {
                             StagePreviewScreen(
                                 viewModel = stageVm,
@@ -63,7 +88,6 @@ fun ChromaDmxApp() {
                         }
                     }
                     is AppState.Settings -> {
-                        val settingsVm = resolveOrNull<SettingsViewModel>()
                         if (settingsVm != null) {
                             SettingsScreen(
                                 viewModel = settingsVm,
@@ -73,9 +97,38 @@ fun ChromaDmxApp() {
                             ScreenPlaceholder("Settings", "Services not registered.")
                         }
                     }
+                    is AppState.RigSelection -> {
+                        RigPresetSelector(
+                            selectedPreset = selectedRigPreset,
+                            onSelectPreset = { preset ->
+                                settingsVm?.setRigPreset(preset)
+                            },
+                            onConfirm = {
+                                // Enable simulation with the selected preset
+                                settingsVm?.toggleSimulation(true)
+
+                                val rig = SimulatedFixtureRig(selectedRigPreset)
+                                stageVm?.enableSimulation(
+                                    presetName = selectedRigPreset.name,
+                                    fixtureCount = rig.fixtureCount,
+                                )
+
+                                if (state.returnToOnboarding) {
+                                    // Return to onboarding at FIXTURE_SCAN step
+                                    appStateManager.navigateTo(
+                                        AppState.Onboarding(
+                                            com.chromadmx.ui.navigation.OnboardingStep.FIXTURE_SCAN
+                                        )
+                                    )
+                                } else {
+                                    appStateManager.navigateBack()
+                                }
+                            },
+                        )
+                    }
                 }
 
-                // Pixel mascot overlay — always visible on top of all screens
+                // Pixel mascot overlay -- always visible on top of all screens
                 val mascotVm = resolveOrNull<MascotViewModel>()
                 if (mascotVm != null) {
                     DisposableEffect(mascotVm) {
