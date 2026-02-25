@@ -9,7 +9,6 @@ import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.core.model.Vec3
 import com.chromadmx.engine.effect.EffectLayer
 import com.chromadmx.engine.effect.EffectRegistry
-import com.chromadmx.engine.effect.EffectStack
 import com.chromadmx.engine.effects.Chase3DEffect
 import com.chromadmx.engine.effects.GradientSweep3DEffect
 import com.chromadmx.engine.effects.PerlinNoise3DEffect
@@ -19,7 +18,6 @@ import com.chromadmx.engine.effects.StrobeEffect
 import com.chromadmx.engine.pipeline.EffectEngine
 import com.chromadmx.simulation.camera.SimulatedCamera
 import com.chromadmx.simulation.camera.SimulatedCamera.FixtureState
-import com.chromadmx.simulation.di.simulationModule
 import com.chromadmx.simulation.fixtures.RigPreset
 import com.chromadmx.simulation.fixtures.SimulatedFixtureRig
 import com.chromadmx.simulation.network.SimulatedDmxNode
@@ -29,10 +27,8 @@ import com.chromadmx.tempo.tap.TapTempoClock
 import com.chromadmx.vision.camera.GrayscaleFrame
 import com.chromadmx.vision.detection.BlobDetector
 import com.chromadmx.vision.mapping.SpatialMapBuilder
-import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
