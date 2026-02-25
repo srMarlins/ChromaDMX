@@ -22,6 +22,9 @@ sealed class AppState {
      *                           (FIXTURE_SCAN step). Otherwise returns to settings.
      */
     data class RigSelection(val returnToOnboarding: Boolean = false) : AppState()
+
+    /** BLE provisioning screen for configuring ESP32 DMX nodes. */
+    data object BleProvisioning : AppState()
 }
 
 /**
