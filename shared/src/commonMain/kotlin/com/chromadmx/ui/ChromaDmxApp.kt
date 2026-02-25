@@ -1,6 +1,8 @@
 package com.chromadmx.ui
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -23,13 +25,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.chromadmx.ui.navigation.Screen
+import com.chromadmx.ui.screen.agent.AgentScreen
+import com.chromadmx.ui.screen.map.MapScreen
+import com.chromadmx.ui.screen.network.NetworkScreen
+import com.chromadmx.ui.screen.perform.PerformScreen
 import com.chromadmx.ui.theme.ChromaDmxTheme
+import com.chromadmx.ui.viewmodel.AgentViewModel
+import com.chromadmx.ui.viewmodel.MapViewModel
+import com.chromadmx.ui.viewmodel.NetworkViewModel
+import com.chromadmx.ui.viewmodel.PerformViewModel
+import org.koin.compose.getKoin
 
 /**
  * Root composable for the ChromaDMX application.
  *
  * Hosts the bottom navigation bar and delegates to per-screen composables.
  * Uses simple enum-based navigation (no Jetpack Navigation) for KMP compatibility.
+ *
+ * ViewModels are resolved from Koin. Screens whose ViewModel dependencies
+ * are not yet registered (EffectEngine, NodeDiscovery) will show a placeholder.
  */
 @Composable
 fun ChromaDmxApp() {
@@ -58,22 +72,62 @@ fun ChromaDmxApp() {
         ) { padding ->
             Box(
                 modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.Center,
             ) {
                 when (currentScreen) {
-                    Screen.PERFORM -> ScreenPlaceholder("Perform", "Effect controls, beat viz, master dimmer")
-                    Screen.NETWORK -> ScreenPlaceholder("Network", "Node list, status, universe mapping")
-                    Screen.MAP -> ScreenPlaceholder("Map", "Camera preview, scan controls, fixture editor")
-                    Screen.AGENT -> ScreenPlaceholder("Agent", "Chat interface, tool visualization")
+                    Screen.PERFORM -> {
+                        val vm = resolveOrNull<PerformViewModel>()
+                        if (vm != null) {
+                            PerformScreen(viewModel = vm)
+                        } else {
+                            ScreenPlaceholder("Perform", "Engine services not yet registered in DI.")
+                        }
+                    }
+                    Screen.NETWORK -> {
+                        val vm = resolveOrNull<NetworkViewModel>()
+                        if (vm != null) {
+                            NetworkScreen(viewModel = vm)
+                        } else {
+                            ScreenPlaceholder("Network", "Networking services not yet registered in DI.")
+                        }
+                    }
+                    Screen.MAP -> {
+                        val vm = resolveOrNull<MapViewModel>()
+                        if (vm != null) {
+                            MapScreen(viewModel = vm)
+                        } else {
+                            ScreenPlaceholder("Map", "Map services not yet registered in DI.")
+                        }
+                    }
+                    Screen.AGENT -> {
+                        val vm = resolveOrNull<AgentViewModel>()
+                        if (vm != null) {
+                            AgentScreen(viewModel = vm)
+                        } else {
+                            ScreenPlaceholder("Agent", "Agent services not yet registered in DI.")
+                        }
+                    }
                 }
             }
         }
     }
 }
 
+/**
+ * Safely resolve a dependency from Koin, returning null if not available.
+ */
+@Composable
+private inline fun <reified T : Any> resolveOrNull(): T? {
+    val koin = getKoin()
+    return remember {
+        runCatching { koin.get<T>() }.getOrNull()
+    }
+}
+
 @Composable
 private fun ScreenPlaceholder(title: String, subtitle: String) {
-    androidx.compose.foundation.layout.Column(
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
