@@ -1,7 +1,7 @@
 package com.chromadmx.ui.mascot
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -27,15 +27,13 @@ import kotlin.math.roundToInt
  * Full-screen overlay that positions the mascot sprite and speech bubble.
  *
  * The mascot is draggable and tappable (opens chat panel).
- * Speech bubbles appear above the mascot.
- *
- * @param onAction Callback invoked when the user taps an action button in a speech bubble.
+ * Speech bubbles appear above the mascot. Action buttons route through
+ * [MascotViewModel.onBubbleAction] using the bubble's [SpeechBubble.actionId].
  */
 @Composable
 fun MascotOverlay(
     viewModel: MascotViewModel,
     onMascotTap: () -> Unit,
-    onAction: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val mascotState by viewModel.mascotState.collectAsState()
@@ -56,16 +54,12 @@ fun MascotOverlay(
                 .align(Alignment.BottomEnd)
                 .padding(16.dp)
                 .offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
+                .clickable { onMascotTap() }
                 .pointerInput(Unit) {
                     detectDragGestures { change, dragAmount ->
                         change.consume()
                         offsetX += dragAmount.x
                         offsetY += dragAmount.y
-                    }
-                }
-                .pointerInput(Unit) {
-                    detectTapGestures {
-                        onMascotTap()
                     }
                 },
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -75,7 +69,7 @@ fun MascotOverlay(
                 SpeechBubbleView(
                     bubble = currentBubble!!,
                     onDismiss = { viewModel.dismissBubble() },
-                    onAction = onAction,
+                    onAction = { actionId -> viewModel.onBubbleAction(actionId) },
                 )
                 Spacer(modifier = Modifier.height(4.dp))
             }

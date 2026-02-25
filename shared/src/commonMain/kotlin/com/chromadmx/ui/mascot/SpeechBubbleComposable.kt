@@ -24,7 +24,7 @@ import com.chromadmx.ui.theme.NodeOffline
 @Composable
 fun SpeechBubbleView(
     bubble: SpeechBubble,
-    onAction: (() -> Unit)? = null,
+    onAction: ((String?) -> Unit)? = null,
     onDismiss: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -54,7 +54,7 @@ fun SpeechBubbleView(
                 text = bubble.actionLabel,
                 style = MaterialTheme.typography.labelMedium,
                 color = borderColor,
-                modifier = Modifier.clickable { onAction() },
+                modifier = Modifier.clickable { onAction(bubble.actionId) },
             )
         }
     }

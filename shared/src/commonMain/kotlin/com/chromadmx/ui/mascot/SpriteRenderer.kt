@@ -26,6 +26,7 @@ fun SpriteRenderer(
     size: Dp = 64.dp,
 ) {
     Canvas(modifier = modifier.size(size)) {
+        if (frame.width == 0 || frame.height == 0) return@Canvas
         val pixelW = this.size.width / frame.width
         val pixelH = this.size.height / frame.height
 

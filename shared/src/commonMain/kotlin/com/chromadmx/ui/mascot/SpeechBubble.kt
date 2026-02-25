@@ -15,11 +15,13 @@ enum class BubbleType {
  * @property text The message text.
  * @property type The bubble type (affects styling).
  * @property actionLabel Optional action button label (for ACTION type).
+ * @property actionId Optional identifier routing the action to the ViewModel handler.
  * @property autoDismissMs Auto-dismiss after this many ms (0 = manual dismiss only).
  */
 data class SpeechBubble(
     val text: String,
     val type: BubbleType = BubbleType.INFO,
     val actionLabel: String? = null,
+    val actionId: String? = null,
     val autoDismissMs: Long = 4000L
 )

@@ -147,16 +147,16 @@ object MascotSprites {
         "____TOOTTOOTT___"
     )
 
-    // Confused frame -- tilted head
+    // Confused frame -- tilted head (antenna leans right, head shifted right at top)
     private val CONFUSED_FRAME = spriteFrame(
         "____TTTTTTTT____",
-        "____TTTOGTTT____",
-        "____TTTOBTTT____",
+        "_____TTTOGTTT___",
+        "_____TTTOBTTT___",
         "____TOOOOOOOT___",
-        "____OBVVBBVBOT__",
-        "____OBBBBBBBBT__",
-        "____OBBBBBBBBT__",
-        "____TOOOOOOOOT__",
+        "___TOBVVBBVBOT__",
+        "___OBBBBBBBBT___",
+        "___OBBBBBBBBT___",
+        "___TOOOOOOOOT___",
         "____TOBBBBOT____",
         "__TTOBBBBBBOTT__",
         "__TOBBBBBBBBOT__",

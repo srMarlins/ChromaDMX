@@ -48,6 +48,7 @@ class MascotViewModel(
     private var autoDismissJob: Job? = null
     private var idleTimerJob: Job? = null
     private var beatSyncJob: Job? = null
+    private var stateSyncJob: Job? = null
 
     /** Whether the dancing state was auto-triggered by BeatClock (vs. manual). */
     private var beatDriven = false
@@ -66,7 +67,23 @@ class MascotViewModel(
     init {
         animationController.start()
         startBeatSync()
+        startStateSync()
         resetIdleTimer()
+    }
+
+    /**
+     * Keep [_mascotState] in sync with the animation controller's state.
+     *
+     * This is necessary because the controller can autonomously transition
+     * back to IDLE when a non-looping animation completes, and the ViewModel
+     * must reflect that change.
+     */
+    private fun startStateSync() {
+        stateSyncJob = scope.launch {
+            animationController.currentState.collect { controllerState ->
+                _mascotState.value = controllerState
+            }
+        }
     }
 
     // ── Beat-reactive sync ──────────────────────────────────────────
@@ -130,6 +147,20 @@ class MascotViewModel(
         resetIdleTimer()
     }
 
+    /**
+     * Handle a speech bubble action by its [actionId].
+     *
+     * Override points can be added here as new action IDs are introduced.
+     * After handling, the bubble is dismissed automatically.
+     */
+    fun onBubbleAction(actionId: String?) {
+        when (actionId) {
+            // Extensible: add action handlers as features are wired
+            else -> { /* unknown action — no-op */ }
+        }
+        dismissBubble()
+    }
+
     fun triggerHappy() {
         _mascotState.value = MascotState.HAPPY
         animationController.transitionTo(MascotState.HAPPY)
@@ -177,5 +208,6 @@ class MascotViewModel(
         autoDismissJob?.cancel()
         idleTimerJob?.cancel()
         beatSyncJob?.cancel()
+        stateSyncJob?.cancel()
     }
 }
