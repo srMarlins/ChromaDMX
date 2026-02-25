@@ -19,17 +19,19 @@ class PreGenerationServiceTest {
     @Test
     fun generateScenesCreatesRequestedCount() = runTest {
         val (service, sceneStore) = createService()
+        val initialCount = sceneStore.list().size
         val scenes = service.generate("techno", 3)
         assertEquals(3, scenes.size)
-        assertEquals(3, sceneStore.list().size)
+        assertEquals(initialCount + 3, sceneStore.list().size)
     }
 
     @Test
     fun generatedScenesAreSavedToStore() = runTest {
         val (service, sceneStore) = createService()
+        val initialCount = sceneStore.list().size
         service.generate("ambient", 2)
         val names = sceneStore.list()
-        assertEquals(2, names.size)
+        assertEquals(initialCount + 2, names.size)
         // Each scene should be loadable
         names.forEach { name ->
             assertNotNull(sceneStore.load(name))

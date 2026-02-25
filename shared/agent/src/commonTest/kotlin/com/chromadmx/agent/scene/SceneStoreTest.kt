@@ -53,10 +53,11 @@ class SceneStoreTest {
     @Test
     fun saveOverwritesExisting() {
         val store = SceneStore()
+        val initialCount = store.list().size
         store.save(ScenePreset(name = "X", masterDimmer = 0.5f))
         store.save(ScenePreset(name = "X", masterDimmer = 1.0f))
         assertEquals(1.0f, store.load("X")!!.masterDimmer)
-        assertEquals(1, store.list().size)
+        assertEquals(initialCount + 1, store.list().size)
     }
 
     @Test
