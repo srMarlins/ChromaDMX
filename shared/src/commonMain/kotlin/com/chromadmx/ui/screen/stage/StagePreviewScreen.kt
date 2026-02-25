@@ -2,6 +2,7 @@ package com.chromadmx.ui.screen.stage
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.chromadmx.ui.components.VenueCanvas
+import com.chromadmx.ui.components.beat.BeatBar
 import com.chromadmx.ui.viewmodel.StageViewModel
 
 /**
@@ -34,7 +36,7 @@ fun StagePreviewScreen(
     modifier: Modifier = Modifier,
 ) {
     val fixtures by viewModel.fixtures.collectAsState()
-    val bpm by viewModel.bpm.collectAsState()
+    val beatState by viewModel.beatState.collectAsState()
     val masterDimmer by viewModel.masterDimmer.collectAsState()
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -45,24 +47,29 @@ fun StagePreviewScreen(
             modifier = Modifier.fillMaxSize()
         )
 
-        // Top bar
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+        // Top bar: beat visualization + settings
+        Column(
+            modifier = Modifier.fillMaxWidth().align(Alignment.TopStart),
         ) {
-            Text(
-                text = "${bpm.toInt()} BPM",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
-
-            IconButton(onClick = onSettingsClick) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = "Settings",
-                    tint = MaterialTheme.colorScheme.onSurface,
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, top = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // Beat bar with BPM, phase indicators (takes most of the width)
+                BeatBar(
+                    beatState = beatState,
+                    onTapTempo = { viewModel.tap() },
+                    modifier = Modifier.weight(1f),
                 )
+
+                IconButton(onClick = onSettingsClick) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Settings",
+                        tint = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
             }
         }
 
