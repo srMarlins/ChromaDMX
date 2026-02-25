@@ -18,6 +18,13 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(project(":shared:core"))
+            api(project(":shared:engine"))
+            api(project(":shared:networking"))
+            api(project(":shared:tempo"))
+            api(project(":shared:simulation"))
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose)
+            implementation(libs.kotlinx.coroutines.core)
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
