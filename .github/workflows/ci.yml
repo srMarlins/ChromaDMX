@@ -29,8 +29,29 @@ jobs:
       - name: Common metadata compilation
         run: ./gradlew :shared:compileCommonMainKotlinMetadata
 
-      - name: Run all unit tests
-        run: ./gradlew testDebugUnitTest
+      - name: Run all unit tests (core, networking, tempo, engine, simulation, vision, agent)
+        run: >-
+          ./gradlew
+          :shared:core:testDebugUnitTest
+          :shared:networking:testDebugUnitTest
+          :shared:tempo:testDebugUnitTest
+          :shared:engine:testDebugUnitTest
+          :shared:simulation:testDebugUnitTest
+          :shared:vision:testDebugUnitTest
+          :shared:agent:testDebugUnitTest
+
+      - name: Print test summary
+        if: always()
+        run: |
+          echo "=== Test Results ==="
+          for dir in shared/core shared/networking shared/tempo shared/engine shared/simulation shared/vision shared/agent; do
+            xml="$dir/build/test-results/testDebugUnitTest"
+            if [ -d "$xml" ]; then
+              tests=$(grep -roh 'tests="[0-9]*"' "$xml" | head -1 | grep -o '[0-9]*')
+              failures=$(grep -roh 'failures="[0-9]*"' "$xml" | head -1 | grep -o '[0-9]*')
+              echo "  $dir: ${tests:-0} tests, ${failures:-0} failures"
+            fi
+          done
 
       - name: Build Android APK
         run: ./gradlew :android:app:assembleDebug
