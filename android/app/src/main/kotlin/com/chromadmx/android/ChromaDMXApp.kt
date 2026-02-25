@@ -2,6 +2,7 @@ package com.chromadmx.android
 
 import android.app.Application
 import com.chromadmx.android.di.appModule
+import com.chromadmx.ui.di.uiModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
@@ -18,7 +19,7 @@ class ChromaDMXApp : Application() {
         startKoin {
             androidLogger(Level.ERROR)
             androidContext(this@ChromaDMXApp)
-            modules(appModule)
+            modules(appModule, uiModule)
         }
     }
 }
