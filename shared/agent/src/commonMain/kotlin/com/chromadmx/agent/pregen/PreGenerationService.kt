@@ -35,8 +35,7 @@ class PreGenerationService(
     private val _progress = MutableStateFlow(PreGenProgress())
     val progress: StateFlow<PreGenProgress> = _progress.asStateFlow()
 
-    @Volatile
-    private var cancelled = false
+    private val _cancelled = MutableStateFlow(false)
 
     /**
      * Generate [count] scenes for the given [genre].
@@ -50,20 +49,20 @@ class PreGenerationService(
     suspend fun generate(genre: String, count: Int): List<Scene> {
         if (count <= 0) return emptyList()
 
-        cancelled = false
+        _cancelled.value = false
         _progress.value = PreGenProgress(current = 0, total = count, isRunning = true)
 
         val scenes = mutableListOf<Scene>()
 
         for (i in 1..count) {
-            if (cancelled) break
+            if (_cancelled.value) break
 
             val sceneName = "${genre}_scene_$i"
             val scene = generateSceneForGenre(genre, sceneName, i)
             sceneStore.save(scene)
             scenes.add(scene)
 
-            _progress.value = PreGenProgress(current = i, total = count, isRunning = i < count && !cancelled)
+            _progress.value = PreGenProgress(current = i, total = count, isRunning = i < count && !_cancelled.value)
         }
 
         _progress.value = _progress.value.copy(isRunning = false)
@@ -74,7 +73,7 @@ class PreGenerationService(
      * Cancel an in-progress generation.
      */
     fun cancel() {
-        cancelled = true
+        _cancelled.value = true
     }
 
     /**
