@@ -25,6 +25,7 @@ import org.koin.dsl.module
  * - NetworkViewModel requires: NodeDiscovery
  * - MapViewModel: standalone
  * - AgentViewModel: requires LightingAgent, PreGenerationService
+ * - SettingsViewModel (single): requires NodeDiscovery
  */
 val uiModule = module {
     // CoroutineScope provided by chromaDiModule

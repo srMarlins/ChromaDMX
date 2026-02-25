@@ -24,7 +24,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -91,107 +90,107 @@ fun PerformScreen(
                 }
             }
 
-        // Beat visualization + tap button
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            BeatVisualization(
-                beatState = beatState,
-                modifier = Modifier.weight(1f),
-            )
-            FilledTonalButton(
-                onClick = { viewModel.tap() },
-                modifier = Modifier.padding(start = 16.dp),
+            // Beat visualization + tap button
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("TAP")
+                BeatVisualization(
+                    beatState = beatState,
+                    modifier = Modifier.weight(1f),
+                )
+                FilledTonalButton(
+                    onClick = { viewModel.tap() },
+                    modifier = Modifier.padding(start = 16.dp),
+                ) {
+                    Text("TAP")
+                }
             }
-        }
 
-        // Master dimmer
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = "Master",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            MasterDimmerSlider(
-                value = masterDimmer,
-                onValueChange = { viewModel.setMasterDimmer(it) },
-                modifier = Modifier.weight(1f),
-            )
-        }
-
-        Spacer(Modifier.height(8.dp))
-
-        // Effect layers header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = "Effect Layers",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-            OutlinedButton(onClick = { viewModel.addLayer() }) {
-                Text("+ Add Layer")
-            }
-        }
-
-        // Layer cards
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-        ) {
-            itemsIndexed(layers, key = { index, layer -> "${index}_${layer.effect.id}" }) { index, layer ->
-                EffectLayerCard(
-                    layerIndex = index,
-                    layer = layer,
-                    onOpacityChange = { viewModel.setLayerOpacity(index, it) },
-                    onToggleEnabled = { viewModel.toggleLayerEnabled(index) },
-                    onRemove = { viewModel.removeLayer(index) },
+            // Master dimmer
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "Master",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                MasterDimmerSlider(
+                    value = masterDimmer,
+                    onValueChange = { viewModel.setMasterDimmer(it) },
+                    modifier = Modifier.weight(1f),
                 )
             }
 
-            if (layers.isEmpty()) {
-                item {
-                    Text(
-                        text = "No effect layers. Tap '+ Add Layer' to begin.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp),
-                    )
+            Spacer(Modifier.height(8.dp))
+
+            // Effect layers header
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "Effect Layers",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                OutlinedButton(onClick = { viewModel.addLayer() }) {
+                    Text("+ Add Layer")
                 }
             }
-        }
 
-        // Scene presets
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = "Scene Presets",
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(horizontal = 16.dp),
-        )
-        Spacer(Modifier.height(4.dp))
-        ScenePresetRow(
-            activePreset = activePreset,
-            onPresetTap = { activePreset = it },
-            modifier = Modifier.padding(bottom = 8.dp),
-        )
-    }
+            // Layer cards
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+            ) {
+                itemsIndexed(layers, key = { index, layer -> "${index}_${layer.effect.id}" }) { index, layer ->
+                    EffectLayerCard(
+                        layerIndex = index,
+                        layer = layer,
+                        onOpacityChange = { viewModel.setLayerOpacity(index, it) },
+                        onToggleEnabled = { viewModel.toggleLayerEnabled(index) },
+                        onRemove = { viewModel.removeLayer(index) },
+                    )
+                }
+
+                if (layers.isEmpty()) {
+                    item {
+                        Text(
+                            text = "No effect layers. Tap '+ Add Layer' to begin.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                        )
+                    }
+                }
+            }
+
+            // Scene presets
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "Scene Presets",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+            Spacer(Modifier.height(4.dp))
+            ScenePresetRow(
+                activePreset = activePreset,
+                onPresetTap = { activePreset = it },
+                modifier = Modifier.padding(bottom = 8.dp),
+            )
+        }
 
         // Settings Overlay
         AnimatedVisibility(
@@ -201,9 +200,6 @@ fun PerformScreen(
         ) {
             val koin = getKoin()
             val settingsVm = remember { koin.get<SettingsViewModel>() }
-            DisposableEffect(settingsVm) {
-                onDispose { settingsVm.onCleared() }
-            }
 
             SettingsScreen(
                 viewModel = settingsVm,

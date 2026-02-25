@@ -53,30 +53,18 @@ private fun Modifier.drawPixelBorder(color: Color, pixelSizeDp: Dp) = this.then(
         val width = size.width
         val height = size.height
 
-        // Draw top border
+        // Draw horizontal borders (top and bottom)
         var x = 0f
         while (x < width) {
             drawRect(color, Offset(x, 0f), Size(pixelSize, pixelSize))
-            x += pixelSize * 2
-        }
-
-        // Draw bottom border
-        x = 0f
-        while (x < width) {
             drawRect(color, Offset(x, height - pixelSize), Size(pixelSize, pixelSize))
             x += pixelSize * 2
         }
 
-        // Draw left border
+        // Draw vertical borders (left and right)
         var y = 0f
         while (y < height) {
             drawRect(color, Offset(0f, y), Size(pixelSize, pixelSize))
-            y += pixelSize * 2
-        }
-
-        // Draw right border
-        y = 0f
-        while (y < height) {
             drawRect(color, Offset(width - pixelSize, y), Size(pixelSize, pixelSize))
             y += pixelSize * 2
         }

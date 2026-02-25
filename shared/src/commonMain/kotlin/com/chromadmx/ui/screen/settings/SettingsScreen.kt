@@ -46,6 +46,7 @@ import com.chromadmx.agent.config.AgentConfig
 import com.chromadmx.core.model.FixtureProfile
 import com.chromadmx.simulation.fixtures.RigPreset
 import com.chromadmx.ui.components.PixelCard
+import com.chromadmx.ui.viewmodel.AgentStatus
 import com.chromadmx.ui.viewmodel.SettingsViewModel
 
 @Composable
@@ -346,7 +347,7 @@ fun SimulationSettingsSection(
 @Composable
 fun AgentSettingsSection(
     config: AgentConfig,
-    status: String,
+    status: AgentStatus,
     onConfigChange: (AgentConfig) -> Unit,
     onTestConnection: () -> Unit
 ) {
@@ -370,7 +371,7 @@ fun AgentSettingsSection(
                     Text("Model: ${config.modelId}")
                 }
                 DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                    listOf("gemini_2_5_flash", "gemini_2_5_pro", "sonnet_4", "sonnet_4_5").forEach { model ->
+                    SettingsViewModel.AVAILABLE_MODELS.forEach { model ->
                         DropdownMenuItem(
                             text = { Text(model) },
                             onClick = {
@@ -404,14 +405,23 @@ fun AgentSettingsSection(
                     Text("TEST CONNECTION")
                 }
 
-                if (status.isNotEmpty()) {
+                val statusText = when (status) {
+                    is AgentStatus.Idle -> null
+                    is AgentStatus.Testing -> "Testing..."
+                    is AgentStatus.Success -> "Connection Successful!"
+                    is AgentStatus.Error -> "Failed: ${status.message}"
+                }
+                val statusColor = when (status) {
+                    is AgentStatus.Success -> MaterialTheme.colorScheme.primary
+                    is AgentStatus.Error -> MaterialTheme.colorScheme.error
+                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                }
+
+                if (statusText != null) {
                     Text(
-                        text = status,
+                        text = statusText,
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (status.contains("Successful"))
-                            MaterialTheme.colorScheme.primary
-                        else
-                            MaterialTheme.colorScheme.error,
+                        color = statusColor,
                         modifier = Modifier.weight(1f)
                     )
                 }

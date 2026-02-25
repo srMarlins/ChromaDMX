@@ -3,15 +3,13 @@ package com.chromadmx.ui.screen.map
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.HorizontalDivider
@@ -19,9 +17,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,7 +52,7 @@ fun MapScreen(
             // Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
@@ -89,12 +85,12 @@ fun MapScreen(
                     .fillMaxWidth(),
             )
 
-        HorizontalDivider(
-            color = MaterialTheme.colorScheme.surfaceVariant,
-            thickness = 1.dp,
-        )
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                thickness = 1.dp,
+            )
 
-        // Fixture list (bottom half)
+            // Fixture list (bottom half)
             FixtureListPanel(
                 fixtures = fixtures,
                 selectedIndex = selectedIndex,
@@ -114,9 +110,6 @@ fun MapScreen(
         ) {
             val koin = getKoin()
             val settingsVm = remember { koin.get<SettingsViewModel>() }
-            DisposableEffect(settingsVm) {
-                onDispose { settingsVm.onCleared() }
-            }
 
             SettingsScreen(
                 viewModel = settingsVm,

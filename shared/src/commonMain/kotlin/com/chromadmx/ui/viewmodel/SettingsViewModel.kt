@@ -11,6 +11,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+/**
+ * Represents the connection test status for the AI agent.
+ */
+sealed class AgentStatus {
+    data object Idle : AgentStatus()
+    data object Testing : AgentStatus()
+    data object Success : AgentStatus()
+    data class Error(val message: String) : AgentStatus()
+}
+
 class SettingsViewModel(
     private val nodeDiscovery: NodeDiscovery,
     private val scope: CoroutineScope,
@@ -46,8 +56,8 @@ class SettingsViewModel(
     private val _agentConfig = MutableStateFlow(AgentConfig())
     val agentConfig: StateFlow<AgentConfig> = _agentConfig.asStateFlow()
 
-    private val _agentStatus = MutableStateFlow("")
-    val agentStatus: StateFlow<String> = _agentStatus.asStateFlow()
+    private val _agentStatus = MutableStateFlow<AgentStatus>(AgentStatus.Idle)
+    val agentStatus: StateFlow<AgentStatus> = _agentStatus.asStateFlow()
 
     fun setPollInterval(interval: Long) {
         _pollInterval.value = interval
@@ -101,12 +111,12 @@ class SettingsViewModel(
 
     fun testAgentConnection() {
         scope.launch {
-            _agentStatus.value = "Testing..."
+            _agentStatus.value = AgentStatus.Testing
             delay(1500)
             if (_agentConfig.value.apiKey.length > 5) {
-                _agentStatus.value = "Connection Successful!"
+                _agentStatus.value = AgentStatus.Success
             } else {
-                _agentStatus.value = "Connection Failed: Invalid API Key"
+                _agentStatus.value = AgentStatus.Error("Invalid API Key")
             }
         }
     }
@@ -123,7 +133,13 @@ class SettingsViewModel(
         // Import logic: would open file picker and deserialize JSON
     }
 
-    fun onCleared() {
-        // Cleanup if needed
+    companion object {
+        /** Model IDs available for selection in the settings UI. */
+        val AVAILABLE_MODELS = listOf(
+            "gemini_2_5_flash",
+            "gemini_2_5_pro",
+            "sonnet_4",
+            "sonnet_4_5",
+        )
     }
 }
