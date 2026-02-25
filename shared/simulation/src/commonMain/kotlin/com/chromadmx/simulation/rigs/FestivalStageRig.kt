@@ -17,11 +17,11 @@ import com.chromadmx.core.model.Vec3
  * Fixture breakdown:
  * - 16 ground PARs (3ch each = 48 channels)
  * - 48 pixel bars (24ch each = 1152 channels)
- * - 8 moving heads (16ch each = 128 channels)
+ * - 8 moving heads (10ch each = 80 channels)
  * - 20 wash PARs (3ch each = 60 channels)
  * - 8 strobes (2ch each = 16 channels)
  * - 8 side PARs (3ch each = 24 channels)
- * Total: 108 fixtures, 1428 channels, ~3 universes
+ * Total: 108 fixtures, 1380 channels, ~3 universes
  *
  * Coordinate system:
  * - x = left/right (audience perspective), stage is ~20m wide
@@ -139,14 +139,14 @@ object FestivalStageRig {
         val mhSpacing = STAGE_WIDTH / (movingHeadCount - 1)
         val mhStartX = -STAGE_WIDTH / 2f
         for (i in 0 until movingHeadCount) {
-            val (uni, ch) = advanceChannel(16) // pan, tilt, speed, dimmer, R,G,B,W, strobe, + reserved
+            val (uni, ch) = advanceChannel(10) // pan, pan-fine, tilt, tilt-fine, dimmer, R,G,B, gobo, strobe
             fixtures.add(
                 Fixture3D(
                     fixture = Fixture(
                         fixtureId = "moving-head-$i",
                         name = "Moving Head ${i + 1}",
                         channelStart = ch,
-                        channelCount = 16,
+                        channelCount = 10,
                         universeId = uni,
                         profileId = "generic-moving-head"
                     ),

@@ -53,7 +53,7 @@ data class FixtureProfile(
     val renderHint: RenderHint = RenderHint.POINT
 ) {
     /** Total number of DMX channels this fixture occupies. */
-    val channelCount: Int get() = channels.size
+    val channelCount: Int get() = (channels.maxOfOrNull { it.offset } ?: -1) + 1
 
     /** Find the first channel of a given type, or null. */
     fun channelByType(type: ChannelType): Channel? = channels.firstOrNull { it.type == type }
