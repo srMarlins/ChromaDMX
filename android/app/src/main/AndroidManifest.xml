@@ -1,6 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Art-Net UDP communication -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Subnet discovery for Art-Net nodes -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
+    <!-- Multicast UDP for Art-Net polling / broadcast -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+
+    <!-- Camera for fixture mapping via phone-flash detection -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Declare camera as optional so the app installs on devices without cameras -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+    <!-- OpenGL ES 3.0 for venue visualization -->
+    <uses-feature android:glEsVersion="0x00030000" android:required="false" />
+
     <application
         android:name=".ChromaDMXApp"
         android:allowBackup="true"
