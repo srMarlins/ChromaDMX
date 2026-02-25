@@ -26,6 +26,9 @@ kotlinx-serialization = "1.8.0"
 # Networking
 ktor = "3.1.0"
 
+# Atomicfu
+kotlinx-atomicfu = "0.27.0"
+
 # Testing
 junit = "4.13.2"
 kotlin-test = "2.1.10"
@@ -65,6 +68,9 @@ koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity-compose" }
 androidx-lifecycle-viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
+
+# Atomicfu
+kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "kotlinx-atomicfu" }
 
 # Testing
 junit = { module = "junit:junit", version.ref = "junit" }

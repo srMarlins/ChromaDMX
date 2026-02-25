@@ -31,4 +31,5 @@ dependencyResolutionManagement {
 rootProject.name = "ChromaDMX"
 
 include(":shared")
+include(":shared:core")
 include(":android:app")
