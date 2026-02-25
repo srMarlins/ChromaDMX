@@ -15,6 +15,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
@@ -39,7 +40,8 @@ import kotlinx.coroutines.launch
 class NodeDiscovery(
     private val transport: PlatformUdpTransport,
     private val pollIntervalMs: Long = DEFAULT_POLL_INTERVAL_MS,
-    private val nodeTimeoutMs: Long = DmxNode.DEFAULT_TIMEOUT_MS
+    private val nodeTimeoutMs: Long = DmxNode.DEFAULT_TIMEOUT_MS,
+    private val maxNodes: Int = DEFAULT_MAX_NODES
 ) {
 
     private val _nodes = MutableStateFlow<Map<String, DmxNode>>(emptyMap())
@@ -134,9 +136,21 @@ class NodeDiscovery(
             lastSeenMs = currentTimeMs
         )
 
-        val current = _nodes.value.toMutableMap()
-        current[node.nodeKey] = node
-        _nodes.value = current
+        _nodes.update { currentNodes ->
+            val mutableNodes = currentNodes.toMutableMap()
+
+            // If this is a new node and we've reached the capacity limit,
+            // evict the node that hasn't been seen for the longest time.
+            if (!mutableNodes.containsKey(node.nodeKey) && mutableNodes.size >= maxNodes) {
+                val oldestKey = mutableNodes.values.minByOrNull { it.lastSeenMs }?.nodeKey
+                if (oldestKey != null) {
+                    mutableNodes.remove(oldestKey)
+                }
+            }
+
+            mutableNodes[node.nodeKey] = node
+            mutableNodes
+        }
 
         return node
     }
@@ -145,10 +159,9 @@ class NodeDiscovery(
      * Remove nodes that have not been seen within [nodeTimeoutMs].
      */
     fun pruneStaleNodes(currentTimeMs: Long) {
-        val current = _nodes.value
-        val alive = current.filterValues { it.isAlive(currentTimeMs, nodeTimeoutMs) }
-        if (alive.size != current.size) {
-            _nodes.value = alive
+        _nodes.update { current ->
+            val alive = current.filterValues { it.isAlive(currentTimeMs, nodeTimeoutMs) }
+            if (alive.size != current.size) alive else current
         }
     }
 
@@ -192,6 +205,9 @@ class NodeDiscovery(
 
         /** Receive timeout per iteration. */
         const val RECEIVE_TIMEOUT_MS: Long = 1_000L
+
+        /** Maximum number of discovered nodes to track to prevent memory exhaustion. */
+        const val DEFAULT_MAX_NODES: Int = 256
     }
 }
 
