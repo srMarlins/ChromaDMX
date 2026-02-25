@@ -2,8 +2,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.the
-import org.gradle.api.artifacts.VersionCatalogsExtension
-import org.jetbrains.compose.ComposeExtension
+import org.jetbrains.compose.ComposePlugin
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
 class ComposeMultiplatformConventionPlugin : Plugin<Project> {
@@ -16,7 +15,7 @@ class ComposeMultiplatformConventionPlugin : Plugin<Project> {
             // This plugin assumes kotlin-multiplatform is already applied
             // (e.g., via chromadmx.kmp.library).
             extensions.configure<KotlinMultiplatformExtension> {
-                val compose = the<ComposeExtension>().dependencies
+                val compose = the<ComposePlugin.Dependencies>()
 
                 sourceSets.apply {
                     commonMain.dependencies {
