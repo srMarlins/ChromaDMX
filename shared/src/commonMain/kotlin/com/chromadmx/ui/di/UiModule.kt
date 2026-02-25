@@ -4,6 +4,7 @@ import com.chromadmx.networking.ble.BleProvisioningService
 import com.chromadmx.ui.components.network.NetworkHealthViewModel
 import com.chromadmx.ui.viewmodel.AgentViewModel
 import com.chromadmx.ui.viewmodel.MascotViewModel
+import com.chromadmx.ui.viewmodel.OnboardingViewModel
 import com.chromadmx.ui.viewmodel.ProvisioningViewModel
 import com.chromadmx.ui.viewmodel.SettingsViewModel
 import com.chromadmx.ui.viewmodel.StageViewModel
@@ -16,14 +17,16 @@ import org.koin.dsl.module
 /**
  * Koin module for UI ViewModels.
  *
- * [StageViewModel], [SettingsViewModel], and [AgentViewModel] are scoped as
- * singletons so they survive navigation round-trips and panel open/close cycles.
- * [MascotViewModel] is a factory -- each composition gets its own instance.
+ * [StageViewModel], [SettingsViewModel], [AgentViewModel], and [OnboardingViewModel]
+ * are scoped as singletons so they survive navigation round-trips and panel
+ * open/close cycles. [MascotViewModel] is a factory -- each composition gets
+ * its own instance.
  *
  * A child [SupervisorJob] is created per ViewModel so its coroutines can be
  * cancelled independently via [onCleared].
  *
  * Dependencies:
+ * - OnboardingViewModel requires: NodeDiscovery, FileStorage
  * - StageViewModel requires: EffectEngine, EffectRegistry, PresetLibrary, BeatClock
  * - SettingsViewModel requires: NodeDiscovery
  * - AgentViewModel requires: LightingAgent, PreGenerationService
@@ -33,6 +36,18 @@ import org.koin.dsl.module
  */
 val uiModule = module {
     // CoroutineScope provided by chromaDiModule
+
+    single {
+        val parentScope: CoroutineScope = get()
+        val childJob = SupervisorJob(parentScope.coroutineContext[Job])
+        val vmScope = CoroutineScope(Dispatchers.Default + childJob)
+        OnboardingViewModel(
+            scope = vmScope,
+            nodeDiscovery = get(),
+            fileStorage = get(),
+            presetLibrary = get(),
+        )
+    }
 
     single {
         val parentScope: CoroutineScope = get()
