@@ -148,7 +148,7 @@ class LoadSceneTool(
         val presets = presetLibrary.listPresets()
         val preset = presets.find { it.name.equals(args.name, ignoreCase = true) }
             ?: return "Scene '${args.name}' not found. Available: ${presets.joinToString(", ") { it.name }}"
-        presetLibrary.loadPreset(preset.id)
+        controller.applyPreset(preset)
         return "Loaded scene '${args.name}' with ${preset.layers.size} layers, dimmer=${preset.masterDimmer}"
     }
 }
