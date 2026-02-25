@@ -34,6 +34,26 @@ enum class FixtureType {
     PIXEL_BAR,
     MOVING_HEAD,
     STROBE,
+    WASH,
+    SPOT,
     LASER,
     OTHER
+}
+
+/**
+ * Typed DMX channel classification.
+ *
+ * Each entry describes the semantic role of a single DMX channel.
+ * [isColor] and [isMovement] flags allow quick capability queries.
+ */
+@Serializable
+enum class ChannelType(val isColor: Boolean = false, val isMovement: Boolean = false) {
+    DIMMER,
+    RED(isColor = true), GREEN(isColor = true), BLUE(isColor = true),
+    WHITE(isColor = true), AMBER(isColor = true), UV(isColor = true),
+    PAN(isMovement = true), TILT(isMovement = true),
+    PAN_FINE(isMovement = true), TILT_FINE(isMovement = true),
+    GOBO, COLOR_WHEEL, FOCUS, ZOOM, PRISM,
+    STROBE, SHUTTER,
+    GENERIC
 }
