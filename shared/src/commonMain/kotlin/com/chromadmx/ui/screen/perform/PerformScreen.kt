@@ -91,13 +91,12 @@ fun PerformScreen(
                         .padding(end = 8.dp, top = 20.dp, bottom = 20.dp)
                 )
 
-                // Swipe trigger area for layer panel (top portion only, avoids master dimmer)
+                // Swipe trigger area for layer panel
                 Box(
                     modifier = Modifier
                         .fillMaxHeight()
                         .width(40.dp)
                         .align(Alignment.CenterEnd)
-                        .padding(bottom = 200.dp)
                         .pointerInput(Unit) {
                             detectHorizontalDragGestures { _, dragAmount ->
                                 if (dragAmount < -15f) {
@@ -144,21 +143,6 @@ fun PerformScreen(
             )
         }
 
-        // Tap background to close layer panel (must be before panel so panel draws on top)
-        if (isLayerPanelVisible) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(end = 280.dp) // Width of panel
-                    .pointerInput(Unit) {
-                        detectHorizontalDragGestures { _, dragAmount ->
-                            if (dragAmount > 15f) isLayerPanelVisible = false
-                        }
-                    }
-                    .clickable(enabled = true, onClick = { isLayerPanelVisible = false })
-            )
-        }
-
         // Layer Panel Overlay (Animated)
         AnimatedVisibility(
             visible = isLayerPanelVisible,
@@ -181,6 +165,21 @@ fun PerformScreen(
                         }
                     }
                 }
+            )
+        }
+
+        // Tap background to close layer panel
+        if (isLayerPanelVisible) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(end = 280.dp) // Width of panel
+                    .pointerInput(Unit) {
+                        detectHorizontalDragGestures { _, dragAmount ->
+                            if (dragAmount > 15f) isLayerPanelVisible = false
+                        }
+                    }
+                    .clickable(enabled = true, onClick = { isLayerPanelVisible = false })
             )
         }
 

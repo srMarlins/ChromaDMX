@@ -47,8 +47,6 @@ fun PresetLibrary(
     val filteredScenes = if (selectedGenre == null) {
         scenes
     } else {
-        // TODO: Scene model has no genre field — filtering by name prefix is fragile.
-        //  Add a `genre: String` field to Scene and filter on that instead.
         scenes.filter { it.name.startsWith(selectedGenre!!, ignoreCase = true) }
     }
 
