@@ -11,8 +11,10 @@ import com.chromadmx.engine.effects.*
  * id prefixed with `builtin_`. The [EffectLayerConfig.effectId] values correspond
  * to the companion-object IDs on the concrete [SpatialEffect] implementations
  * registered in [EffectRegistry].
+ *
+ * The list is cached as a top-level val so it is only created once.
  */
-fun builtInPresets(): List<ScenePreset> = listOf(
+private val allBuiltInPresets: List<ScenePreset> = listOf(
     neonPulse(),
     sunsetSweep(),
     strobeStorm(),
@@ -21,10 +23,36 @@ fun builtInPresets(): List<ScenePreset> = listOf(
     midnightRainbow()
 )
 
+fun builtInPresets(): List<ScenePreset> = allBuiltInPresets
+
+// ── Helper ─────────────────────────────────────────────────────────────────
+
+/**
+ * Factory that stamps every built-in preset with a deterministic id prefix,
+ * [ScenePreset.isBuiltIn] = true, and [ScenePreset.createdAt] = 0.
+ */
+private fun createBuiltInPreset(
+    id: String,
+    name: String,
+    genre: Genre,
+    layers: List<EffectLayerConfig>,
+    masterDimmer: Float = 1.0f,
+    thumbnailColors: List<Color>
+) = ScenePreset(
+    id = "builtin_$id",
+    name = name,
+    genre = genre,
+    layers = layers,
+    masterDimmer = masterDimmer,
+    isBuiltIn = true,
+    createdAt = 0L,
+    thumbnailColors = thumbnailColors
+)
+
 // ── 1. Neon Pulse ──────────────────────────────────────────────────────────
 
-private fun neonPulse() = ScenePreset(
-    id = "builtin_neon_pulse",
+private fun neonPulse() = createBuiltInPreset(
+    id = "neon_pulse",
     name = "Neon Pulse",
     genre = Genre.TECHNO,
     layers = listOf(
@@ -48,9 +76,6 @@ private fun neonPulse() = ScenePreset(
             opacity = 0.7f
         )
     ),
-    masterDimmer = 1.0f,
-    isBuiltIn = true,
-    createdAt = 0L,
     thumbnailColors = listOf(
         Color(0f, 1f, 1f),     // cyan
         Color(1f, 0f, 1f),     // magenta
@@ -60,8 +85,8 @@ private fun neonPulse() = ScenePreset(
 
 // ── 2. Sunset Sweep ────────────────────────────────────────────────────────
 
-private fun sunsetSweep() = ScenePreset(
-    id = "builtin_sunset_sweep",
+private fun sunsetSweep() = createBuiltInPreset(
+    id = "sunset_sweep",
     name = "Sunset Sweep",
     genre = Genre.AMBIENT,
     layers = listOf(
@@ -83,8 +108,6 @@ private fun sunsetSweep() = ScenePreset(
         )
     ),
     masterDimmer = 0.9f,
-    isBuiltIn = true,
-    createdAt = 0L,
     thumbnailColors = listOf(
         Color(1.0f, 0.6f, 0f),
         Color(1.0f, 0.15f, 0f),
@@ -94,8 +117,8 @@ private fun sunsetSweep() = ScenePreset(
 
 // ── 3. Strobe Storm ────────────────────────────────────────────────────────
 
-private fun strobeStorm() = ScenePreset(
-    id = "builtin_strobe_storm",
+private fun strobeStorm() = createBuiltInPreset(
+    id = "strobe_storm",
     name = "Strobe Storm",
     genre = Genre.DNB,
     layers = listOf(
@@ -117,9 +140,6 @@ private fun strobeStorm() = ScenePreset(
             opacity = 1.0f
         )
     ),
-    masterDimmer = 1.0f,
-    isBuiltIn = true,
-    createdAt = 0L,
     thumbnailColors = listOf(
         Color.WHITE,
         Color(1f, 0f, 0f),
@@ -130,8 +150,8 @@ private fun strobeStorm() = ScenePreset(
 
 // ── 4. Ocean Waves ─────────────────────────────────────────────────────────
 
-private fun oceanWaves() = ScenePreset(
-    id = "builtin_ocean_waves",
+private fun oceanWaves() = createBuiltInPreset(
+    id = "ocean_waves",
     name = "Ocean Waves",
     genre = Genre.AMBIENT,
     layers = listOf(
@@ -167,8 +187,6 @@ private fun oceanWaves() = ScenePreset(
         )
     ),
     masterDimmer = 0.85f,
-    isBuiltIn = true,
-    createdAt = 0L,
     thumbnailColors = listOf(
         Color(0f, 0.1f, 0.4f),
         Color(0f, 0.8f, 0.7f),
@@ -178,8 +196,8 @@ private fun oceanWaves() = ScenePreset(
 
 // ── 5. Fire & Ice ──────────────────────────────────────────────────────────
 
-private fun fireAndIce() = ScenePreset(
-    id = "builtin_fire_and_ice",
+private fun fireAndIce() = createBuiltInPreset(
+    id = "fire_and_ice",
     name = "Fire & Ice",
     genre = Genre.HOUSE,
     layers = listOf(
@@ -214,9 +232,6 @@ private fun fireAndIce() = ScenePreset(
             opacity = 0.6f
         )
     ),
-    masterDimmer = 1.0f,
-    isBuiltIn = true,
-    createdAt = 0L,
     thumbnailColors = listOf(
         Color(1.0f, 0.3f, 0f),
         Color(1.0f, 0.05f, 0f),
@@ -227,8 +242,8 @@ private fun fireAndIce() = ScenePreset(
 
 // ── 6. Midnight Rainbow ────────────────────────────────────────────────────
 
-private fun midnightRainbow() = ScenePreset(
-    id = "builtin_midnight_rainbow",
+private fun midnightRainbow() = createBuiltInPreset(
+    id = "midnight_rainbow",
     name = "Midnight Rainbow",
     genre = Genre.CUSTOM,
     layers = listOf(
@@ -250,8 +265,6 @@ private fun midnightRainbow() = ScenePreset(
         )
     ),
     masterDimmer = 0.8f,
-    isBuiltIn = true,
-    createdAt = 0L,
     thumbnailColors = listOf(
         Color(0.02f, 0.02f, 0.05f),
         Color(0.3f, 0f, 0f),

@@ -44,7 +44,7 @@ class PresetLibrary(
      */
     private fun ensureBuiltIns() {
         for (preset in builtInPresets()) {
-            if (getPreset(preset.id) == null) {
+            if (!storage.exists("$presetsDir/${preset.id}.json")) {
                 savePreset(preset)
             }
         }
