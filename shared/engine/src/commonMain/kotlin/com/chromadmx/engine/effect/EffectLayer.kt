@@ -12,13 +12,15 @@ import com.chromadmx.core.model.BlendMode
  * @property effect    The spatial effect to evaluate.
  * @property params    Parameters passed to [effect] on each evaluation.
  * @property blendMode How this layer composites onto the stack below.
- * @property opacity   Layer opacity, 0.0 (invisible) to 1.0 (fully opaque).
- * @property enabled   When false the layer is skipped entirely.
+ * @property opacity       Layer opacity, 0.0 (invisible) to 1.0 (fully opaque).
+ * @property enabled       When false the layer is skipped entirely.
+ * @property targetGroupId Optional ID of a fixture group to restrict this layer to.
  */
 data class EffectLayer(
     val effect: SpatialEffect,
     val params: EffectParams = EffectParams.EMPTY,
     val blendMode: BlendMode = BlendMode.NORMAL,
     val opacity: Float = 1.0f,
-    val enabled: Boolean = true
+    val enabled: Boolean = true,
+    val targetGroupId: String? = null
 )

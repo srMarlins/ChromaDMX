@@ -25,16 +25,26 @@ import kotlin.time.TimeSource
  */
 class EffectEngine(
     private val scope: CoroutineScope,
-    private val fixtures: List<Fixture3D>
+    fixtures: List<Fixture3D>
 ) {
     /** The compositing effect stack evaluated each frame. */
     val effectStack: EffectStack = EffectStack()
 
+    /** The current list of active fixtures. Read-only from outside. */
+    var fixtures: List<Fixture3D> = fixtures.toList()
+        private set
+
     /** Triple-buffered color output: one [Color] per fixture. */
-    val colorOutput: TripleBuffer<Array<Color>> = TripleBuffer(
-        initialA = Array(fixtures.size) { Color.BLACK },
-        initialB = Array(fixtures.size) { Color.BLACK },
-        initialC = Array(fixtures.size) { Color.BLACK }
+    var colorOutput: TripleBuffer<Array<Color>> = createBuffer(fixtures.size)
+        private set
+
+    /** Fixture overrides (e.g., for test firing). Index -> Color. */
+    private val overrides = mutableMapOf<Int, Color>()
+
+    private fun createBuffer(size: Int) = TripleBuffer(
+        initialA = Array(size) { Color.BLACK },
+        initialB = Array(size) { Color.BLACK },
+        initialC = Array(size) { Color.BLACK }
     )
 
     /** Provider for the current beat state. Defaults to [BeatState.IDLE]. */
@@ -89,9 +99,37 @@ class EffectEngine(
 
         val writeSlot = colorOutput.writeSlot()
         for (i in fixtures.indices) {
-            writeSlot[i] = effectStack.evaluate(fixtures[i].position, time, beat)
+            val fixture = fixtures[i]
+            writeSlot[i] = overrides[i] ?: effectStack.evaluate(
+                fixture.position,
+                time,
+                beat,
+                fixture.groupId
+            )
         }
         colorOutput.swapWrite()
+    }
+
+    /**
+     * Update the active fixture list. This re-allocates the triple buffer.
+     * Use with caution during runtime as it may cause a momentary glitch.
+     */
+    fun updateFixtures(newFixtures: List<Fixture3D>) {
+        fixtures = newFixtures.toList()
+        colorOutput = createBuffer(fixtures.size)
+        overrides.clear()
+    }
+
+    /**
+     * Set a temporary color override for a specific fixture index.
+     * Set to null to clear the override and return to engine control.
+     */
+    fun setOverride(index: Int, color: Color?) {
+        if (color != null) {
+            overrides[index] = color
+        } else {
+            overrides.remove(index)
+        }
     }
 
     /**
@@ -101,7 +139,8 @@ class EffectEngine(
      */
     fun evaluateFrame(time: Float, beat: BeatState): Array<Color> {
         return Array(fixtures.size) { i ->
-            effectStack.evaluate(fixtures[i].position, time, beat)
+            val fixture = fixtures[i]
+            effectStack.evaluate(fixture.position, time, beat, fixture.groupId)
         }
     }
 }

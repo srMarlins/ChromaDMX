@@ -6,6 +6,5 @@ package com.chromadmx.ui.navigation
 enum class Screen(val route: String, val title: String) {
     PERFORM("perform", "Perform"),
     NETWORK("network", "Network"),
-    MAP("map", "Map"),
     AGENT("agent", "Agent"),
 }

@@ -3,8 +3,8 @@ package com.chromadmx.ui.viewmodel
 import com.chromadmx.agent.scene.Scene
 import com.chromadmx.agent.scene.SceneStore
 import com.chromadmx.core.EffectParams
-import com.chromadmx.core.model.BeatState
-import com.chromadmx.core.model.BlendMode
+import com.chromadmx.core.model.*
+import com.chromadmx.core.persistence.FixtureLibrary
 import com.chromadmx.engine.effect.EffectLayer
 import com.chromadmx.engine.effect.EffectRegistry
 import com.chromadmx.engine.effect.EffectStack
@@ -38,6 +38,7 @@ class PerformViewModel(
     val effectRegistry: EffectRegistry,
     private val sceneStore: SceneStore,
     private val beatClock: BeatClock,
+    private val fixtureLibrary: FixtureLibrary,
     private val scope: CoroutineScope,
 ) {
     private val effectStack: EffectStack get() = engine.effectStack
@@ -54,6 +55,12 @@ class PerformViewModel(
 
     private val _scenes = MutableStateFlow<List<String>>(emptyList())
     val scenes: StateFlow<List<String>> = _scenes.asStateFlow()
+
+    val fixtures: StateFlow<List<Fixture3D>> = fixtureLibrary.fixtures
+    val groups: StateFlow<List<FixtureGroup>> = fixtureLibrary.groups
+
+    private val _selectedFixtureIndices = MutableStateFlow<Set<Int>>(emptySet())
+    val selectedFixtureIndices: StateFlow<Set<Int>> = _selectedFixtureIndices.asStateFlow()
 
     val allScenes: StateFlow<List<Scene>> = _scenes.map { names ->
         names.mapNotNull { sceneStore.load(it) }
@@ -203,5 +210,109 @@ class PerformViewModel(
 
     fun tap() {
         (beatClock as? TapTempoClock)?.tap()
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Fixture Spatial Editor                                            */
+    /* ------------------------------------------------------------------ */
+
+    fun selectFixture(index: Int, multiSelect: Boolean = false) {
+        if (multiSelect) {
+            val current = _selectedFixtureIndices.value
+            if (current.contains(index)) {
+                _selectedFixtureIndices.value = current - index
+            } else {
+                _selectedFixtureIndices.value = current + index
+            }
+        } else {
+            _selectedFixtureIndices.value = setOf(index)
+        }
+    }
+
+    fun selectFixturesInRegion(xRange: ClosedFloatingPointRange<Float>, yRange: ClosedFloatingPointRange<Float>) {
+        val inRegion = fixtures.value.withIndex().filter { (_, f) ->
+            f.position.x in xRange && f.position.y in yRange
+        }.map { it.index }.toSet()
+        _selectedFixtureIndices.value = inRegion
+    }
+
+    fun clearSelection() {
+        _selectedFixtureIndices.value = emptySet()
+    }
+
+    fun updateSelectedFixturesPosition(newPos: Vec3) {
+        val selected = _selectedFixtureIndices.value
+        if (selected.isEmpty()) return
+
+        val currentFixtures = fixtures.value.toMutableList()
+        // If single select, set absolute. If multi-select, could be relative offset,
+        // but requirement says "drag handle to reposition on grid".
+        // For simplicity, we'll apply the same position if single, or offset if we had a delta.
+        // Let's assume absolute for now as per "snaps to grid".
+
+        selected.forEach { index ->
+            if (index in currentFixtures.indices) {
+                currentFixtures[index] = currentFixtures[index].copy(position = newPos)
+            }
+        }
+
+        fixtureLibrary.saveFixtures(currentFixtures)
+        engine.updateFixtures(currentFixtures)
+    }
+
+    fun updateFixturePosition(index: Int, newPos: Vec3) {
+        fixtureLibrary.updateFixture(index) { it.copy(position = newPos) }
+        engine.updateFixtures(fixtures.value)
+    }
+
+    fun setZHeight(height: Float) {
+        val selected = _selectedFixtureIndices.value
+        if (selected.isEmpty()) return
+
+        val currentFixtures = fixtures.value.toMutableList()
+        selected.forEach { index ->
+            if (index in currentFixtures.indices) {
+                currentFixtures[index] = currentFixtures[index].copy(
+                    position = currentFixtures[index].position.copy(z = height)
+                )
+            }
+        }
+        fixtureLibrary.saveFixtures(currentFixtures)
+        engine.updateFixtures(currentFixtures)
+    }
+
+    fun assignToGroup(groupId: String?) {
+        val selected = _selectedFixtureIndices.value
+        if (selected.isEmpty()) return
+
+        val currentFixtures = fixtures.value.toMutableList()
+        selected.forEach { index ->
+            if (index in currentFixtures.indices) {
+                currentFixtures[index] = currentFixtures[index].copy(groupId = groupId)
+            }
+        }
+        fixtureLibrary.saveFixtures(currentFixtures)
+        engine.updateFixtures(currentFixtures)
+    }
+
+    fun createGroup(name: String, color: Color) {
+        val id = name.lowercase().replace(" ", "_") + "_" + (hashCode() % 1000)
+        fixtureLibrary.upsertGroup(FixtureGroup(id, name, color))
+    }
+
+    fun testFireSelected() {
+        val selected = _selectedFixtureIndices.value
+        selected.forEach { index ->
+            engine.setOverride(index, Color.WHITE)
+            scope.launch {
+                delay(1000L)
+                engine.setOverride(index, null)
+            }
+        }
+    }
+
+    fun reScanFixtures() {
+        // Placeholder for vision scan trigger
+        // In a real app, this would navigate to the scan screen or start the scan state machine
     }
 }

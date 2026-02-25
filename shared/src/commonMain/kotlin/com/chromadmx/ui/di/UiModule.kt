@@ -37,6 +37,7 @@ val uiModule = module {
             effectRegistry = get(),
             sceneStore = get(),
             beatClock = get(),
+            fixtureLibrary = get(),
             scope = vmScope,
         )
     }

@@ -18,6 +18,16 @@ data class Fixture(
 )
 
 /**
+ * A named group of fixtures for batch control and color coding.
+ */
+@Serializable
+data class FixtureGroup(
+    val id: String,
+    val name: String,
+    val color: Color
+)
+
+/**
  * Fixture with a 3-D position in the venue, used by spatial effects.
  */
 @Serializable

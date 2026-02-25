@@ -27,7 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.chromadmx.ui.navigation.Screen
 import com.chromadmx.ui.screen.agent.AgentScreen
-import com.chromadmx.ui.screen.map.MapScreen
 import com.chromadmx.ui.screen.network.NetworkScreen
 import com.chromadmx.ui.screen.perform.PerformScreen
 import com.chromadmx.ui.theme.ChromaDmxTheme
@@ -97,17 +96,6 @@ fun ChromaDmxApp() {
                             NetworkScreen(viewModel = vm)
                         } else {
                             ScreenPlaceholder("Network", "Networking services not yet registered in DI.")
-                        }
-                    }
-                    Screen.MAP -> {
-                        val vm = resolveOrNull<MapViewModel>()
-                        if (vm != null) {
-                            DisposableEffect(vm) {
-                                onDispose { vm.onCleared() }
-                            }
-                            MapScreen(viewModel = vm)
-                        } else {
-                            ScreenPlaceholder("Map", "Map services not yet registered in DI.")
                         }
                     }
                     Screen.AGENT -> {

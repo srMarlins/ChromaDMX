@@ -97,14 +97,26 @@ class EffectStack(
      *
      * Reads the atomic layer snapshot without locking (wait-free).
      *
+     * @param pos     Fixture position in 3D space.
+     * @param time    Current engine time in seconds.
+     * @param beat    Current beat/tempo state.
+     * @param groupId Optional ID of the fixture's group for filtering layers.
      * @return The final composited and dimmed color.
      */
-    fun evaluate(pos: Vec3, time: Float, beat: BeatState): Color {
+    fun evaluate(
+        pos: Vec3,
+        time: Float,
+        beat: BeatState,
+        groupId: String? = null
+    ): Color {
         val snapshot = _layersRef.value  // single atomic read
         var result = Color.BLACK
 
         for (layer in snapshot) {
             if (!layer.enabled) continue
+
+            // Filter by group if targetGroupId is set
+            if (layer.targetGroupId != null && layer.targetGroupId != groupId) continue
 
             val layerColor = layer.effect.compute(pos, time, beat, layer.params)
             result = ColorBlending.blend(

@@ -33,12 +33,20 @@ val agentModule: Module = module {
     single<EngineController> { RealEngineController(get(), get()) }
     single<NetworkController> { RealNetworkController(get()) }
     single<FixtureController> {
-        val fixturesProvider: () -> List<Fixture3D> = getOrNull() ?: { emptyList() }
-        RealFixtureController(fixturesProvider = fixturesProvider)
+        RealFixtureController(
+            library = get(),
+            engine = get(),
+            scope = get()
+        )
     }
     single<StateController> {
-        val fixturesProvider: () -> List<Fixture3D> = getOrNull() ?: { emptyList() }
-        RealStateController(get(), get(), get(), get(), fixturesProvider)
+        RealStateController(
+            get(),
+            get(),
+            get(),
+            get(),
+            fixtureLibrary = get()
+        )
     }
     single<ToolRegistry> {
         buildToolRegistry(

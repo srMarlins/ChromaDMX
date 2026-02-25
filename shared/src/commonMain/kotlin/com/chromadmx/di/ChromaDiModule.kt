@@ -12,6 +12,7 @@ import com.chromadmx.engine.effects.SolidColorEffect
 import com.chromadmx.engine.effects.StrobeEffect
 import com.chromadmx.engine.effects.WaveEffect3DEffect
 import com.chromadmx.engine.effect.EffectStack
+import com.chromadmx.core.persistence.FixtureLibrary
 import com.chromadmx.engine.pipeline.EffectEngine
 import com.chromadmx.engine.preset.PresetLibrary
 import com.chromadmx.networking.discovery.NodeDiscovery
@@ -59,7 +60,8 @@ val chromaDiModule = module {
         }
     }
     single {
-        EffectEngine(scope = get(), fixtures = emptyList()).apply {
+        val fixtures = get<FixtureLibrary>().fixtures.value
+        EffectEngine(scope = get(), fixtures = fixtures).apply {
             beatStateProvider = { get<BeatClock>().beatState.value }
             start()
         }
@@ -69,6 +71,7 @@ val chromaDiModule = module {
     // --- Presets ---
     single { PresetLibrary(get(), get(), get()) }
 
-    // --- Fixture provider (empty default — MapViewModel manages fixtures) ---
-    single<() -> List<Fixture3D>> { { emptyList() } }
+    // --- Fixtures ---
+    single { FixtureLibrary(storage = get()) }
+    single<() -> List<Fixture3D>> { { get<FixtureLibrary>().fixtures.value } }
 }

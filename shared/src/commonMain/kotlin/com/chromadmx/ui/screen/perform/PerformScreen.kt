@@ -48,9 +48,11 @@ import com.chromadmx.core.model.Color as DmxColor
 @Composable
 fun PerformScreen(
     viewModel: PerformViewModel,
-    fixtures: List<Fixture3D> = emptyList(),
-    fixtureColors: List<DmxColor> = emptyList(),
 ) {
+    val fixtures by viewModel.fixtures.collectAsState()
+    val fixtureColors = emptyList<DmxColor>() // TODO: Get from engine via VM
+    val selectedIndices by viewModel.selectedFixtureIndices.collectAsState()
+    val groups by viewModel.groups.collectAsState()
     val beatState by viewModel.beatState.collectAsState()
     val masterDimmer by viewModel.masterDimmer.collectAsState()
     val layers by viewModel.layers.collectAsState()
@@ -79,8 +81,39 @@ fun PerformScreen(
                 VenueCanvas(
                     fixtures = fixtures,
                     fixtureColors = fixtureColors,
+                    selectedIndices = selectedIndices,
+                    groups = groups,
+                    onFixtureSelected = { index, multi ->
+                        if (index == -1) viewModel.clearSelection()
+                        else viewModel.selectFixture(index, multi)
+                    },
+                    onFixtureMoved = { index, pos -> viewModel.updateFixturePosition(index, pos) },
+                    onRegionSelected = { x, y -> viewModel.selectFixturesInRegion(x, y) },
                     modifier = Modifier.fillMaxSize(),
                 )
+
+                // Selection info overlay
+                if (selectedIndices.isNotEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(16.dp)
+                            .background(Color.Black.copy(alpha = 0.6f))
+                            .padding(8.dp)
+                    ) {
+                        Text(
+                            "Selected: ${selectedIndices.size}",
+                            color = Color.Cyan,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                        FilledTonalButton(
+                            onClick = { viewModel.testFireSelected() },
+                            modifier = Modifier.padding(top = 4.dp)
+                        ) {
+                            Text("TEST", style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
 
                 // Master Dimmer (Vertical, Right Edge)
                 MasterDimmerSlider(
