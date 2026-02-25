@@ -110,5 +110,7 @@ object BuiltInProfiles {
 
     fun all(): List<FixtureProfile> = allProfiles
 
-    fun findById(profileId: String): FixtureProfile? = allProfiles.find { it.profileId == profileId }
+    private val profileMap: Map<String, FixtureProfile> = allProfiles.associateBy { it.profileId }
+
+    fun findById(profileId: String): FixtureProfile? = profileMap[profileId]
 }
