@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -32,7 +31,6 @@ import com.chromadmx.ui.screen.perform.PerformScreen
 import com.chromadmx.ui.theme.ChromaDmxTheme
 import com.chromadmx.ui.theme.pixelGrid
 import com.chromadmx.ui.viewmodel.AgentViewModel
-import com.chromadmx.ui.viewmodel.MapViewModel
 import com.chromadmx.ui.viewmodel.NetworkViewModel
 import com.chromadmx.ui.viewmodel.PerformViewModel
 import org.koin.compose.getKoin
@@ -149,6 +147,5 @@ private fun ScreenPlaceholder(title: String, subtitle: String) {
 private fun screenIcon(screen: Screen): ImageVector = when (screen) {
     Screen.PERFORM -> Icons.Default.PlayArrow
     Screen.NETWORK -> Icons.Default.Settings
-    Screen.MAP -> Icons.Default.Place
     Screen.AGENT -> Icons.Default.Build
 }

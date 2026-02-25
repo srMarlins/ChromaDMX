@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.toSize
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.core.model.FixtureGroup
 import com.chromadmx.core.model.Vec3
@@ -59,7 +60,7 @@ fun VenueCanvas(
             .background(Color(0xFF080818))
             .pointerInput(fixtures) {
                 detectTapGestures { offset ->
-                    val index = findFixtureAt(offset, fixtures, size)
+                    val index = findFixtureAt(offset, fixtures, size.toSize())
                     if (index != -1) {
                         onFixtureSelected(index, false)
                     } else {
@@ -70,7 +71,7 @@ fun VenueCanvas(
             .pointerInput(fixtures) {
                 detectDragGestures(
                     onDragStart = { offset ->
-                        val index = findFixtureAt(offset, fixtures, size)
+                        val index = findFixtureAt(offset, fixtures, size.toSize())
                         if (index != -1) {
                             draggingFixtureIndex = index
                             onFixtureSelected(index, false)
@@ -82,8 +83,8 @@ fun VenueCanvas(
                     onDragEnd = {
                         if (selectionRectStart != null && selectionRectEnd != null) {
                             // Compute region in fixture coordinates
-                            val (x1, y1) = canvasToFixture(selectionRectStart!!, size, fixtures)
-                            val (x2, y2) = canvasToFixture(selectionRectEnd!!, size, fixtures)
+                            val (x1, y1) = canvasToFixture(selectionRectStart!!, size.toSize(), fixtures)
+                            val (x2, y2) = canvasToFixture(selectionRectEnd!!, size.toSize(), fixtures)
                             onRegionSelected(
                                 minOf(x1, x2)..maxOf(x1, x2),
                                 minOf(y1, y2)..maxOf(y1, y2)
@@ -96,7 +97,7 @@ fun VenueCanvas(
                     onDrag = { change, dragAmount ->
                         if (draggingFixtureIndex != null) {
                             val newOffset = change.position
-                            val fixturePos = canvasToFixture(newOffset, size, fixtures)
+                            val fixturePos = canvasToFixture(newOffset, size.toSize(), fixtures)
                             // Grid snap (0.25m)
                             val snappedX = (fixturePos.x / 0.25f).roundToInt() * 0.25f
                             val snappedY = (fixturePos.y / 0.25f).roundToInt() * 0.25f

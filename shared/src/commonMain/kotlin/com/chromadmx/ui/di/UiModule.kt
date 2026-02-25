@@ -2,8 +2,9 @@ package com.chromadmx.ui.di
 
 import com.chromadmx.agent.LightingAgent
 import com.chromadmx.agent.pregen.PreGenerationService
+import com.chromadmx.agent.scene.SceneStore
+import com.chromadmx.core.persistence.FixtureLibrary
 import com.chromadmx.ui.viewmodel.AgentViewModel
-import com.chromadmx.ui.viewmodel.MapViewModel
 import com.chromadmx.ui.viewmodel.NetworkViewModel
 import com.chromadmx.ui.viewmodel.PerformViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -20,9 +21,8 @@ import org.koin.dsl.module
  * so its coroutines can be cancelled independently via [onCleared].
  *
  * Dependencies:
- * - PerformViewModel requires: EffectEngine, EffectRegistry, BeatClock
+ * - PerformViewModel requires: EffectEngine, EffectRegistry, BeatClock, FixtureLibrary
  * - NetworkViewModel requires: NodeDiscovery
- * - MapViewModel: standalone
  * - AgentViewModel: requires LightingAgent, PreGenerationService
  */
 val uiModule = module {
@@ -35,9 +35,9 @@ val uiModule = module {
         PerformViewModel(
             engine = get(),
             effectRegistry = get(),
-            sceneStore = get(),
+            sceneStore = get<SceneStore>(),
             beatClock = get(),
-            fixtureLibrary = get(),
+            fixtureLibrary = get<FixtureLibrary>(),
             scope = vmScope,
         )
     }
@@ -48,15 +48,6 @@ val uiModule = module {
         val vmScope = CoroutineScope(Dispatchers.Default + childJob)
         NetworkViewModel(
             nodeDiscovery = get(),
-            scope = vmScope,
-        )
-    }
-
-    factory {
-        val parentScope: CoroutineScope = get()
-        val childJob = SupervisorJob(parentScope.coroutineContext[Job])
-        val vmScope = CoroutineScope(Dispatchers.Default + childJob)
-        MapViewModel(
             scope = vmScope,
         )
     }

@@ -188,7 +188,7 @@ class PerformViewModel(
             val effect = effectRegistry.get(config.effectId) ?: return@mapNotNull null
             EffectLayer(
                 effect = effect,
-                params = EffectParams(config.params),
+                params = EffectParams(config.params.mapValues { it.value.toVariant() }),
                 blendMode = try {
                     BlendMode.valueOf(config.blendMode.uppercase())
                 } catch (e: Exception) {
@@ -200,6 +200,8 @@ class PerformViewModel(
         effectStack.replaceLayers(newLayers)
         effectStack.masterDimmer = scene.masterDimmer
     }
+
+    private fun Float.toVariant(): Any = this // EffectParams takes Any
 
     fun addLayer() {
         val ids = effectRegistry.ids()
@@ -245,11 +247,6 @@ class PerformViewModel(
         if (selected.isEmpty()) return
 
         val currentFixtures = fixtures.value.toMutableList()
-        // If single select, set absolute. If multi-select, could be relative offset,
-        // but requirement says "drag handle to reposition on grid".
-        // For simplicity, we'll apply the same position if single, or offset if we had a delta.
-        // Let's assume absolute for now as per "snaps to grid".
-
         selected.forEach { index ->
             if (index in currentFixtures.indices) {
                 currentFixtures[index] = currentFixtures[index].copy(position = newPos)
@@ -313,6 +310,5 @@ class PerformViewModel(
 
     fun reScanFixtures() {
         // Placeholder for vision scan trigger
-        // In a real app, this would navigate to the scan screen or start the scan state machine
     }
 }
