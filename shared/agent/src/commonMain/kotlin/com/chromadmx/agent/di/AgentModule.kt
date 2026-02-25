@@ -53,5 +53,5 @@ val agentModule: Module = module {
     single<FixtureController> { RealFixtureController(fixturesProvider = { emptyList() }) }
     single<StateController> { RealStateController(get(), get(), get(), get()) }
     single { LightingAgent(get(), get(), get(), get(), get(), get()) }
-    single { PreGenerationService(get(), get()) }
+    single { PreGenerationService(get()) }
 }

@@ -84,7 +84,7 @@ androidx-camera-view = { module = "androidx.camera:camera-view", version.ref = "
 # Atomicfu
 kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "kotlinx-atomicfu" }
 
-# Koog AI Agent
+# Koog AI Agent (reserved — not yet used in builds; deps don't fully resolve)
 koog-agents = { module = "ai.koog:koog-agents", version.ref = "koog" }
 koog-agents-core = { module = "ai.koog:agents-core", version.ref = "koog" }
 koog-agents-tools = { module = "ai.koog:agents-tools", version.ref = "koog" }

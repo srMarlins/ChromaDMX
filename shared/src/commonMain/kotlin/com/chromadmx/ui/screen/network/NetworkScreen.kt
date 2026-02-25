@@ -17,12 +17,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.chromadmx.ui.util.currentTimeMillis
 import com.chromadmx.ui.viewmodel.NetworkViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 
 /**
  * Network screen showing discovered DMX nodes.
@@ -37,8 +44,15 @@ fun NetworkScreen(
     val nodesMap by viewModel.nodes.collectAsState()
     val nodes = nodesMap.values.toList()
     val isScanning = viewModel.isScanning
-    // Approximate current time for health calculation
-    val currentTimeMs = remember()
+
+    // Real clock for health calculation — updates every second
+    var currentTimeMs by remember { mutableStateOf(currentTimeMillis()) }
+    LaunchedEffect(Unit) {
+        while (isActive) {
+            currentTimeMs = currentTimeMillis()
+            delay(1_000L)
+        }
+    }
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -127,16 +141,4 @@ fun NetworkScreen(
             }
         }
     }
-}
-
-/**
- * Simple timestamp provider for the network screen.
- * In production, this would use kotlinx-datetime or expect/actual.
- */
-@Composable
-private fun remember(): Long {
-    // Use a reasonable approximation; actual time tracking would use
-    // a LaunchedEffect updating every second. For now, nodes will
-    // show as "Unknown" health which is acceptable for the initial build.
-    return 0L
 }

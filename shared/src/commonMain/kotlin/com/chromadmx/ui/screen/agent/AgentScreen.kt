@@ -12,9 +12,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -43,7 +43,8 @@ fun AgentScreen(
 ) {
     val messages by viewModel.messages.collectAsState()
     val isProcessing by viewModel.isProcessing.collectAsState()
-    val isAgentAvailable by viewModel.isAgentAvailable.collectAsState()
+    val isAgentAvailable = viewModel.isAgentAvailable
+    val preGenProgress by viewModel.preGenProgress.collectAsState()
     var inputText by remember { mutableStateOf("") }
     var showPreGen by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
@@ -62,7 +63,7 @@ fun AgentScreen(
                 ),
             ) {
                 Text(
-                    text = "Agent module not connected. Chat responses are local placeholders.",
+                    text = "No API key configured. Tool dispatch still works — try 'Pre-Generate' for offline scene creation.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onErrorContainer,
                     modifier = Modifier.padding(12.dp),
@@ -73,11 +74,12 @@ fun AgentScreen(
         // Pre-generation panel (toggle)
         if (showPreGen) {
             PreGenPanel(
-                isGenerating = false,
-                progress = 0f,
-                onGenerate = { _, _ ->
-                    // Placeholder — will be wired to agent
-                    showPreGen = false
+                isGenerating = preGenProgress.isRunning,
+                progress = if (preGenProgress.total > 0) {
+                    preGenProgress.current.toFloat() / preGenProgress.total
+                } else 0f,
+                onGenerate = { genre, count ->
+                    viewModel.generateScenes(genre, count)
                 },
             )
         }
@@ -154,19 +156,15 @@ fun AgentScreen(
                 singleLine = true,
             )
             Spacer(Modifier.width(8.dp))
-            FilledIconButton(
+            Button(
                 onClick = {
                     if (inputText.isNotBlank()) {
                         viewModel.sendMessage(inputText)
                         inputText = ""
                     }
                 },
-                colors = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                ),
             ) {
-                Text("Go", style = MaterialTheme.typography.labelLarge)
+                Text("Send")
             }
         }
     }

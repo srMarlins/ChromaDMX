@@ -56,7 +56,7 @@ class FixtureToolsTest {
         controller.fireResult = false
         val tool = FireFixtureTool(controller)
         val result = tool.execute(FireFixtureTool.Args(fixtureId = "unknown", colorHex = "#FF0000"))
-        assertContains(result, "Failed")
+        assertContains(result, "not found")
     }
 
     @Test

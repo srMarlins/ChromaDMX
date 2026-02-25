@@ -1,6 +1,5 @@
 package com.chromadmx.agent.pregen
 
-import com.chromadmx.agent.LightingAgent
 import com.chromadmx.agent.scene.Scene
 import com.chromadmx.agent.scene.SceneStore
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,12 +23,11 @@ data class PreGenProgress(
  * Orchestrates repeated "create a scene for [genre]" requests, using the
  * agent's createScene tool to build and save scenes to the [SceneStore].
  *
- * When the full LLM pipeline is wired, this will send natural language
- * prompts to the agent. For now, it generates deterministic template
- * scenes based on genre presets.
+ * When the full LLM pipeline is wired, this will accept a LightingAgent
+ * and send natural language prompts. For now, it generates deterministic
+ * template scenes based on genre presets.
  */
 class PreGenerationService(
-    private val agent: LightingAgent,
     private val sceneStore: SceneStore,
 ) {
     private val _progress = MutableStateFlow(PreGenProgress())

@@ -9,6 +9,7 @@ kotlin {
             implementation(project(":shared:engine"))
             implementation(project(":shared:networking"))
             implementation(project(":shared:tempo"))
+            implementation(libs.kotlinx.atomicfu)
         }
     }
 }

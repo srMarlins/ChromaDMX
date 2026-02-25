@@ -114,13 +114,12 @@ fun ChromaDmxApp() {
 
 /**
  * Safely resolve a dependency from Koin, returning null if not available.
+ * Re-attempts resolution on each recomposition (no permanent caching of null).
  */
 @Composable
 private inline fun <reified T : Any> resolveOrNull(): T? {
     val koin = getKoin()
-    return remember {
-        runCatching { koin.get<T>() }.getOrNull()
-    }
+    return runCatching { koin.get<T>() }.getOrNull()
 }
 
 @Composable

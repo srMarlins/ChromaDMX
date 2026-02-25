@@ -9,8 +9,8 @@ import com.chromadmx.agent.scene.Scene
  * or to a fake for testing.
  */
 interface EngineController {
-    /** Apply an effect to a specific layer with parameters. */
-    fun setEffect(layer: Int, effectId: String, params: Map<String, Float>)
+    /** Apply an effect to a specific layer with parameters. Returns false if the effect ID was not found. */
+    fun setEffect(layer: Int, effectId: String, params: Map<String, Float>): Boolean
 
     /** Set the blend mode for a specific layer. */
     fun setBlendMode(layer: Int, mode: String)

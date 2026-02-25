@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.chromadmx.core.model.Fixture3D
+import com.chromadmx.ui.util.formatFloat
 
 /**
  * List panel showing all mapped fixtures with their name, position,
@@ -117,10 +118,4 @@ fun FixtureListPanel(
             }
         }
     }
-}
-
-private fun formatFloat(value: Float): String {
-    val intPart = value.toInt()
-    val fracPart = ((value - intPart) * 10).toInt().let { kotlin.math.abs(it) }
-    return if (value < 0 && intPart == 0) "-0.$fracPart" else "$intPart.$fracPart"
 }

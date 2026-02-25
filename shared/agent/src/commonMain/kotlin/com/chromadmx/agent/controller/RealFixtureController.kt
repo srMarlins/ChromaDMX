@@ -21,12 +21,11 @@ class RealFixtureController(
 
     override fun fireFixture(fixtureId: String, colorHex: String): Boolean {
         val fixtures = fixturesProvider()
-        val fixture = fixtures.find { it.fixture.fixtureId == fixtureId }
-        return fixture != null
-        // In a real implementation, this would:
-        // 1. Parse colorHex to RGB
-        // 2. Write the color directly to the fixture's DMX channels
-        // 3. Set a timer to restore the previous state
+        val fixture = fixtures.find { it.fixture.fixtureId == fixtureId } ?: return false
+        // TODO: Actually send DMX data — parse colorHex to RGB,
+        // write to fixture's channels, set timer to restore previous state.
+        // For now, returns true if fixture exists (identification stub).
+        return true
     }
 
     override fun setFixtureGroup(groupName: String, fixtureIds: List<String>): Boolean {

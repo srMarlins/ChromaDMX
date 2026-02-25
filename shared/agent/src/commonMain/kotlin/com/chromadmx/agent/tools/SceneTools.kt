@@ -16,7 +16,8 @@ class SetEffectTool(private val controller: EngineController) {
     )
 
     fun execute(args: Args): String {
-        controller.setEffect(args.layer, args.effectId, args.params)
+        val success = controller.setEffect(args.layer, args.effectId, args.params)
+        if (!success) return "Effect '${args.effectId}' not found in registry."
         return "Applied effect '${args.effectId}' to layer ${args.layer}" +
             if (args.params.isNotEmpty()) " with params ${args.params}" else ""
     }

@@ -1,13 +1,7 @@
 package com.chromadmx.agent.pregen
 
-import com.chromadmx.agent.config.AgentConfig
 import com.chromadmx.agent.scene.Scene
 import com.chromadmx.agent.scene.SceneStore
-import com.chromadmx.agent.tools.FakeEngineController
-import com.chromadmx.agent.tools.FakeFixtureController
-import com.chromadmx.agent.tools.FakeNetworkController
-import com.chromadmx.agent.tools.FakeStateController
-import com.chromadmx.agent.LightingAgent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -18,15 +12,7 @@ import kotlin.test.assertTrue
 class PreGenerationServiceTest {
     private fun createService(): Pair<PreGenerationService, SceneStore> {
         val sceneStore = SceneStore()
-        val agent = LightingAgent(
-            config = AgentConfig(),
-            engineController = FakeEngineController(),
-            networkController = FakeNetworkController(),
-            fixtureController = FakeFixtureController(),
-            stateController = FakeStateController(),
-            sceneStore = sceneStore
-        )
-        return PreGenerationService(agent, sceneStore) to sceneStore
+        return PreGenerationService(sceneStore) to sceneStore
     }
 
     @Test

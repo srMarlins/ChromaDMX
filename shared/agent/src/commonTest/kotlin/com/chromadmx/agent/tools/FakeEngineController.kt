@@ -19,10 +19,11 @@ class FakeEngineController : EngineController {
     var lastBlendModeLayer: Int = -1
     var lastAppliedScene: Scene? = null
 
-    override fun setEffect(layer: Int, effectId: String, params: Map<String, Float>) {
+    override fun setEffect(layer: Int, effectId: String, params: Map<String, Float>): Boolean {
         lastSetEffectId = effectId
         lastSetEffectLayer = layer
         lastSetEffectParams = params
+        return true
     }
 
     override fun setBlendMode(layer: Int, mode: String) {

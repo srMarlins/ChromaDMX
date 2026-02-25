@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 /**
- * Vertical master dimmer slider (0-100%).
+ * Master dimmer slider (0-100%), rendered horizontally.
  * Controls the overall output level of the effect engine.
  */
 @Composable

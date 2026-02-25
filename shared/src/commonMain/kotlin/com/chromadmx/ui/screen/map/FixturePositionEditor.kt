@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.core.model.Vec3
+import com.chromadmx.ui.util.formatFloat
 
 /**
  * Canvas-based 2D top-down view showing fixture positions as dots.
@@ -155,10 +156,4 @@ fun FixturePositionEditor(
             }
         }
     }
-}
-
-private fun formatFloat(value: Float): String {
-    val intPart = value.toInt()
-    val fracPart = ((value - intPart) * 10).toInt().let { kotlin.math.abs(it) }
-    return if (value < 0 && intPart == 0) "-0.$fracPart" else "$intPart.$fracPart"
 }

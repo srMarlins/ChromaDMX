@@ -10,9 +10,12 @@ import com.chromadmx.engine.pipeline.EffectEngine
 import com.chromadmx.tempo.clock.BeatClock
 import com.chromadmx.tempo.tap.TapTempoClock
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 /**
  * ViewModel for the Perform screen.
@@ -20,6 +23,9 @@ import kotlinx.coroutines.flow.asStateFlow
  * Exposes beat state, effect layers, and master dimmer controls.
  * Observes [BeatClock] for real-time musical timing and manages the
  * [EffectStack] for layer compositing.
+ *
+ * Periodically syncs from the [EffectStack] to pick up changes made by
+ * the agent or other external sources.
  */
 class PerformViewModel(
     private val engine: EffectEngine,
@@ -39,6 +45,23 @@ class PerformViewModel(
     private val _layers = MutableStateFlow(effectStack.layers)
     val layers: StateFlow<List<EffectLayer>> = _layers.asStateFlow()
 
+    init {
+        // Periodically sync from the engine to pick up external changes
+        // (e.g., agent tool calls loading a scene).
+        scope.launch {
+            while (isActive) {
+                syncFromEngine()
+                delay(500L) // 2 Hz sync rate — responsive without being wasteful
+            }
+        }
+    }
+
+    /** Pull current state from the EffectStack into our StateFlows. */
+    private fun syncFromEngine() {
+        _masterDimmer.value = effectStack.masterDimmer
+        _layers.value = effectStack.layers
+    }
+
     fun availableEffects(): Set<String> = effectRegistry.ids()
 
     /**
@@ -53,7 +76,7 @@ class PerformViewModel(
         } else {
             effectStack.addLayer(layer)
         }
-        _layers.value = effectStack.layers
+        syncFromEngine()
     }
 
     fun setMasterDimmer(value: Float) {
@@ -66,34 +89,34 @@ class PerformViewModel(
         if (layerIndex >= effectStack.layerCount) return
         val current = effectStack.layers[layerIndex]
         effectStack.setLayer(layerIndex, current.copy(opacity = opacity.coerceIn(0f, 1f)))
-        _layers.value = effectStack.layers
+        syncFromEngine()
     }
 
     fun setLayerBlendMode(layerIndex: Int, blendMode: BlendMode) {
         if (layerIndex >= effectStack.layerCount) return
         val current = effectStack.layers[layerIndex]
         effectStack.setLayer(layerIndex, current.copy(blendMode = blendMode))
-        _layers.value = effectStack.layers
+        syncFromEngine()
     }
 
     fun toggleLayerEnabled(layerIndex: Int) {
         if (layerIndex >= effectStack.layerCount) return
         val current = effectStack.layers[layerIndex]
         effectStack.setLayer(layerIndex, current.copy(enabled = !current.enabled))
-        _layers.value = effectStack.layers
+        syncFromEngine()
     }
 
     fun removeLayer(layerIndex: Int) {
         if (layerIndex >= effectStack.layerCount) return
         effectStack.removeLayerAt(layerIndex)
-        _layers.value = effectStack.layers
+        syncFromEngine()
     }
 
     fun addLayer() {
         val ids = effectRegistry.ids()
         val firstEffect = ids.firstOrNull()?.let { effectRegistry.get(it) } ?: return
         effectStack.addLayer(EffectLayer(effect = firstEffect))
-        _layers.value = effectStack.layers
+        syncFromEngine()
     }
 
     fun tap() {

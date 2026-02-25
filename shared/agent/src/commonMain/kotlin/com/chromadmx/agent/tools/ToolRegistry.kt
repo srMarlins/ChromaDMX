@@ -17,8 +17,8 @@ import kotlinx.serialization.json.jsonPrimitive
  * Registry of all agent tools.
  *
  * Maps tool names to their execution functions and provides a JSON-based
- * dispatch interface. This is the adapter layer that can be wired to Koog
- * or any other agent framework.
+ * dispatch interface. Tools are registered in a single map, so tool names
+ * and dispatch logic are always in sync.
  */
 class ToolRegistry(
     private val engineController: EngineController,
@@ -46,14 +46,74 @@ class ToolRegistry(
     private val getBeatStateTool = GetBeatStateTool(stateController)
     private val getNetworkStateTool = GetNetworkStateTool(stateController)
 
-    /** All registered tool names. */
-    val toolNames: List<String> = listOf(
-        "setEffect", "setBlendMode", "setMasterDimmer", "setColorPalette",
-        "setTempoMultiplier", "createScene", "loadScene",
-        "scanNetwork", "getNodeStatus", "configureNode", "diagnoseConnection",
-        "listFixtures", "fireFixture", "setFixtureGroup",
-        "getEngineState", "getBeatState", "getNetworkState"
+    /** Single source of truth: tool name -> dispatch function. */
+    private val tools: Map<String, suspend (JsonObject) -> String> = mapOf(
+        "setEffect" to { args ->
+            val layer = args["layer"]?.jsonPrimitive?.int ?: 0
+            val effectId = args["effectId"]?.jsonPrimitive?.content ?: ""
+            val params = args["params"]?.jsonObject?.mapValues {
+                it.value.jsonPrimitive.float
+            } ?: emptyMap()
+            setEffectTool.execute(SetEffectTool.Args(layer, effectId, params))
+        },
+        "setBlendMode" to { args ->
+            val layer = args["layer"]?.jsonPrimitive?.int ?: 0
+            val mode = args["mode"]?.jsonPrimitive?.content ?: "NORMAL"
+            setBlendModeTool.execute(SetBlendModeTool.Args(layer, mode))
+        },
+        "setMasterDimmer" to { args ->
+            val value = args["value"]?.jsonPrimitive?.float ?: 1.0f
+            setMasterDimmerTool.execute(SetMasterDimmerTool.Args(value))
+        },
+        "setColorPalette" to { args ->
+            val colors = args["colors"]?.jsonArray?.map { it.jsonPrimitive.content } ?: emptyList()
+            setColorPaletteTool.execute(SetColorPaletteTool.Args(colors))
+        },
+        "setTempoMultiplier" to { args ->
+            val multiplier = args["multiplier"]?.jsonPrimitive?.float ?: 1.0f
+            setTempoMultiplierTool.execute(SetTempoMultiplierTool.Args(multiplier))
+        },
+        "createScene" to { args ->
+            val name = args["name"]?.jsonPrimitive?.content ?: ""
+            createSceneTool.execute(CreateSceneTool.Args(name))
+        },
+        "loadScene" to { args ->
+            val name = args["name"]?.jsonPrimitive?.content ?: ""
+            loadSceneTool.execute(LoadSceneTool.Args(name))
+        },
+        "scanNetwork" to { _ -> scanNetworkTool.execute() },
+        "getNodeStatus" to { args ->
+            val nodeId = args["nodeId"]?.jsonPrimitive?.content ?: ""
+            getNodeStatusTool.execute(GetNodeStatusTool.Args(nodeId))
+        },
+        "configureNode" to { args ->
+            val nodeId = args["nodeId"]?.jsonPrimitive?.content ?: ""
+            val universe = args["universe"]?.jsonPrimitive?.int ?: 0
+            val startAddress = args["startAddress"]?.jsonPrimitive?.int ?: 1
+            configureNodeTool.execute(ConfigureNodeTool.Args(nodeId, universe, startAddress))
+        },
+        "diagnoseConnection" to { args ->
+            val nodeId = args["nodeId"]?.jsonPrimitive?.content ?: ""
+            diagnoseConnectionTool.execute(DiagnoseConnectionTool.Args(nodeId))
+        },
+        "listFixtures" to { _ -> listFixturesTool.execute() },
+        "fireFixture" to { args ->
+            val fixtureId = args["fixtureId"]?.jsonPrimitive?.content ?: ""
+            val colorHex = args["colorHex"]?.jsonPrimitive?.content ?: "#FFFFFF"
+            fireFixtureTool.execute(FireFixtureTool.Args(fixtureId, colorHex))
+        },
+        "setFixtureGroup" to { args ->
+            val groupName = args["groupName"]?.jsonPrimitive?.content ?: ""
+            val fixtureIds = args["fixtureIds"]?.jsonArray?.map { it.jsonPrimitive.content } ?: emptyList()
+            setFixtureGroupTool.execute(SetFixtureGroupTool.Args(groupName, fixtureIds))
+        },
+        "getEngineState" to { _ -> getEngineStateTool.execute() },
+        "getBeatState" to { _ -> getBeatStateTool.execute() },
+        "getNetworkState" to { _ -> getNetworkStateTool.execute() },
     )
+
+    /** All registered tool names — derived from the dispatch map. */
+    val toolNames: List<String> get() = tools.keys.toList()
 
     /**
      * Dispatch a tool call by name with JSON arguments.
@@ -70,77 +130,11 @@ class ToolRegistry(
             } else {
                 json.parseToJsonElement(argsJson).jsonObject
             }
-            dispatchParsed(toolName, args)
+            val handler = tools[toolName]
+                ?: return "Unknown tool: '$toolName'. Available: ${toolNames.joinToString(", ")}"
+            handler(args)
         } catch (e: Exception) {
             "Error executing tool '$toolName': ${e.message}"
-        }
-    }
-
-    private suspend fun dispatchParsed(toolName: String, args: JsonObject): String {
-        return when (toolName) {
-            "setEffect" -> {
-                val layer = args["layer"]?.jsonPrimitive?.int ?: 0
-                val effectId = args["effectId"]?.jsonPrimitive?.content ?: ""
-                val params = args["params"]?.jsonObject?.mapValues {
-                    it.value.jsonPrimitive.float
-                } ?: emptyMap()
-                setEffectTool.execute(SetEffectTool.Args(layer, effectId, params))
-            }
-            "setBlendMode" -> {
-                val layer = args["layer"]?.jsonPrimitive?.int ?: 0
-                val mode = args["mode"]?.jsonPrimitive?.content ?: "NORMAL"
-                setBlendModeTool.execute(SetBlendModeTool.Args(layer, mode))
-            }
-            "setMasterDimmer" -> {
-                val value = args["value"]?.jsonPrimitive?.float ?: 1.0f
-                setMasterDimmerTool.execute(SetMasterDimmerTool.Args(value))
-            }
-            "setColorPalette" -> {
-                val colors = args["colors"]?.jsonArray?.map { it.jsonPrimitive.content } ?: emptyList()
-                setColorPaletteTool.execute(SetColorPaletteTool.Args(colors))
-            }
-            "setTempoMultiplier" -> {
-                val multiplier = args["multiplier"]?.jsonPrimitive?.float ?: 1.0f
-                setTempoMultiplierTool.execute(SetTempoMultiplierTool.Args(multiplier))
-            }
-            "createScene" -> {
-                val name = args["name"]?.jsonPrimitive?.content ?: ""
-                createSceneTool.execute(CreateSceneTool.Args(name))
-            }
-            "loadScene" -> {
-                val name = args["name"]?.jsonPrimitive?.content ?: ""
-                loadSceneTool.execute(LoadSceneTool.Args(name))
-            }
-            "scanNetwork" -> scanNetworkTool.execute()
-            "getNodeStatus" -> {
-                val nodeId = args["nodeId"]?.jsonPrimitive?.content ?: ""
-                getNodeStatusTool.execute(GetNodeStatusTool.Args(nodeId))
-            }
-            "configureNode" -> {
-                val nodeId = args["nodeId"]?.jsonPrimitive?.content ?: ""
-                val universe = args["universe"]?.jsonPrimitive?.int ?: 0
-                val startAddress = args["startAddress"]?.jsonPrimitive?.int ?: 1
-                configureNodeTool.execute(ConfigureNodeTool.Args(nodeId, universe, startAddress))
-            }
-            "diagnoseConnection" -> {
-                val nodeId = args["nodeId"]?.jsonPrimitive?.content ?: ""
-                diagnoseConnectionTool.execute(DiagnoseConnectionTool.Args(nodeId))
-            }
-            "listFixtures" -> listFixturesTool.execute()
-            "fireFixture" -> {
-                val fixtureId = args["fixtureId"]?.jsonPrimitive?.content ?: ""
-                val colorHex = args["colorHex"]?.jsonPrimitive?.content ?: "#FFFFFF"
-                fireFixtureTool.execute(FireFixtureTool.Args(fixtureId, colorHex))
-            }
-            "setFixtureGroup" -> {
-                val groupName = args["groupName"]?.jsonPrimitive?.content ?: ""
-                val fixtureIds = args["fixtureIds"]?.jsonArray?.map { it.jsonPrimitive.content } ?: emptyList()
-                setFixtureGroupTool.execute(SetFixtureGroupTool.Args(groupName, fixtureIds))
-            }
-            "getEngineState" -> getEngineStateTool.execute()
-            "getBeatState" -> getBeatStateTool.execute()
-            "getNetworkState" -> getNetworkStateTool.execute()
-            else -> "Unknown tool: '$toolName'. Available: ${toolNames.joinToString(", ")}"
         }
     }
 }

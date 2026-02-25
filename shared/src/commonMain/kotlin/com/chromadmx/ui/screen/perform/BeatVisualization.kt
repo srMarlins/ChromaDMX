@@ -54,8 +54,7 @@ fun BeatVisualization(
             for (i in 0 until 4) {
                 val isActive = i == currentBeat
                 val color = if (isActive) {
-                    // Lerp from active to a brighter version based on pulse
-                    lerpColor(BeatActive, BeatActive.copy(alpha = 0.4f + 0.6f * pulseIntensity), 0f)
+                    BeatActive.copy(alpha = 0.4f + 0.6f * pulseIntensity)
                 } else {
                     BeatInactive
                 }
@@ -71,14 +70,4 @@ fun BeatVisualization(
             }
         }
     }
-}
-
-private fun lerpColor(a: Color, b: Color, t: Float): Color {
-    val ct = t.coerceIn(0f, 1f)
-    return Color(
-        red = a.red + (b.red - a.red) * ct,
-        green = a.green + (b.green - a.green) * ct,
-        blue = a.blue + (b.blue - a.blue) * ct,
-        alpha = a.alpha + (b.alpha - a.alpha) * ct,
-    )
 }

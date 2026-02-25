@@ -16,8 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 /**
- * Horizontal row of scene preset buttons.
- * Tap to load a scene; long-press to save current state (future feature).
+ * Horizontal row of scene preset buttons (visual only).
+ * TODO: Wire to SceneStore for load/save. Currently tracks selection state locally.
  */
 @Composable
 fun ScenePresetRow(

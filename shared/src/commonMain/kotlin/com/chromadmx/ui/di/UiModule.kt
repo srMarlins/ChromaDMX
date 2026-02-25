@@ -1,5 +1,7 @@
 package com.chromadmx.ui.di
 
+import com.chromadmx.agent.LightingAgent
+import com.chromadmx.agent.pregen.PreGenerationService
 import com.chromadmx.ui.viewmodel.AgentViewModel
 import com.chromadmx.ui.viewmodel.MapViewModel
 import com.chromadmx.ui.viewmodel.NetworkViewModel
@@ -13,17 +15,20 @@ import org.koin.dsl.module
  * Koin module for UI ViewModels.
  *
  * Each ViewModel is scoped as a factory so a new instance is created
- * per screen composition. The CoroutineScope uses SupervisorJob + Dispatchers.Default.
+ * per screen composition. The CoroutineScope uses SupervisorJob + Dispatchers.Default
+ * and is cancelled when the Koin application closes.
  *
  * Dependencies:
  * - PerformViewModel requires: EffectEngine, EffectRegistry, BeatClock
  * - NetworkViewModel requires: NodeDiscovery
  * - MapViewModel: standalone
- * - AgentViewModel: standalone (agent integration deferred to Issue #9)
+ * - AgentViewModel: requires LightingAgent, PreGenerationService
  */
 val uiModule = module {
-    // Shared UI coroutine scope
-    single { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
+    // Shared UI coroutine scope — uses SupervisorJob so child failures don't cancel siblings
+    single {
+        CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    }
 
     factory {
         PerformViewModel(
@@ -49,6 +54,8 @@ val uiModule = module {
 
     factory {
         AgentViewModel(
+            agent = get(),
+            preGenService = get(),
             scope = get(),
         )
     }

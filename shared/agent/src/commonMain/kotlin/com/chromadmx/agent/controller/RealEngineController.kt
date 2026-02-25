@@ -26,8 +26,8 @@ class RealEngineController(
     /** Current tempo multiplier. */
     private var currentTempoMultiplier: Float = 1.0f
 
-    override fun setEffect(layer: Int, effectId: String, params: Map<String, Float>) {
-        val effect = effectRegistry.get(effectId) ?: return
+    override fun setEffect(layer: Int, effectId: String, params: Map<String, Float>): Boolean {
+        val effect = effectRegistry.get(effectId) ?: return false
 
         // Build EffectParams from the float map
         val effectParams = params.entries.fold(EffectParams.EMPTY) { acc, (key, value) ->
@@ -36,7 +36,7 @@ class RealEngineController(
 
         // Ensure we have enough layers
         while (effectStack.layerCount <= layer) {
-            val defaultEffect = effectRegistry.all().firstOrNull() ?: return
+            val defaultEffect = effectRegistry.all().firstOrNull() ?: return false
             effectStack.addLayer(EffectLayer(effect = defaultEffect, enabled = false))
         }
 
@@ -45,6 +45,7 @@ class RealEngineController(
             layer,
             existingLayer.copy(effect = effect, params = effectParams, enabled = true)
         )
+        return true
     }
 
     override fun setBlendMode(layer: Int, mode: String) {
@@ -75,13 +76,7 @@ class RealEngineController(
             Scene.LayerConfig(
                 effectId = layer.effect.id,
                 params = layer.params.toMap().mapValues { (_, v) ->
-                    when (v) {
-                        is Float -> v
-                        is Double -> v.toFloat()
-                        is Int -> v.toFloat()
-                        is Number -> v.toFloat()
-                        else -> 0f
-                    }
+                    (v as? Number)?.toFloat() ?: 0f
                 },
                 blendMode = layer.blendMode.name,
                 opacity = layer.opacity
@@ -97,10 +92,10 @@ class RealEngineController(
     }
 
     override fun applyScene(scene: Scene) {
-        effectStack.clearLayers()
-
-        for (layerConfig in scene.layers) {
-            val effect = effectRegistry.get(layerConfig.effectId) ?: continue
+        // Build all layers first, then swap atomically to avoid
+        // the engine seeing a partially-applied scene.
+        val newLayers = scene.layers.mapNotNull { layerConfig ->
+            val effect = effectRegistry.get(layerConfig.effectId) ?: return@mapNotNull null
             val params = layerConfig.params.entries.fold(EffectParams.EMPTY) { acc, (key, value) ->
                 acc.with(key, value)
             }
@@ -109,16 +104,15 @@ class RealEngineController(
             } catch (_: IllegalArgumentException) {
                 BlendMode.NORMAL
             }
-            effectStack.addLayer(
-                EffectLayer(
-                    effect = effect,
-                    params = params,
-                    blendMode = blendMode,
-                    opacity = layerConfig.opacity,
-                    enabled = true
-                )
+            EffectLayer(
+                effect = effect,
+                params = params,
+                blendMode = blendMode,
+                opacity = layerConfig.opacity,
+                enabled = true
             )
         }
+        effectStack.replaceLayers(newLayers)
 
         effectStack.masterDimmer = scene.masterDimmer
         currentPalette = scene.colorPalette

@@ -35,9 +35,9 @@ class FireFixtureTool(private val controller: FixtureController) {
     fun execute(args: Args): String {
         val success = controller.fireFixture(args.fixtureId, args.colorHex)
         return if (success) {
-            "Fired fixture '${args.fixtureId}' with color ${args.colorHex}"
+            "Identified fixture '${args.fixtureId}' with color ${args.colorHex} (DMX output pending implementation)"
         } else {
-            "Failed to fire fixture '${args.fixtureId}'. Check fixture ID."
+            "Fixture '${args.fixtureId}' not found. Check fixture ID."
         }
     }
 }

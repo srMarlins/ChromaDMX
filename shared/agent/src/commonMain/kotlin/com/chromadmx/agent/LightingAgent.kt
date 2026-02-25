@@ -10,6 +10,7 @@ import com.chromadmx.agent.tools.ToolRegistry
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 /**
  * The AI lighting director agent.
@@ -71,18 +72,18 @@ class LightingAgent(
         }
 
         _isProcessing.value = true
-        _conversationHistory.value += ChatMessage(role = "user", content = userMessage)
+        _conversationHistory.update { it + ChatMessage(role = "user", content = userMessage) }
 
         return try {
             // TODO: Wire Koog AIAgent here when SDK is available
             val response = "LLM integration pending (Koog SDK). " +
                 "Use dispatchTool() for direct tool access. " +
                 "Available tools: ${toolRegistry.toolNames.joinToString(", ")}"
-            _conversationHistory.value += ChatMessage(role = "assistant", content = response)
+            _conversationHistory.update { it + ChatMessage(role = "assistant", content = response) }
             response
         } catch (e: Exception) {
             val error = "Error: ${e.message}"
-            _conversationHistory.value += ChatMessage(role = "assistant", content = error)
+            _conversationHistory.update { it + ChatMessage(role = "assistant", content = error) }
             error
         } finally {
             _isProcessing.value = false

@@ -1,5 +1,6 @@
 package com.chromadmx.agent.controller
 
+import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.engine.effect.EffectStack
 import com.chromadmx.engine.pipeline.EffectEngine
 import com.chromadmx.networking.discovery.NodeDiscovery
@@ -16,6 +17,7 @@ class RealStateController(
     private val beatClock: BeatClock,
     private val nodeDiscovery: NodeDiscovery,
     private val dmxOutputService: DmxOutputService,
+    private val fixturesProvider: () -> List<Fixture3D> = { emptyList() },
 ) : StateController {
 
     override fun getEngineState(): EngineStateSnapshot {
@@ -24,8 +26,8 @@ class RealStateController(
             isRunning = effectEngine.isRunning,
             layerCount = stack.layerCount,
             masterDimmer = stack.masterDimmer,
-            fixtureCount = 0, // Would need fixtures reference
-            fps = 0f, // Would need frame timing measurement
+            fixtureCount = fixturesProvider().size,
+            fps = 0f, // TODO: Wire frame timing measurement from engine
             effectIds = stack.layers
                 .filter { it.enabled }
                 .map { it.effect.id }
