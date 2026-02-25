@@ -200,7 +200,7 @@ fun PresetThumbnail(
                     y = (j - gridRes / 2f) * 2f,
                     z = 0f
                 )
-                val color = thumbnailStack.evaluate(pos, 0f, BeatState())
+                val color = thumbnailStack.evaluate(pos, 0f, BeatState.IDLE)
                 drawRect(
                     color = Color(color.r, color.g, color.b),
                     topLeft = Offset(i * size.width / gridRes, j * size.height / gridRes),
