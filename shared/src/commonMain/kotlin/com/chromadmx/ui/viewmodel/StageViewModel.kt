@@ -1,5 +1,6 @@
 package com.chromadmx.ui.viewmodel
 
+import com.chromadmx.agent.scene.Scene
 import com.chromadmx.core.EffectParams
 import com.chromadmx.core.model.BeatState
 import com.chromadmx.core.model.BlendMode
@@ -9,6 +10,7 @@ import com.chromadmx.engine.effect.EffectLayer
 import com.chromadmx.engine.effect.EffectRegistry
 import com.chromadmx.engine.effect.EffectStack
 import com.chromadmx.engine.pipeline.EffectEngine
+import com.chromadmx.engine.preset.PresetLibrary
 import com.chromadmx.tempo.clock.BeatClock
 import com.chromadmx.tempo.tap.TapTempoClock
 import kotlinx.coroutines.CoroutineScope
@@ -30,6 +32,7 @@ import kotlinx.coroutines.launch
 class StageViewModel(
     private val engine: EffectEngine,
     val effectRegistry: EffectRegistry,
+    private val presetLibrary: PresetLibrary,
     private val beatClock: BeatClock,
     private val scope: CoroutineScope,
 ) {
@@ -47,6 +50,13 @@ class StageViewModel(
     // --- Effect layers ---
     private val _layers = MutableStateFlow(effectStack.layers)
     val layers: StateFlow<List<EffectLayer>> = _layers.asStateFlow()
+
+    // --- Scenes (from PresetLibrary) ---
+    private val _scenes = MutableStateFlow<List<Scene>>(emptyList())
+    val allScenes: StateFlow<List<Scene>> = _scenes.asStateFlow()
+
+    private var layersBeforePreview: List<EffectLayer>? = null
+    private var masterDimmerBeforePreview: Float? = null
 
     // --- Fixtures ---
     private val _fixtures = MutableStateFlow(engine.fixtures)
@@ -74,10 +84,36 @@ class StageViewModel(
     private fun syncFromEngine() {
         _masterDimmer.value = effectStack.masterDimmer
         _layers.value = effectStack.layers
+        _scenes.value = presetLibrary.listPresets().map { preset ->
+            Scene(
+                name = preset.name,
+                layers = preset.layers.map { config ->
+                    @Suppress("UNCHECKED_CAST")
+                    val floatParams = config.params.toMap().mapValues { (_, v) ->
+                        when (v) {
+                            is Float -> v
+                            is Double -> v.toFloat()
+                            is Int -> v.toFloat()
+                            is Number -> v.toFloat()
+                            else -> 0f
+                        }
+                    }
+                    Scene.LayerConfig(
+                        effectId = config.effectId,
+                        params = floatParams,
+                        blendMode = config.blendMode.name,
+                        opacity = config.opacity,
+                    )
+                },
+                masterDimmer = preset.masterDimmer,
+            )
+        }
     }
 
     // --- Effect controls ---
     fun availableEffects(): Set<String> = effectRegistry.ids()
+
+    fun availableGenres(): List<String> = listOf("techno", "ambient", "house", "default")
 
     fun setEffect(layerIndex: Int, effectId: String, params: EffectParams = EffectParams.EMPTY) {
         val effect = effectRegistry.get(effectId) ?: return
@@ -126,6 +162,39 @@ class StageViewModel(
     fun reorderLayer(fromIndex: Int, toIndex: Int) {
         effectStack.moveLayer(fromIndex, toIndex)
         syncFromEngine()
+    }
+
+    fun applyScene(name: String) {
+        val presets = presetLibrary.listPresets()
+        val preset = presets.find { it.name == name } ?: return
+        layersBeforePreview = null
+        masterDimmerBeforePreview = null
+        presetLibrary.loadPreset(preset.id)
+        syncFromEngine()
+    }
+
+    fun previewScene(name: String?) {
+        if (name == null) {
+            // Revert preview
+            layersBeforePreview?.let {
+                effectStack.replaceLayers(it)
+                layersBeforePreview = null
+            }
+            masterDimmerBeforePreview?.let {
+                effectStack.masterDimmer = it
+                masterDimmerBeforePreview = null
+            }
+            syncFromEngine()
+        } else {
+            val presets = presetLibrary.listPresets()
+            val preset = presets.find { it.name == name } ?: return
+            if (layersBeforePreview == null) {
+                layersBeforePreview = effectStack.layers
+                masterDimmerBeforePreview = effectStack.masterDimmer
+            }
+            presetLibrary.loadPreset(preset.id)
+            syncFromEngine()
+        }
     }
 
     fun addLayer() {

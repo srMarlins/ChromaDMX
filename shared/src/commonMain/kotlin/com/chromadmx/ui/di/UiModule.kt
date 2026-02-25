@@ -14,15 +14,15 @@ import org.koin.dsl.module
  *
  * [StageViewModel] and [SettingsViewModel] are scoped as singletons so
  * they survive navigation round-trips (e.g., StagePreview -> Settings -> back).
- * [AgentViewModel] remains a factory — each chat session can be independent.
+ * [AgentViewModel] remains a factory -- each chat session can be independent.
  *
  * A child [SupervisorJob] is created per ViewModel so its coroutines can be
  * cancelled independently via [onCleared].
  *
  * Dependencies:
- * - StageViewModel requires: EffectEngine, EffectRegistry, BeatClock
- * - SettingsViewModel: standalone
- * - AgentViewModel: requires LightingAgent, PreGenerationService
+ * - StageViewModel requires: EffectEngine, EffectRegistry, PresetLibrary, BeatClock
+ * - SettingsViewModel requires: NodeDiscovery
+ * - AgentViewModel requires: LightingAgent, PreGenerationService
  */
 val uiModule = module {
     // CoroutineScope provided by chromaDiModule
@@ -34,6 +34,7 @@ val uiModule = module {
         StageViewModel(
             engine = get(),
             effectRegistry = get(),
+            presetLibrary = get(),
             beatClock = get(),
             scope = vmScope,
         )
@@ -43,7 +44,10 @@ val uiModule = module {
         val parentScope: CoroutineScope = get()
         val childJob = SupervisorJob(parentScope.coroutineContext[Job])
         val vmScope = CoroutineScope(Dispatchers.Default + childJob)
-        SettingsViewModel(scope = vmScope)
+        SettingsViewModel(
+            nodeDiscovery = get(),
+            scope = vmScope,
+        )
     }
 
     factory {
