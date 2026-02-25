@@ -25,7 +25,7 @@ import org.koin.dsl.module
  * - NetworkViewModel requires: NodeDiscovery
  * - MapViewModel: standalone
  * - AgentViewModel: requires LightingAgent, PreGenerationService
- * - MascotViewModel: standalone
+ * - MascotViewModel: requires BeatClock
  */
 val uiModule = module {
     // CoroutineScope provided by chromaDiModule
@@ -78,6 +78,7 @@ val uiModule = module {
         val vmScope = CoroutineScope(Dispatchers.Default + childJob)
         MascotViewModel(
             scope = vmScope,
+            beatClock = get(),
         )
     }
 }

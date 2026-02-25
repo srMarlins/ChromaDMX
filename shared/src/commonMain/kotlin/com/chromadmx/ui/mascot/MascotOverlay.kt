@@ -28,15 +28,18 @@ import kotlin.math.roundToInt
  *
  * The mascot is draggable and tappable (opens chat panel).
  * Speech bubbles appear above the mascot.
+ *
+ * @param onAction Callback invoked when the user taps an action button in a speech bubble.
  */
 @Composable
 fun MascotOverlay(
     viewModel: MascotViewModel,
     onMascotTap: () -> Unit,
+    onAction: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val mascotState by viewModel.mascotState.collectAsState()
-    val frameIndex by viewModel.animationController.currentFrameIndex.collectAsState()
+    val frameIndex by viewModel.currentFrameIndex.collectAsState()
     val currentBubble by viewModel.currentBubble.collectAsState()
 
     // Draggable offset (starts at bottom-right)
@@ -72,7 +75,7 @@ fun MascotOverlay(
                 SpeechBubbleView(
                     bubble = currentBubble!!,
                     onDismiss = { viewModel.dismissBubble() },
-                    onAction = { /* TODO: wire action callbacks */ },
+                    onAction = onAction,
                 )
                 Spacer(modifier = Modifier.height(4.dp))
             }
