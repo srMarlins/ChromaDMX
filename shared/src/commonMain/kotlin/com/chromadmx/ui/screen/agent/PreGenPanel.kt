@@ -52,7 +52,7 @@ fun PreGenPanel(
             modifier = Modifier.padding(16.dp),
         ) {
             Text(
-                text = "Generate ScenePreset Presets",
+                text = "Generate Scene Presets",
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface,
             )

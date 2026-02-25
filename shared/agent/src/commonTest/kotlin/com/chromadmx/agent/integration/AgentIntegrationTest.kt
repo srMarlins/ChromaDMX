@@ -98,13 +98,13 @@ class AgentIntegrationTest {
     @Test
     fun createAndLoadSceneWorkflow() = runTest {
         // Create a scene
-        val createResult = agent.dispatchTool("createScene", """{"name": "My ScenePreset"}""")
-        assertContains(createResult, "My ScenePreset")
-        assertNotNull(sceneStore.load("My ScenePreset"))
+        val createResult = agent.dispatchTool("createScene", """{"name": "My Scene"}""")
+        assertContains(createResult, "My Scene")
+        assertNotNull(sceneStore.load("My Scene"))
 
         // Load the scene
-        val loadResult = agent.dispatchTool("loadScene", """{"name": "My ScenePreset"}""")
-        assertContains(loadResult, "My ScenePreset")
+        val loadResult = agent.dispatchTool("loadScene", """{"name": "My Scene"}""")
+        assertContains(loadResult, "My Scene")
     }
 
     @Test

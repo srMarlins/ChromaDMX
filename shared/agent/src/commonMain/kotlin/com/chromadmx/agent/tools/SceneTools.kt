@@ -146,7 +146,7 @@ class LoadSceneTool(
 
     override suspend fun execute(args: Args): String {
         val scene = sceneStore.load(args.name)
-            ?: return "ScenePreset '${args.name}' not found. Available: ${sceneStore.list().joinToString(", ")}"
+            ?: return "Scene '${args.name}' not found. Available: ${sceneStore.list().joinToString(", ")}"
         controller.applyScene(scene)
         return "Loaded scene '${args.name}' with ${scene.layers.size} layers, dimmer=${scene.masterDimmer}"
     }
