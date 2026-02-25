@@ -39,6 +39,11 @@ val chromaDiModule = module {
     single { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
 
     // --- Tempo ---
+    // Currently using TapTempoClock directly. To enable Ableton Link with
+    // automatic fallback to tap-tempo, replace this binding with:
+    //   includes(com.chromadmx.tempo.di.tempoModule)
+    // and remove the single<BeatClock> line below.
+    // See: shared/tempo/src/commonMain/.../di/TempoModule.kt
     single<BeatClock> { TapTempoClock(scope = get()) }
 
     // --- Networking ---
