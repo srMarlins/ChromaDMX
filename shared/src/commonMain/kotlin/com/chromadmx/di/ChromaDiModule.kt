@@ -88,6 +88,6 @@ val chromaDiModule = module {
     // --- Presets ---
     single { PresetLibrary(get(), get(), get()) }
 
-    // --- Fixture provider (empty default — MapViewModel manages fixtures) ---
+    // --- Fixture provider (empty default — StageViewModel manages fixtures) ---
     single<() -> List<Fixture3D>> { { emptyList() } }
 }

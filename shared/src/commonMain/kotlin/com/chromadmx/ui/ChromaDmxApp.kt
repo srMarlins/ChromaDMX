@@ -4,123 +4,73 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Place
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import com.chromadmx.ui.mascot.MascotOverlay
-import com.chromadmx.ui.navigation.Screen
-import com.chromadmx.ui.screen.agent.AgentScreen
-import com.chromadmx.ui.screen.map.MapScreen
-import com.chromadmx.ui.screen.network.NetworkScreen
-import com.chromadmx.ui.screen.perform.PerformScreen
+import com.chromadmx.ui.navigation.AppState
+import com.chromadmx.ui.navigation.AppStateManager
+import com.chromadmx.ui.screen.onboarding.OnboardingScreen
+import com.chromadmx.ui.screen.settings.SettingsScreen
+import com.chromadmx.ui.screen.stage.StagePreviewScreen
 import com.chromadmx.ui.theme.ChromaDmxTheme
-import com.chromadmx.ui.theme.pixelGrid
-import com.chromadmx.ui.viewmodel.AgentViewModel
-import com.chromadmx.ui.viewmodel.MapViewModel
 import com.chromadmx.ui.viewmodel.MascotViewModel
-import com.chromadmx.ui.viewmodel.NetworkViewModel
-import com.chromadmx.ui.viewmodel.PerformViewModel
+import com.chromadmx.ui.viewmodel.SettingsViewModel
+import com.chromadmx.ui.viewmodel.StageViewModel
 import org.koin.compose.getKoin
 
 /**
  * Root composable for the ChromaDMX application.
  *
- * Hosts the bottom navigation bar and delegates to per-screen composables.
- * Uses simple enum-based navigation (no Jetpack Navigation) for KMP compatibility.
- *
- * ViewModels are resolved from Koin. Screens whose ViewModel dependencies
- * are not yet registered (EffectEngine, NodeDiscovery) will show a placeholder.
+ * Uses [AppStateManager] for navigation: Onboarding -> StagePreview <-> Settings.
+ * No tab bar. Single main screen with contextual overlays.
  */
 @Composable
 fun ChromaDmxApp() {
     ChromaDmxTheme {
-        var currentScreen by remember { mutableStateOf(Screen.PERFORM) }
+        // TODO: Read isFirstLaunch from persistent storage
+        val appStateManager = remember { AppStateManager(isFirstLaunch = false) }
+        val currentState by appStateManager.currentState.collectAsState()
 
-        Scaffold(
-            containerColor = MaterialTheme.colorScheme.background,
-            modifier = Modifier.pixelGrid(),
-            bottomBar = {
-                NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
-                    Screen.entries.forEach { screen ->
-                        NavigationBarItem(
-                            selected = currentScreen == screen,
-                            onClick = { currentScreen = screen },
-                            icon = {
-                                Icon(
-                                    imageVector = screenIcon(screen),
-                                    contentDescription = screen.title,
-                                )
-                            },
-                            label = { Text(screen.title) },
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background,
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                when (val state = currentState) {
+                    is AppState.Onboarding -> {
+                        OnboardingScreen(
+                            step = state.step,
+                            onAdvance = { appStateManager.advanceOnboarding() },
                         )
                     }
-                }
-            }
-        ) { padding ->
-            Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
-            ) {
-                when (currentScreen) {
-                    Screen.PERFORM -> {
-                        val vm = resolveOrNull<PerformViewModel>()
-                        if (vm != null) {
-                            DisposableEffect(vm) {
-                                onDispose { vm.onCleared() }
-                            }
-                            PerformScreen(viewModel = vm)
+                    is AppState.StagePreview -> {
+                        val stageVm = resolveOrNull<StageViewModel>()
+                        if (stageVm != null) {
+                            StagePreviewScreen(
+                                viewModel = stageVm,
+                                onSettingsClick = { appStateManager.navigateTo(AppState.Settings) },
+                            )
                         } else {
-                            ScreenPlaceholder("Perform", "Engine services not yet registered in DI.")
+                            ScreenPlaceholder("Stage Preview", "Engine services not yet registered in DI.")
                         }
                     }
-                    Screen.NETWORK -> {
-                        val vm = resolveOrNull<NetworkViewModel>()
-                        if (vm != null) {
-                            DisposableEffect(vm) {
-                                onDispose { vm.onCleared() }
-                            }
-                            NetworkScreen(viewModel = vm)
+                    is AppState.Settings -> {
+                        val settingsVm = resolveOrNull<SettingsViewModel>()
+                        if (settingsVm != null) {
+                            SettingsScreen(
+                                viewModel = settingsVm,
+                                onClose = { appStateManager.navigateBack() },
+                            )
                         } else {
-                            ScreenPlaceholder("Network", "Networking services not yet registered in DI.")
-                        }
-                    }
-                    Screen.MAP -> {
-                        val vm = resolveOrNull<MapViewModel>()
-                        if (vm != null) {
-                            DisposableEffect(vm) {
-                                onDispose { vm.onCleared() }
-                            }
-                            MapScreen(viewModel = vm)
-                        } else {
-                            ScreenPlaceholder("Map", "Map services not yet registered in DI.")
-                        }
-                    }
-                    Screen.AGENT -> {
-                        val vm = resolveOrNull<AgentViewModel>()
-                        if (vm != null) {
-                            DisposableEffect(vm) {
-                                onDispose { vm.onCleared() }
-                            }
-                            AgentScreen(viewModel = vm)
-                        } else {
-                            ScreenPlaceholder("Agent", "Agent services not yet registered in DI.")
+                            ScreenPlaceholder("Settings", "Services not registered.")
                         }
                     }
                 }
@@ -170,11 +120,4 @@ private fun ScreenPlaceholder(title: String, subtitle: String) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
-}
-
-private fun screenIcon(screen: Screen): ImageVector = when (screen) {
-    Screen.PERFORM -> Icons.Default.PlayArrow
-    Screen.NETWORK -> Icons.Default.Settings
-    Screen.MAP -> Icons.Default.Place
-    Screen.AGENT -> Icons.Default.Build
 }
