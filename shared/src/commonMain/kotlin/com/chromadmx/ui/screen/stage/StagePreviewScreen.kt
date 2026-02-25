@@ -5,6 +5,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -81,41 +82,39 @@ fun StagePreviewScreen(
             }
         }
 
-        // Simulation badge (top-left, below BPM)
-        AnimatedVisibility(
-            visible = isSimulationMode,
-            enter = fadeIn(),
-            exit = fadeOut(),
+        // Simulation badge + tooltip (top-left, below BPM)
+        Column(
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(start = 16.dp, top = 56.dp),
+                .padding(start = 16.dp, top = 56.dp)
         ) {
-            SimulationBadge(
-                onTap = { showSimTooltip = !showSimTooltip },
-            )
-        }
-
-        // Simulation tooltip
-        AnimatedVisibility(
-            visible = showSimTooltip && isSimulationMode,
-            enter = fadeIn(),
-            exit = fadeOut(),
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(start = 16.dp, top = 84.dp),
-        ) {
-            val tooltipText = buildString {
-                append("Running with virtual fixtures")
-                if (simPresetName != null) {
-                    append(" ($simPresetName, $simFixtureCount fixtures)")
-                }
+            AnimatedVisibility(
+                visible = isSimulationMode,
+                enter = fadeIn(),
+                exit = fadeOut(),
+            ) {
+                SimulationBadge(
+                    onTap = { showSimTooltip = !showSimTooltip },
+                )
             }
-            Text(
-                text = tooltipText,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(8.dp),
-            )
+            AnimatedVisibility(
+                visible = showSimTooltip && isSimulationMode,
+                enter = fadeIn(),
+                exit = fadeOut(),
+            ) {
+                val tooltipText = buildString {
+                    append("Running with virtual fixtures")
+                    if (simPresetName != null) {
+                        append(" ($simPresetName, $simFixtureCount fixtures)")
+                    }
+                }
+                Text(
+                    text = tooltipText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(8.dp),
+                )
+            }
         }
 
         // Master dimmer (bottom-left)

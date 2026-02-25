@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import com.chromadmx.simulation.fixtures.RigPreset
 import com.chromadmx.simulation.fixtures.SimulatedFixtureRig
 import com.chromadmx.ui.mascot.MascotOverlay
+import com.chromadmx.ui.util.presetDisplayName
 import com.chromadmx.ui.navigation.AppState
 import com.chromadmx.ui.navigation.AppStateManager
 import com.chromadmx.ui.screen.onboarding.OnboardingScreen
@@ -60,10 +61,12 @@ fun ChromaDmxApp() {
             Box(modifier = Modifier.fillMaxSize()) {
                 when (val state = currentState) {
                     is AppState.Onboarding -> {
-                        val simFixtureCount = if (simulationEnabled) {
-                            SimulatedFixtureRig(selectedRigPreset).fixtureCount
-                        } else {
-                            0
+                        val simFixtureCount = remember(simulationEnabled, selectedRigPreset) {
+                            if (simulationEnabled) {
+                                SimulatedFixtureRig(selectedRigPreset).fixtureCount
+                            } else {
+                                0
+                            }
                         }
 
                         OnboardingScreen(
@@ -109,7 +112,7 @@ fun ChromaDmxApp() {
 
                                 val rig = SimulatedFixtureRig(selectedRigPreset)
                                 stageVm?.enableSimulation(
-                                    presetName = selectedRigPreset.name,
+                                    presetName = selectedRigPreset.presetDisplayName(),
                                     fixtureCount = rig.fixtureCount,
                                 )
 

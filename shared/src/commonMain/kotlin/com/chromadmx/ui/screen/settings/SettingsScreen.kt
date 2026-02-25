@@ -38,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -46,7 +47,12 @@ import androidx.compose.ui.unit.sp
 import com.chromadmx.agent.config.AgentConfig
 import com.chromadmx.core.model.FixtureProfile
 import com.chromadmx.simulation.fixtures.RigPreset
+import com.chromadmx.simulation.fixtures.SimulatedFixtureRig
 import com.chromadmx.ui.components.PixelCard
+import com.chromadmx.ui.components.VirtualNodeBadge
+import com.chromadmx.ui.theme.NeonCyan
+import com.chromadmx.ui.theme.NeonGreen
+import com.chromadmx.ui.util.presetDisplayName
 import com.chromadmx.ui.viewmodel.AgentStatus
 import com.chromadmx.ui.viewmodel.SettingsViewModel
 
@@ -320,7 +326,7 @@ fun SimulationSettingsSection(
             // Current status summary
             if (enabled) {
                 val rig = remember(selectedPreset) {
-                    com.chromadmx.simulation.fixtures.SimulatedFixtureRig(selectedPreset)
+                    SimulatedFixtureRig(selectedPreset)
                 }
                 Row(
                     modifier = Modifier
@@ -334,7 +340,7 @@ fun SimulationSettingsSection(
                         Text(
                             text = "Active",
                             style = MaterialTheme.typography.labelMedium,
-                            color = com.chromadmx.ui.theme.NeonGreen,
+                            color = NeonGreen,
                         )
                         Text(
                             text = "${selectedPreset.presetDisplayName()} -- ${rig.fixtureCount} fixtures",
@@ -342,7 +348,7 @@ fun SimulationSettingsSection(
                             color = MaterialTheme.colorScheme.onSurface,
                         )
                     }
-                    com.chromadmx.ui.components.VirtualNodeBadge()
+                    VirtualNodeBadge()
                 }
             }
 
@@ -353,15 +359,15 @@ fun SimulationSettingsSection(
                 RigPreset.entries.forEach { preset ->
                     val isSelected = selectedPreset == preset
                     val rig = remember(preset) {
-                        com.chromadmx.simulation.fixtures.SimulatedFixtureRig(preset)
+                        SimulatedFixtureRig(preset)
                     }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(
-                                if (isSelected) com.chromadmx.ui.theme.NeonCyan.copy(alpha = 0.08f)
-                                else androidx.compose.ui.graphics.Color.Transparent
+                                if (isSelected) NeonCyan.copy(alpha = 0.08f)
+                                else Color.Transparent
                             )
                             .padding(vertical = 4.dp)
                     ) {
@@ -396,15 +402,6 @@ fun SimulationSettingsSection(
             }
         }
     }
-}
-
-/**
- * User-friendly display name for a [RigPreset].
- */
-private fun RigPreset.presetDisplayName(): String = when (this) {
-    RigPreset.SMALL_DJ -> "Small DJ"
-    RigPreset.TRUSS_RIG -> "Truss Rig"
-    RigPreset.FESTIVAL_STAGE -> "Festival Stage"
 }
 
 @Composable
