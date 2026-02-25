@@ -1,7 +1,10 @@
 package com.chromadmx.agent.tools
 
 import com.chromadmx.agent.scene.Scene
-import com.chromadmx.agent.scene.SceneStore
+import com.chromadmx.engine.preset.PresetLibrary
+import com.chromadmx.engine.effect.EffectRegistry
+import com.chromadmx.engine.effect.EffectStack
+import com.chromadmx.agent.FakeFileStorage
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -10,7 +13,7 @@ import kotlin.test.assertContains
 
 class SceneToolsTest {
     private val controller = FakeEngineController()
-    private val sceneStore = SceneStore()
+    private val library = PresetLibrary(FakeFileStorage(), EffectRegistry(), EffectStack())
 
     @Test
     fun setEffectAppliesEffectToLayer() = runTest {
@@ -75,17 +78,17 @@ class SceneToolsTest {
 
     @Test
     fun createSceneSavesToStore() = runTest {
-        val tool = CreateSceneTool(controller, sceneStore)
+        val tool = CreateSceneTool(controller, library)
         val result = tool.execute(CreateSceneTool.Args(name = "Test Scene"))
-        val saved = sceneStore.load("Test Scene")
+        val saved = library.listPresets().find { it.name == "Test Scene" }
         assertTrue(saved != null)
         assertContains(result, "Test Scene")
     }
 
     @Test
     fun loadSceneRestoresFromStore() = runTest {
-        sceneStore.save(Scene(name = "Saved", masterDimmer = 0.5f))
-        val tool = LoadSceneTool(controller, sceneStore)
+        library.savePreset(controller.capturePreset("Saved").copy(masterDimmer = 0.5f))
+        val tool = LoadSceneTool(controller, library)
         val result = tool.execute(LoadSceneTool.Args(name = "Saved"))
         assertContains(result, "Saved")
         assertEquals(0.5f, controller.lastMasterDimmer)
@@ -93,7 +96,7 @@ class SceneToolsTest {
 
     @Test
     fun loadSceneReturnsErrorForMissing() = runTest {
-        val tool = LoadSceneTool(controller, sceneStore)
+        val tool = LoadSceneTool(controller, library)
         val result = tool.execute(LoadSceneTool.Args(name = "Nope"))
         assertContains(result, "not found")
     }

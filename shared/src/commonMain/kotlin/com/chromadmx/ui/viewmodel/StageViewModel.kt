@@ -29,7 +29,7 @@ import kotlinx.coroutines.launch
  */
 class StageViewModel(
     private val engine: EffectEngine,
-    private val effectRegistry: EffectRegistry,
+    val effectRegistry: EffectRegistry,
     private val beatClock: BeatClock,
     private val scope: CoroutineScope,
 ) {
@@ -123,6 +123,11 @@ class StageViewModel(
         syncFromEngine()
     }
 
+    fun reorderLayer(fromIndex: Int, toIndex: Int) {
+        effectStack.moveLayer(fromIndex, toIndex)
+        syncFromEngine()
+    }
+
     fun addLayer() {
         val firstEffect = effectRegistry.ids().firstOrNull()?.let { effectRegistry.get(it) } ?: return
         effectStack.addLayer(EffectLayer(effect = firstEffect))
@@ -140,7 +145,7 @@ class StageViewModel(
 
     /**
      * Update a fixture's position in the UI model.
-     * Note: Does not propagate to EffectEngine — engine integration
+     * Note: Does not propagate to EffectEngine -- engine integration
      * requires support for mutable fixture lists (future work).
      */
     fun updateFixturePosition(index: Int, newPosition: Vec3) {
@@ -153,7 +158,7 @@ class StageViewModel(
 
     /**
      * Add a fixture to the UI model.
-     * Note: Does not propagate to EffectEngine — engine integration
+     * Note: Does not propagate to EffectEngine -- engine integration
      * requires support for mutable fixture lists (future work).
      */
     fun addFixture(fixture: Fixture3D) {
@@ -162,7 +167,7 @@ class StageViewModel(
 
     /**
      * Remove a fixture from the UI model by index.
-     * Note: Does not propagate to EffectEngine — engine integration
+     * Note: Does not propagate to EffectEngine -- engine integration
      * requires support for mutable fixture lists (future work).
      */
     fun removeFixture(index: Int) {

@@ -60,6 +60,16 @@ class EffectStack(
         }
     }
 
+    fun moveLayer(fromIndex: Int, toIndex: Int) {
+        synchronized(lock) {
+            val list = _layersRef.value.toMutableList()
+            if (fromIndex !in list.indices || toIndex !in list.indices) return
+            val layer = list.removeAt(fromIndex)
+            list.add(toIndex, layer)
+            _layersRef.value = list
+        }
+    }
+
     fun clearLayers() {
         synchronized(lock) {
             _layersRef.value = emptyList()
