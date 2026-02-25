@@ -1,7 +1,10 @@
 package com.chromadmx.agent.pregen
 
 import com.chromadmx.agent.scene.Scene
-import com.chromadmx.agent.scene.SceneStore
+import com.chromadmx.engine.preset.PresetLibrary
+import com.chromadmx.engine.effect.EffectRegistry
+import com.chromadmx.engine.effect.EffectStack
+import com.chromadmx.agent.FakeFileStorage
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -10,28 +13,28 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class PreGenerationServiceTest {
-    private fun createService(): Pair<PreGenerationService, SceneStore> {
-        val sceneStore = SceneStore()
-        return PreGenerationService(sceneStore) to sceneStore
+    private fun createService(): Pair<PreGenerationService, PresetLibrary> {
+        val library = PresetLibrary(FakeFileStorage(), EffectRegistry(), EffectStack())
+        return PreGenerationService(library) to library
     }
 
     @Test
     fun generateScenesCreatesRequestedCount() = runTest {
-        val (service, sceneStore) = createService()
-        val scenes = service.generate("techno", 3)
-        assertEquals(3, scenes.size)
-        assertEquals(3, sceneStore.list().size)
+        val (service, library) = createService()
+        val presets = service.generate("techno", 3)
+        assertEquals(3, presets.size)
+        assertEquals(3, library.listPresets().size)
     }
 
     @Test
     fun generatedScenesAreSavedToStore() = runTest {
-        val (service, sceneStore) = createService()
+        val (service, library) = createService()
         service.generate("ambient", 2)
-        val names = sceneStore.list()
-        assertEquals(2, names.size)
+        val presets = library.listPresets()
+        assertEquals(2, presets.size)
         // Each scene should be loadable
-        names.forEach { name ->
-            assertNotNull(sceneStore.load(name))
+        presets.forEach { preset ->
+            assertNotNull(library.getPreset(preset.id))
         }
     }
 
