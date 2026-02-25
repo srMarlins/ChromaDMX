@@ -8,6 +8,7 @@ import com.chromadmx.ui.viewmodel.NetworkViewModel
 import com.chromadmx.ui.viewmodel.PerformViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import org.koin.dsl.module
 
@@ -15,8 +16,8 @@ import org.koin.dsl.module
  * Koin module for UI ViewModels.
  *
  * Each ViewModel is scoped as a factory so a new instance is created
- * per screen composition. The CoroutineScope uses SupervisorJob + Dispatchers.Default
- * and is cancelled when the Koin application closes.
+ * per screen composition. A child [SupervisorJob] is created per ViewModel
+ * so its coroutines can be cancelled independently via [onCleared].
  *
  * Dependencies:
  * - PerformViewModel requires: EffectEngine, EffectRegistry, BeatClock
@@ -31,32 +32,44 @@ val uiModule = module {
     }
 
     factory {
+        val parentScope: CoroutineScope = get()
+        val childJob = SupervisorJob(parentScope.coroutineContext[Job])
+        val vmScope = CoroutineScope(childJob + Dispatchers.Default)
         PerformViewModel(
             engine = get(),
             effectRegistry = get(),
             beatClock = get(),
-            scope = get(),
+            scope = vmScope,
         )
     }
 
     factory {
+        val parentScope: CoroutineScope = get()
+        val childJob = SupervisorJob(parentScope.coroutineContext[Job])
+        val vmScope = CoroutineScope(childJob + Dispatchers.Default)
         NetworkViewModel(
             nodeDiscovery = get(),
-            scope = get(),
+            scope = vmScope,
         )
     }
 
     factory {
+        val parentScope: CoroutineScope = get()
+        val childJob = SupervisorJob(parentScope.coroutineContext[Job])
+        val vmScope = CoroutineScope(childJob + Dispatchers.Default)
         MapViewModel(
-            scope = get(),
+            scope = vmScope,
         )
     }
 
     factory {
+        val parentScope: CoroutineScope = get()
+        val childJob = SupervisorJob(parentScope.coroutineContext[Job])
+        val vmScope = CoroutineScope(childJob + Dispatchers.Default)
         AgentViewModel(
             agent = get(),
             preGenService = get(),
-            scope = get(),
+            scope = vmScope,
         )
     }
 }

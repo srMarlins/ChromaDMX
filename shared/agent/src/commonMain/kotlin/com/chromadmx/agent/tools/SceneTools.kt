@@ -31,8 +31,16 @@ class SetBlendModeTool(private val controller: EngineController) {
     data class Args(val layer: Int, val mode: String)
 
     fun execute(args: Args): String {
-        controller.setBlendMode(args.layer, args.mode)
-        return "Set blend mode for layer ${args.layer} to ${args.mode}"
+        val upperMode = args.mode.uppercase()
+        if (upperMode !in VALID_BLEND_MODES) {
+            return "Error: invalid blend mode '${args.mode}'. Valid modes: ${VALID_BLEND_MODES.joinToString(", ")}"
+        }
+        controller.setBlendMode(args.layer, upperMode)
+        return "Set blend mode for layer ${args.layer} to $upperMode"
+    }
+
+    companion object {
+        val VALID_BLEND_MODES = listOf("NORMAL", "ADDITIVE", "MULTIPLY", "OVERLAY", "SCREEN")
     }
 }
 
@@ -64,15 +72,16 @@ class SetColorPaletteTool(private val controller: EngineController) {
 }
 
 /**
- * Tool: Set the tempo multiplier.
+ * Tool: Set the tempo multiplier (clamped to 0.1-16.0).
  */
 class SetTempoMultiplierTool(private val controller: EngineController) {
     @Serializable
     data class Args(val multiplier: Float)
 
     fun execute(args: Args): String {
-        controller.setTempoMultiplier(args.multiplier)
-        return "Set tempo multiplier to ${args.multiplier}x"
+        val clamped = args.multiplier.coerceIn(0.1f, 16.0f)
+        controller.setTempoMultiplier(clamped)
+        return "Set tempo multiplier to ${clamped}x"
     }
 }
 

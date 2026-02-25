@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,6 +49,12 @@ fun AgentScreen(
     var inputText by remember { mutableStateOf("") }
     var showPreGen by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
+
+    LaunchedEffect(messages.size) {
+        if (messages.isNotEmpty()) {
+            listState.animateScrollToItem(messages.lastIndex)
+        }
+    }
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -81,6 +88,7 @@ fun AgentScreen(
                 onGenerate = { genre, count ->
                     viewModel.generateScenes(genre, count)
                 },
+                onCancel = { viewModel.cancelGeneration() },
             )
         }
 
@@ -117,7 +125,7 @@ fun AgentScreen(
                 }
             }
 
-            items(messages) { message ->
+            itemsIndexed(messages, key = { index, _ -> index }) { _, message ->
                 ChatBubble(
                     message = message,
                     modifier = Modifier.padding(vertical = 4.dp),

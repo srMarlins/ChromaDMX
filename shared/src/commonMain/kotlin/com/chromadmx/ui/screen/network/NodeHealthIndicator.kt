@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.chromadmx.networking.model.DmxNode
 import com.chromadmx.ui.theme.NodeOffline
@@ -51,7 +53,11 @@ fun NodeHealthIndicator(
         NodeHealth.UNKNOWN -> NodeUnknown
     }
 
-    Canvas(modifier = modifier.size(12.dp)) {
+    Canvas(
+        modifier = modifier
+            .size(12.dp)
+            .semantics { contentDescription = "Node health: ${health.name.lowercase()}" }
+    ) {
         drawCircle(
             color = color,
             radius = size.minDimension / 2f,

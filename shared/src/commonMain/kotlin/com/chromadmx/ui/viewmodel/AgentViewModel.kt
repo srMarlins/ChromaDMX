@@ -3,6 +3,7 @@ package com.chromadmx.ui.viewmodel
 import com.chromadmx.agent.LightingAgent
 import com.chromadmx.agent.pregen.PreGenProgress
 import com.chromadmx.agent.pregen.PreGenerationService
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -112,5 +113,10 @@ class AgentViewModel(
     fun clearHistory() {
         _messages.value = emptyList()
         agent.clearHistory()
+    }
+
+    /** Cancel all coroutines launched by this ViewModel. */
+    fun onCleared() {
+        scope.coroutineContext[Job]?.cancel()
     }
 }

@@ -50,7 +50,8 @@ class ToolRegistry(
     private val tools: Map<String, suspend (JsonObject) -> String> = mapOf(
         "setEffect" to { args ->
             val layer = args["layer"]?.jsonPrimitive?.int ?: 0
-            val effectId = args["effectId"]?.jsonPrimitive?.content ?: ""
+            val effectId = args["effectId"]?.jsonPrimitive?.content
+                ?: return@to "Error: missing required parameter 'effectId'"
             val params = args["params"]?.jsonObject?.mapValues {
                 it.value.jsonPrimitive.float
             } ?: emptyMap()
@@ -74,36 +75,43 @@ class ToolRegistry(
             setTempoMultiplierTool.execute(SetTempoMultiplierTool.Args(multiplier))
         },
         "createScene" to { args ->
-            val name = args["name"]?.jsonPrimitive?.content ?: ""
+            val name = args["name"]?.jsonPrimitive?.content
+                ?: return@to "Error: missing required parameter 'name'"
             createSceneTool.execute(CreateSceneTool.Args(name))
         },
         "loadScene" to { args ->
-            val name = args["name"]?.jsonPrimitive?.content ?: ""
+            val name = args["name"]?.jsonPrimitive?.content
+                ?: return@to "Error: missing required parameter 'name'"
             loadSceneTool.execute(LoadSceneTool.Args(name))
         },
         "scanNetwork" to { _ -> scanNetworkTool.execute() },
         "getNodeStatus" to { args ->
-            val nodeId = args["nodeId"]?.jsonPrimitive?.content ?: ""
+            val nodeId = args["nodeId"]?.jsonPrimitive?.content
+                ?: return@to "Error: missing required parameter 'nodeId'"
             getNodeStatusTool.execute(GetNodeStatusTool.Args(nodeId))
         },
         "configureNode" to { args ->
-            val nodeId = args["nodeId"]?.jsonPrimitive?.content ?: ""
+            val nodeId = args["nodeId"]?.jsonPrimitive?.content
+                ?: return@to "Error: missing required parameter 'nodeId'"
             val universe = args["universe"]?.jsonPrimitive?.int ?: 0
             val startAddress = args["startAddress"]?.jsonPrimitive?.int ?: 1
             configureNodeTool.execute(ConfigureNodeTool.Args(nodeId, universe, startAddress))
         },
         "diagnoseConnection" to { args ->
-            val nodeId = args["nodeId"]?.jsonPrimitive?.content ?: ""
+            val nodeId = args["nodeId"]?.jsonPrimitive?.content
+                ?: return@to "Error: missing required parameter 'nodeId'"
             diagnoseConnectionTool.execute(DiagnoseConnectionTool.Args(nodeId))
         },
         "listFixtures" to { _ -> listFixturesTool.execute() },
         "fireFixture" to { args ->
-            val fixtureId = args["fixtureId"]?.jsonPrimitive?.content ?: ""
+            val fixtureId = args["fixtureId"]?.jsonPrimitive?.content
+                ?: return@to "Error: missing required parameter 'fixtureId'"
             val colorHex = args["colorHex"]?.jsonPrimitive?.content ?: "#FFFFFF"
             fireFixtureTool.execute(FireFixtureTool.Args(fixtureId, colorHex))
         },
         "setFixtureGroup" to { args ->
-            val groupName = args["groupName"]?.jsonPrimitive?.content ?: ""
+            val groupName = args["groupName"]?.jsonPrimitive?.content
+                ?: return@to "Error: missing required parameter 'groupName'"
             val fixtureIds = args["fixtureIds"]?.jsonArray?.map { it.jsonPrimitive.content } ?: emptyList()
             setFixtureGroupTool.execute(SetFixtureGroupTool.Args(groupName, fixtureIds))
         },
@@ -124,7 +132,6 @@ class ToolRegistry(
      */
     suspend fun dispatch(toolName: String, argsJson: String = "{}"): String {
         return try {
-            val json = Json { ignoreUnknownKeys = true }
             val args = if (argsJson.isBlank() || argsJson == "{}") {
                 JsonObject(emptyMap())
             } else {
@@ -136,5 +143,9 @@ class ToolRegistry(
         } catch (e: Exception) {
             "Error executing tool '$toolName': ${e.message}"
         }
+    }
+
+    companion object {
+        private val json = Json { ignoreUnknownKeys = true }
     }
 }

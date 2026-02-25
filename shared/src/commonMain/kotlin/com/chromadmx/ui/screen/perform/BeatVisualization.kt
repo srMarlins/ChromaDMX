@@ -1,5 +1,7 @@
 package com.chromadmx.ui.screen.perform
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,10 +13,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.chromadmx.core.model.BeatState
 import com.chromadmx.ui.theme.BeatActive
@@ -58,9 +60,10 @@ fun BeatVisualization(
                 } else {
                     BeatInactive
                 }
-                val circleSize = if (isActive) 24.dp else 20.dp
+                val targetSize = if (isActive) 24.dp else 20.dp
+                val animatedSize by animateDpAsState(targetValue = targetSize, animationSpec = tween(100))
 
-                Canvas(modifier = Modifier.size(circleSize)) {
+                Canvas(modifier = Modifier.size(animatedSize)) {
                     drawCircle(
                         color = color,
                         radius = size.minDimension / 2f,

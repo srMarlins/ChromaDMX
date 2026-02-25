@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
@@ -33,6 +34,7 @@ fun PreGenPanel(
     isGenerating: Boolean,
     progress: Float,
     onGenerate: (genre: String, count: Int) -> Unit,
+    onCancel: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var genre by remember { mutableStateOf("") }
@@ -104,12 +106,22 @@ fun PreGenPanel(
                 Spacer(Modifier.height(8.dp))
             }
 
-            FilledTonalButton(
-                onClick = { onGenerate(genre, selectedCount) },
-                enabled = genre.isNotBlank() && !isGenerating,
-                modifier = Modifier.align(Alignment.End),
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
             ) {
-                Text(if (isGenerating) "Generating..." else "Generate")
+                if (isGenerating) {
+                    OutlinedButton(onClick = onCancel) {
+                        Text("Cancel")
+                    }
+                    Spacer(Modifier.width(8.dp))
+                }
+                FilledTonalButton(
+                    onClick = { onGenerate(genre, selectedCount) },
+                    enabled = genre.isNotBlank() && !isGenerating,
+                ) {
+                    Text(if (isGenerating) "Generating..." else "Generate")
+                }
             }
         }
     }

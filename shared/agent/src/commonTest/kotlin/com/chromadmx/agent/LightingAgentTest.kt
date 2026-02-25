@@ -12,6 +12,7 @@ import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import com.chromadmx.agent.ChatRole
 
 class LightingAgentTest {
     private fun createAgent(apiKey: String = ""): LightingAgent {
@@ -57,9 +58,9 @@ class LightingAgentTest {
         agent.send("hello")
         val history = agent.conversationHistory.value
         assertEquals(2, history.size)
-        assertEquals("user", history[0].role)
+        assertEquals(ChatRole.USER, history[0].role)
         assertEquals("hello", history[0].content)
-        assertEquals("assistant", history[1].role)
+        assertEquals(ChatRole.ASSISTANT, history[1].role)
     }
 
     @Test
@@ -120,7 +121,7 @@ class LightingAgentTest {
     @Test
     fun toolRegistryHasAllTools() {
         val agent = createAgent()
-        assertEquals(17, agent.toolRegistry.toolNames.size)
+        assertEquals(17, agent.toolNames.size)
     }
 
     @Test

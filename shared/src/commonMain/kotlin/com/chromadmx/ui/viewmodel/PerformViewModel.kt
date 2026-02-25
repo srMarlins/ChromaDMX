@@ -9,6 +9,7 @@ import com.chromadmx.engine.effect.EffectStack
 import com.chromadmx.engine.pipeline.EffectEngine
 import com.chromadmx.tempo.clock.BeatClock
 import com.chromadmx.tempo.tap.TapTempoClock
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,15 +46,23 @@ class PerformViewModel(
     private val _layers = MutableStateFlow(effectStack.layers)
     val layers: StateFlow<List<EffectLayer>> = _layers.asStateFlow()
 
+    private val syncJob: Job
+
     init {
         // Periodically sync from the engine to pick up external changes
         // (e.g., agent tool calls loading a scene).
-        scope.launch {
+        syncJob = scope.launch {
             while (isActive) {
                 syncFromEngine()
                 delay(500L) // 2 Hz sync rate — responsive without being wasteful
             }
         }
+    }
+
+    /** Cancel all coroutines launched by this ViewModel. */
+    fun onCleared() {
+        syncJob.cancel()
+        scope.coroutineContext[Job]?.cancel()
     }
 
     /** Pull current state from the EffectStack into our StateFlows. */

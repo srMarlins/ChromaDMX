@@ -41,7 +41,6 @@ fun PerformScreen(
     val beatState by viewModel.beatState.collectAsState()
     val masterDimmer by viewModel.masterDimmer.collectAsState()
     val layers by viewModel.layers.collectAsState()
-    val bpm by viewModel.bpm.collectAsState()
     var activePreset by remember { mutableStateOf<Int?>(null) }
 
     Column(
@@ -120,7 +119,7 @@ fun PerformScreen(
         LazyColumn(
             modifier = Modifier.weight(1f),
         ) {
-            itemsIndexed(layers) { index, layer ->
+            itemsIndexed(layers, key = { index, layer -> "${index}_${layer.effect.id}" }) { index, layer ->
                 EffectLayerCard(
                     layerIndex = index,
                     layer = layer,

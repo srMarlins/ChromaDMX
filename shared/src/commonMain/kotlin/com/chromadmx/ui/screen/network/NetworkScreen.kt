@@ -43,7 +43,7 @@ fun NetworkScreen(
 ) {
     val nodesMap by viewModel.nodes.collectAsState()
     val nodes = nodesMap.values.toList()
-    val isScanning = viewModel.isScanning
+    val isScanning by viewModel.isScanning.collectAsState()
 
     // Real clock for health calculation — updates every second
     var currentTimeMs by remember { mutableStateOf(currentTimeMillis()) }

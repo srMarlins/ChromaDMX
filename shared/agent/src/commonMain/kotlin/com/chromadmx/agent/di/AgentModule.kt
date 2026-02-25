@@ -13,6 +13,7 @@ import com.chromadmx.agent.controller.RealStateController
 import com.chromadmx.agent.controller.StateController
 import com.chromadmx.agent.pregen.PreGenerationService
 import com.chromadmx.agent.scene.SceneStore
+import com.chromadmx.core.model.Fixture3D
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -50,8 +51,16 @@ val agentModule: Module = module {
     single { SceneStore() }
     single<EngineController> { RealEngineController(get(), get()) }
     single<NetworkController> { RealNetworkController(get()) }
-    single<FixtureController> { RealFixtureController(fixturesProvider = { emptyList() }) }
-    single<StateController> { RealStateController(get(), get(), get(), get()) }
+    // Shared fixtures provider: resolves from DI if available, falls back to empty.
+    // The app module should bind a () -> List<Fixture3D> provider to supply real fixture data.
+    single<FixtureController> {
+        val fixturesProvider: () -> List<Fixture3D> = getOrNull() ?: { emptyList() }
+        RealFixtureController(fixturesProvider = fixturesProvider)
+    }
+    single<StateController> {
+        val fixturesProvider: () -> List<Fixture3D> = getOrNull() ?: { emptyList() }
+        RealStateController(get(), get(), get(), get(), fixturesProvider)
+    }
     single { LightingAgent(get(), get(), get(), get(), get(), get()) }
     single { PreGenerationService(get()) }
 }

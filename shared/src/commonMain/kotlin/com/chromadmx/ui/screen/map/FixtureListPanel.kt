@@ -58,7 +58,7 @@ fun FixtureListPanel(
             }
         }
 
-        itemsIndexed(fixtures) { index, fixture3d ->
+        itemsIndexed(fixtures, key = { _, f -> f.fixture.fixtureId }) { index, fixture3d ->
             val isSelected = index == selectedIndex
             Card(
                 modifier = Modifier

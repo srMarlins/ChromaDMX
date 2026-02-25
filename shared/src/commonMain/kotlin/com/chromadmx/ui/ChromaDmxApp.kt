@@ -17,6 +17,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -77,6 +78,9 @@ fun ChromaDmxApp() {
                     Screen.PERFORM -> {
                         val vm = resolveOrNull<PerformViewModel>()
                         if (vm != null) {
+                            DisposableEffect(vm) {
+                                onDispose { vm.onCleared() }
+                            }
                             PerformScreen(viewModel = vm)
                         } else {
                             ScreenPlaceholder("Perform", "Engine services not yet registered in DI.")
@@ -85,6 +89,9 @@ fun ChromaDmxApp() {
                     Screen.NETWORK -> {
                         val vm = resolveOrNull<NetworkViewModel>()
                         if (vm != null) {
+                            DisposableEffect(vm) {
+                                onDispose { vm.onCleared() }
+                            }
                             NetworkScreen(viewModel = vm)
                         } else {
                             ScreenPlaceholder("Network", "Networking services not yet registered in DI.")
@@ -93,6 +100,9 @@ fun ChromaDmxApp() {
                     Screen.MAP -> {
                         val vm = resolveOrNull<MapViewModel>()
                         if (vm != null) {
+                            DisposableEffect(vm) {
+                                onDispose { vm.onCleared() }
+                            }
                             MapScreen(viewModel = vm)
                         } else {
                             ScreenPlaceholder("Map", "Map services not yet registered in DI.")
@@ -101,6 +111,9 @@ fun ChromaDmxApp() {
                     Screen.AGENT -> {
                         val vm = resolveOrNull<AgentViewModel>()
                         if (vm != null) {
+                            DisposableEffect(vm) {
+                                onDispose { vm.onCleared() }
+                            }
                             AgentScreen(viewModel = vm)
                         } else {
                             ScreenPlaceholder("Agent", "Agent services not yet registered in DI.")
@@ -114,12 +127,13 @@ fun ChromaDmxApp() {
 
 /**
  * Safely resolve a dependency from Koin, returning null if not available.
- * Re-attempts resolution on each recomposition (no permanent caching of null).
+ * The result is remembered so the same ViewModel instance is reused
+ * across recompositions within the same composition.
  */
 @Composable
 private inline fun <reified T : Any> resolveOrNull(): T? {
     val koin = getKoin()
-    return runCatching { koin.get<T>() }.getOrNull()
+    return remember { runCatching { koin.get<T>() }.getOrNull() }
 }
 
 @Composable

@@ -6,11 +6,16 @@ import com.chromadmx.core.model.BlendMode
 import com.chromadmx.engine.effect.EffectLayer
 import com.chromadmx.engine.effect.EffectRegistry
 import com.chromadmx.engine.effect.EffectStack
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
 
 /**
  * Real [EngineController] bridging to the effect engine.
  *
  * Translates agent tool calls into [EffectStack] and [EffectRegistry] operations.
+ * Thread safety: [currentPalette] and [currentTempoMultiplier] use atomicfu,
+ * and multi-step [EffectStack] operations are guarded by [lock].
  *
  * @param effectStack    The compositing effect stack.
  * @param effectRegistry Registry for looking up effects by ID.
@@ -20,11 +25,13 @@ class RealEngineController(
     private val effectRegistry: EffectRegistry,
 ) : EngineController {
 
-    /** Current color palette (hex strings). */
-    private var currentPalette: List<String> = emptyList()
+    private val lock = SynchronizedObject()
 
-    /** Current tempo multiplier. */
-    private var currentTempoMultiplier: Float = 1.0f
+    /** Current color palette (hex strings). Atomic for thread-safe reads/writes. */
+    private val _currentPalette = atomic<List<String>>(emptyList())
+
+    /** Current tempo multiplier. Atomic for thread-safe reads/writes. */
+    private val _currentTempoMultiplier = atomic(1.0f)
 
     override fun setEffect(layer: Int, effectId: String, params: Map<String, Float>): Boolean {
         val effect = effectRegistry.get(effectId) ?: return false
@@ -34,29 +41,35 @@ class RealEngineController(
             acc.with(key, value)
         }
 
-        // Ensure we have enough layers
-        while (effectStack.layerCount <= layer) {
-            val defaultEffect = effectRegistry.all().firstOrNull() ?: return false
-            effectStack.addLayer(EffectLayer(effect = defaultEffect, enabled = false))
-        }
+        // Synchronized: layerCount→addLayer→layers[layer]→setLayer must be atomic
+        synchronized(lock) {
+            // Ensure we have enough layers
+            while (effectStack.layerCount <= layer) {
+                val defaultEffect = effectRegistry.all().firstOrNull() ?: return false
+                effectStack.addLayer(EffectLayer(effect = defaultEffect, enabled = false))
+            }
 
-        val existingLayer = effectStack.layers[layer]
-        effectStack.setLayer(
-            layer,
-            existingLayer.copy(effect = effect, params = effectParams, enabled = true)
-        )
+            val existingLayer = effectStack.layers[layer]
+            effectStack.setLayer(
+                layer,
+                existingLayer.copy(effect = effect, params = effectParams, enabled = true)
+            )
+        }
         return true
     }
 
     override fun setBlendMode(layer: Int, mode: String) {
-        if (layer >= effectStack.layerCount) return
         val blendMode = try {
             BlendMode.valueOf(mode)
         } catch (_: IllegalArgumentException) {
             BlendMode.NORMAL
         }
-        val existingLayer = effectStack.layers[layer]
-        effectStack.setLayer(layer, existingLayer.copy(blendMode = blendMode))
+        // Synchronized: check-then-act on layerCount→layers[layer]→setLayer
+        synchronized(lock) {
+            if (layer >= effectStack.layerCount) return
+            val existingLayer = effectStack.layers[layer]
+            effectStack.setLayer(layer, existingLayer.copy(blendMode = blendMode))
+        }
     }
 
     override fun setMasterDimmer(value: Float) {
@@ -64,20 +77,20 @@ class RealEngineController(
     }
 
     override fun setColorPalette(colors: List<String>) {
-        currentPalette = colors
+        _currentPalette.value = colors
     }
 
     override fun setTempoMultiplier(multiplier: Float) {
-        currentTempoMultiplier = multiplier
+        _currentTempoMultiplier.value = multiplier
     }
 
     override fun captureScene(): Scene {
         val layers = effectStack.layers.map { layer ->
             Scene.LayerConfig(
                 effectId = layer.effect.id,
-                params = layer.params.toMap().mapValues { (_, v) ->
-                    (v as? Number)?.toFloat() ?: 0f
-                },
+                params = layer.params.toMap()
+                    .filterValues { it is Number }
+                    .mapValues { (_, v) -> (v as Number).toFloat() },
                 blendMode = layer.blendMode.name,
                 opacity = layer.opacity
             )
@@ -86,8 +99,8 @@ class RealEngineController(
             name = "",
             layers = layers,
             masterDimmer = effectStack.masterDimmer,
-            colorPalette = currentPalette,
-            tempoMultiplier = currentTempoMultiplier
+            colorPalette = _currentPalette.value,
+            tempoMultiplier = _currentTempoMultiplier.value
         )
     }
 
@@ -115,7 +128,7 @@ class RealEngineController(
         effectStack.replaceLayers(newLayers)
 
         effectStack.masterDimmer = scene.masterDimmer
-        currentPalette = scene.colorPalette
-        currentTempoMultiplier = scene.tempoMultiplier
+        _currentPalette.value = scene.colorPalette
+        _currentTempoMultiplier.value = scene.tempoMultiplier
     }
 }

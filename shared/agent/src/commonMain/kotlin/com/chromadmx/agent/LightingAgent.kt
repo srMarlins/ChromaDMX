@@ -36,13 +36,16 @@ class LightingAgent(
     sceneStore: SceneStore,
 ) {
     /** The tool registry for dispatching tool calls. */
-    val toolRegistry = ToolRegistry(
+    internal val toolRegistry = ToolRegistry(
         engineController = engineController,
         networkController = networkController,
         fixtureController = fixtureController,
         stateController = stateController,
         sceneStore = sceneStore
     )
+
+    /** All registered tool names — public read-only view. */
+    val toolNames: List<String> get() = toolRegistry.toolNames
 
     private val _conversationHistory = MutableStateFlow<List<ChatMessage>>(emptyList())
 
@@ -72,18 +75,18 @@ class LightingAgent(
         }
 
         _isProcessing.value = true
-        _conversationHistory.update { it + ChatMessage(role = "user", content = userMessage) }
+        _conversationHistory.update { it + ChatMessage(role = ChatRole.USER, content = userMessage) }
 
         return try {
             // TODO: Wire Koog AIAgent here when SDK is available
             val response = "LLM integration pending (Koog SDK). " +
                 "Use dispatchTool() for direct tool access. " +
                 "Available tools: ${toolRegistry.toolNames.joinToString(", ")}"
-            _conversationHistory.update { it + ChatMessage(role = "assistant", content = response) }
+            _conversationHistory.update { it + ChatMessage(role = ChatRole.ASSISTANT, content = response) }
             response
         } catch (e: Exception) {
             val error = "Error: ${e.message}"
-            _conversationHistory.update { it + ChatMessage(role = "assistant", content = error) }
+            _conversationHistory.update { it + ChatMessage(role = ChatRole.ASSISTANT, content = error) }
             error
         } finally {
             _isProcessing.value = false

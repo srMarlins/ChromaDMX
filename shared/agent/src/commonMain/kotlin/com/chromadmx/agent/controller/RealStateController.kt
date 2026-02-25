@@ -6,6 +6,7 @@ import com.chromadmx.engine.pipeline.EffectEngine
 import com.chromadmx.networking.discovery.NodeDiscovery
 import com.chromadmx.networking.output.DmxOutputService
 import com.chromadmx.tempo.clock.BeatClock
+import com.chromadmx.tempo.tap.TapTempoClock
 
 /**
  * Real [StateController] bridging to the engine, tempo, and networking modules.
@@ -41,7 +42,10 @@ class RealStateController(
             beatPhase = state.beatPhase,
             barPhase = state.barPhase,
             isRunning = beatClock.isRunning.value,
-            source = beatClock::class.simpleName ?: "Unknown"
+            source = when (beatClock) {
+                is TapTempoClock -> "TapTempo"
+                else -> "External"
+            }
         )
     }
 

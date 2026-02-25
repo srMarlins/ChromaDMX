@@ -2,6 +2,7 @@ package com.chromadmx.ui.viewmodel
 
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.core.model.Vec3
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -47,5 +48,10 @@ class MapViewModel(
                 _selectedFixtureIndex.value = null
             }
         }
+    }
+
+    /** Cancel all coroutines launched by this ViewModel. */
+    fun onCleared() {
+        scope.coroutineContext[Job]?.cancel()
     }
 }

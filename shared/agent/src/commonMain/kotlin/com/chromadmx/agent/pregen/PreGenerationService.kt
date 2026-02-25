@@ -2,10 +2,13 @@ package com.chromadmx.agent.pregen
 
 import com.chromadmx.agent.scene.Scene
 import com.chromadmx.agent.scene.SceneStore
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.Serializable
+import kotlin.coroutines.coroutineContext
 
 /**
  * Progress state for batch scene generation.
@@ -33,45 +36,62 @@ class PreGenerationService(
     private val _progress = MutableStateFlow(PreGenProgress())
     val progress: StateFlow<PreGenProgress> = _progress.asStateFlow()
 
-    private val _cancelled = MutableStateFlow(false)
+    /** Job for the current generation, if any. */
+    private var generationJob: Job? = null
 
     /**
      * Generate [count] scenes for the given [genre].
      *
      * Each scene is saved to the [SceneStore] and returned.
+     * Respects structured concurrency: cancelling the enclosing scope
+     * or calling [cancel] stops generation via [ensureActive].
      *
      * @param genre The music genre to generate scenes for.
      * @param count Number of scenes to generate.
-     * @return List of generated scenes.
+     * @return List of generated scenes (may be partial if cancelled).
+     * @throws IllegalStateException if generation is already in progress.
      */
     suspend fun generate(genre: String, count: Int): List<Scene> {
         if (count <= 0) return emptyList()
 
-        _cancelled.value = false
+        check(!_progress.value.isRunning) { "Generation already in progress" }
         _progress.value = PreGenProgress(current = 0, total = count, isRunning = true)
 
         val scenes = mutableListOf<Scene>()
 
-        for (i in 1..count) {
-            if (_cancelled.value) break
+        // Store the current coroutine's Job so cancel() can cancel it
+        generationJob = coroutineContext[Job]
+        try {
+            for (i in 1..count) {
+                coroutineContext.ensureActive()
 
-            val sceneName = "${genre}_scene_$i"
-            val scene = generateSceneForGenre(genre, sceneName, i)
-            sceneStore.save(scene)
-            scenes.add(scene)
+                val sceneName = "${genre}_scene_$i"
+                val scene = generateSceneForGenre(genre, sceneName, i)
+                sceneStore.save(scene)
+                scenes.add(scene)
 
-            _progress.value = PreGenProgress(current = i, total = count, isRunning = i < count && !_cancelled.value)
+                _progress.value = PreGenProgress(
+                    current = i,
+                    total = count,
+                    isRunning = i < count
+                )
+            }
+        } finally {
+            generationJob = null
+            _progress.value = _progress.value.copy(isRunning = false)
         }
-
-        _progress.value = _progress.value.copy(isRunning = false)
         return scenes
     }
 
     /**
      * Cancel an in-progress generation.
+     *
+     * Cancels the coroutine running [generate], which will cause
+     * [ensureActive] to throw [kotlinx.coroutines.CancellationException].
      */
     fun cancel() {
-        _cancelled.value = true
+        generationJob?.cancel()
+        generationJob = null
     }
 
     /**

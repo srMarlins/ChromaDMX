@@ -18,7 +18,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.core.model.Vec3
@@ -38,13 +37,17 @@ fun FixturePositionEditor(
     onUpdatePosition: (Int, Vec3) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val backgroundColor = MaterialTheme.colorScheme.background
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val secondaryColor = MaterialTheme.colorScheme.secondary
+
     Column(modifier = modifier) {
         // Canvas area
         Box(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .background(Color(0xFF0A0A1A))
+                .background(backgroundColor)
                 .padding(8.dp),
         ) {
             if (fixtures.isEmpty()) {
@@ -82,11 +85,7 @@ fun FixturePositionEditor(
                         val cy = padding + (1f - normY) * canvasH // flip Y for top-down view
 
                         val isSelected = index == selectedIndex
-                        val dotColor = if (isSelected) {
-                            Color(0xFF6C63FF) // primary
-                        } else {
-                            Color(0xFF00E5FF) // secondary
-                        }
+                        val dotColor = if (isSelected) primaryColor else secondaryColor
                         val radius = if (isSelected) 14f else 10f
 
                         drawCircle(
