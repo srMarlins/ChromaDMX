@@ -2,7 +2,7 @@ package com.chromadmx.agent.controller
 
 import com.chromadmx.agent.scene.Scene
 import com.chromadmx.core.EffectParams
-import com.chromadmx.core.model.BlendMode
+import com.chromadmx.core.model.*
 import com.chromadmx.engine.effect.EffectLayer
 import com.chromadmx.engine.effect.EffectRegistry
 import com.chromadmx.engine.effect.EffectStack
@@ -130,5 +130,44 @@ class RealEngineController(
         effectStack.masterDimmer = scene.masterDimmer
         _currentPalette.value = scene.colorPalette
         _currentTempoMultiplier.value = scene.tempoMultiplier
+    }
+
+    override fun capturePreset(name: String): ScenePreset {
+        val layers = effectStack.layers.map { layer ->
+            EffectLayerConfig(
+                effectId = layer.effect.id,
+                params = layer.params,
+                blendMode = layer.blendMode,
+                opacity = layer.opacity,
+                enabled = layer.enabled
+            )
+        }
+        val id = name.lowercase().replace(" ", "_") + "_" + (hashCode() % 1000)
+        return ScenePreset(
+            id = id,
+            name = name,
+            genre = Genre.CUSTOM,
+            layers = layers,
+            masterDimmer = effectStack.masterDimmer,
+            createdAt = 0L, // Placeholder
+            thumbnailColors = layers.mapNotNull { config ->
+                config.params.getColor("color")
+            }.take(4).ifEmpty { listOf(Color.WHITE) }
+        )
+    }
+
+    override fun applyPreset(preset: ScenePreset) {
+        val newLayers = preset.layers.mapNotNull { config ->
+            val effect = effectRegistry.get(config.effectId) ?: return@mapNotNull null
+            EffectLayer(
+                effect = effect,
+                params = config.params,
+                blendMode = config.blendMode,
+                opacity = config.opacity,
+                enabled = config.enabled
+            )
+        }
+        effectStack.replaceLayers(newLayers)
+        effectStack.masterDimmer = preset.masterDimmer
     }
 }

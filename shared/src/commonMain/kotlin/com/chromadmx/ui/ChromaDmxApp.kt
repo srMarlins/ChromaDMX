@@ -31,6 +31,7 @@ import com.chromadmx.ui.screen.map.MapScreen
 import com.chromadmx.ui.screen.network.NetworkScreen
 import com.chromadmx.ui.screen.perform.PerformScreen
 import com.chromadmx.ui.theme.ChromaDmxTheme
+import com.chromadmx.ui.theme.pixelGrid
 import com.chromadmx.ui.viewmodel.AgentViewModel
 import com.chromadmx.ui.viewmodel.MapViewModel
 import com.chromadmx.ui.viewmodel.NetworkViewModel
@@ -53,6 +54,7 @@ fun ChromaDmxApp() {
 
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
+            modifier = Modifier.pixelGrid(),
             bottomBar = {
                 NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                     Screen.entries.forEach { screen ->

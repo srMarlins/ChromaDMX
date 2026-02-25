@@ -3,6 +3,8 @@ package com.chromadmx.android
 import android.app.Application
 import com.chromadmx.agent.config.AgentConfig
 import com.chromadmx.agent.di.agentModule
+import com.chromadmx.core.persistence.AndroidFileStorage
+import com.chromadmx.core.persistence.FileStorage
 import com.chromadmx.di.chromaDiModule
 import com.chromadmx.ui.di.uiModule
 import org.koin.android.ext.koin.androidContext
@@ -20,7 +22,8 @@ class ChromaDMXApp : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        val androidKeysModule = module {
+        val androidPlatformModule = module {
+            single<FileStorage> { AndroidFileStorage(get()) }
             single {
                 val googleKey = BuildConfig.GOOGLE_API_KEY
                 val anthropicKey = BuildConfig.ANTHROPIC_API_KEY
@@ -36,7 +39,7 @@ class ChromaDMXApp : Application() {
             androidLogger(Level.ERROR)
             androidContext(this@ChromaDMXApp)
             allowOverride(true)
-            modules(chromaDiModule, agentModule, androidKeysModule, uiModule)
+            modules(chromaDiModule, agentModule, androidPlatformModule, uiModule)
         }
     }
 }

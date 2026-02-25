@@ -9,7 +9,10 @@ import com.chromadmx.agent.controller.NodeSummary
 import com.chromadmx.agent.model.DiagnosticResult
 import com.chromadmx.agent.model.NodeStatusResult
 import com.chromadmx.agent.scene.Scene
-import com.chromadmx.agent.scene.SceneStore
+import com.chromadmx.engine.preset.PresetLibrary
+import com.chromadmx.engine.effect.EffectRegistry
+import com.chromadmx.engine.effect.EffectStack
+import com.chromadmx.agent.FakeFileStorage
 import com.chromadmx.agent.tools.FakeEngineController
 import com.chromadmx.agent.tools.FakeFixtureController
 import com.chromadmx.agent.tools.FakeNetworkController
@@ -35,7 +38,7 @@ class AgentIntegrationTest {
     private val networkController = FakeNetworkController()
     private val fixtureController = FakeFixtureController()
     private val stateController = FakeStateController()
-    private val sceneStore = SceneStore()
+    private val library = PresetLibrary(FakeFileStorage(), EffectRegistry(), EffectStack())
 
     private val agent = LightingAgent(
         config = AgentConfig(),
@@ -44,7 +47,7 @@ class AgentIntegrationTest {
             networkController = networkController,
             fixtureController = fixtureController,
             stateController = stateController,
-            sceneStore = sceneStore,
+            presetLibrary = library,
         ),
     )
 
@@ -99,7 +102,7 @@ class AgentIntegrationTest {
         // Create a scene
         val createResult = agent.dispatchTool("createScene", """{"name": "My Scene"}""")
         assertContains(createResult, "My Scene")
-        assertNotNull(sceneStore.load("My Scene"))
+        assertNotNull(library.listPresets().find { it.name == "My Scene" })
 
         // Load the scene
         val loadResult = agent.dispatchTool("loadScene", """{"name": "My Scene"}""")
@@ -272,7 +275,7 @@ class AgentIntegrationTest {
         val result = agent.dispatchTool("createScene", """{"name": "Red Pulse"}""")
 
         assertContains(result, "Red Pulse")
-        assertNotNull(sceneStore.load("Red Pulse"))
+        assertNotNull(library.listPresets().find { it.name == "Red Pulse" })
         assertEquals("solid_color", engineController.lastSetEffectId)
         assertEquals(0.8f, engineController.lastMasterDimmer)
         assertEquals(2, engineController.lastPalette.size)
