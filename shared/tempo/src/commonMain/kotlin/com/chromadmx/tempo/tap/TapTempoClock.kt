@@ -88,6 +88,7 @@ class TapTempoClock(
     override val isRunning: StateFlow<Boolean> = _isRunning.asStateFlow()
 
     private val _syncSource = MutableStateFlow(BeatSyncSource.NONE)
+    override val syncSource: StateFlow<BeatSyncSource> = _syncSource.asStateFlow()
 
     private val _beatState = MutableStateFlow(BeatState.IDLE)
     override val beatState: StateFlow<BeatState> = _beatState.asStateFlow()

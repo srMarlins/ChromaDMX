@@ -9,7 +9,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.chromadmx.core.model.Fixture3D
-import com.chromadmx.ui.theme.StageBackground
 import com.chromadmx.core.model.Color as DmxColor
 
 /**
@@ -32,7 +31,7 @@ fun VenueCanvas(
     Canvas(
         modifier = modifier
             .fillMaxSize()
-            .background(StageBackground),
+            .background(Color(0xFF080818)),
     ) {
         if (fixtures.isEmpty()) return@Canvas
 
