@@ -42,7 +42,3 @@ kotlin {
         }
     }
 }
-
-android {
-    namespace = "com.chromadmx.shared"
-}

@@ -5,6 +5,7 @@ import org.gradle.kotlin.dsl.the
 import org.jetbrains.compose.ComposePlugin
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
+@Suppress("DEPRECATION")
 class ComposeMultiplatformConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
@@ -14,6 +15,9 @@ class ComposeMultiplatformConventionPlugin : Plugin<Project> {
             // Add Compose dependencies to commonMain via the Kotlin extension.
             // This plugin assumes kotlin-multiplatform is already applied
             // (e.g., via chromadmx.kmp.library).
+            // Note: compose.* accessors are deprecated in CMP 1.10+ but the direct
+            // artifact replacement has version mismatches (e.g. material3 != plugin version).
+            // Using @Suppress("DEPRECATION") until JetBrains provides a stable migration path.
             extensions.configure<KotlinMultiplatformExtension> {
                 val compose = the<ComposePlugin.Dependencies>()
 
@@ -22,6 +26,7 @@ class ComposeMultiplatformConventionPlugin : Plugin<Project> {
                         implementation(compose.runtime)
                         implementation(compose.foundation)
                         implementation(compose.material3)
+                        implementation(compose.materialIconsExtended)
                         implementation(compose.ui)
                     }
                 }

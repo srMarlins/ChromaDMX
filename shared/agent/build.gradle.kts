@@ -13,7 +13,3 @@ kotlin {
         }
     }
 }
-
-android {
-    namespace = "com.chromadmx.agent"
-}

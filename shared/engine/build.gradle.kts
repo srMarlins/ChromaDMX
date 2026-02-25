@@ -11,7 +11,3 @@ kotlin {
         }
     }
 }
-
-android {
-    namespace = "com.chromadmx.engine"
-}
