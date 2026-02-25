@@ -8,7 +8,8 @@ import com.chromadmx.agent.controller.NetworkStateSnapshot
 import com.chromadmx.agent.controller.NodeSummary
 import com.chromadmx.agent.model.DiagnosticResult
 import com.chromadmx.agent.model.NodeStatusResult
-import com.chromadmx.agent.scene.Scene
+import com.chromadmx.agent.scene.ScenePreset
+import com.chromadmx.agent.scene.EffectLayerConfig
 import com.chromadmx.agent.scene.SceneStore
 import com.chromadmx.agent.tools.FakeEngineController
 import com.chromadmx.agent.tools.FakeFixtureController
@@ -48,7 +49,7 @@ class AgentIntegrationTest {
         ),
     )
 
-    // ---- Scene tool dispatch ----
+    // ---- ScenePreset tool dispatch ----
 
     @Test
     fun setEffectViaJsonDispatch() = runTest {
@@ -92,18 +93,18 @@ class AgentIntegrationTest {
         assertEquals(2.0f, engineController.lastTempoMultiplier)
     }
 
-    // ---- Scene save/load workflow ----
+    // ---- ScenePreset save/load workflow ----
 
     @Test
     fun createAndLoadSceneWorkflow() = runTest {
         // Create a scene
-        val createResult = agent.dispatchTool("createScene", """{"name": "My Scene"}""")
-        assertContains(createResult, "My Scene")
-        assertNotNull(sceneStore.load("My Scene"))
+        val createResult = agent.dispatchTool("createScene", """{"name": "My ScenePreset"}""")
+        assertContains(createResult, "My ScenePreset")
+        assertNotNull(sceneStore.load("My ScenePreset"))
 
         // Load the scene
-        val loadResult = agent.dispatchTool("loadScene", """{"name": "My Scene"}""")
-        assertContains(loadResult, "My Scene")
+        val loadResult = agent.dispatchTool("loadScene", """{"name": "My ScenePreset"}""")
+        assertContains(loadResult, "My ScenePreset")
     }
 
     @Test

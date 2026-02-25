@@ -1,7 +1,8 @@
 package com.chromadmx.agent.tools
 
 import com.chromadmx.agent.controller.EngineController
-import com.chromadmx.agent.scene.Scene
+import com.chromadmx.agent.scene.ScenePreset
+import com.chromadmx.agent.scene.EffectLayerConfig
 
 /**
  * Fake [EngineController] for testing tools without the real engine.
@@ -17,7 +18,7 @@ class FakeEngineController : EngineController {
     var lastTempoMultiplier: Float = 1.0f
     var lastBlendMode: String = "NORMAL"
     var lastBlendModeLayer: Int = -1
-    var lastAppliedScene: Scene? = null
+    var lastAppliedScene: ScenePreset? = null
 
     override fun setEffect(layer: Int, effectId: String, params: Map<String, Float>): Boolean {
         lastSetEffectId = effectId
@@ -43,14 +44,14 @@ class FakeEngineController : EngineController {
         lastTempoMultiplier = multiplier
     }
 
-    override fun captureScene(): Scene = Scene(
+    override fun captureScene(): ScenePreset = ScenePreset(
         name = "capture",
         masterDimmer = lastMasterDimmer,
         colorPalette = lastPalette,
         tempoMultiplier = lastTempoMultiplier
     )
 
-    override fun applyScene(scene: Scene) {
+    override fun applyScene(scene: ScenePreset) {
         lastAppliedScene = scene
         lastMasterDimmer = scene.masterDimmer
         lastPalette = scene.colorPalette

@@ -1,5 +1,8 @@
 package com.chromadmx.ui.viewmodel
 
+import com.chromadmx.agent.controller.EngineController
+import com.chromadmx.agent.scene.ScenePreset
+import com.chromadmx.agent.scene.SceneStore
 import com.chromadmx.core.EffectParams
 import com.chromadmx.core.model.BeatState
 import com.chromadmx.core.model.BlendMode
@@ -32,6 +35,8 @@ class PerformViewModel(
     private val engine: EffectEngine,
     private val effectRegistry: EffectRegistry,
     private val beatClock: BeatClock,
+    private val sceneStore: SceneStore,
+    private val engineController: EngineController,
     private val scope: CoroutineScope,
 ) {
     private val effectStack: EffectStack get() = engine.effectStack
@@ -45,6 +50,12 @@ class PerformViewModel(
 
     private val _layers = MutableStateFlow(effectStack.layers)
     val layers: StateFlow<List<EffectLayer>> = _layers.asStateFlow()
+
+    private val _presets = MutableStateFlow(sceneStore.list())
+    val presets: StateFlow<List<String>> = _presets.asStateFlow()
+
+    private val _activePreset = MutableStateFlow<String?>(null)
+    val activePreset: StateFlow<String?> = _activePreset.asStateFlow()
 
     private val syncJob: Job
 
@@ -69,6 +80,7 @@ class PerformViewModel(
     private fun syncFromEngine() {
         _masterDimmer.value = effectStack.masterDimmer
         _layers.value = effectStack.layers
+        _presets.value = sceneStore.list()
     }
 
     fun availableEffects(): Set<String> = effectRegistry.ids()
@@ -130,5 +142,16 @@ class PerformViewModel(
 
     fun tap() {
         (beatClock as? TapTempoClock)?.tap()
+    }
+
+    fun loadPreset(name: String) {
+        val scene = sceneStore.load(name) ?: return
+        engineController.applyScene(scene)
+        _activePreset.value = name
+        syncFromEngine()
+    }
+
+    fun getPreset(name: String): ScenePreset? {
+        return sceneStore.load(name)
     }
 }

@@ -41,7 +41,8 @@ fun PerformScreen(
     val beatState by viewModel.beatState.collectAsState()
     val masterDimmer by viewModel.masterDimmer.collectAsState()
     val layers by viewModel.layers.collectAsState()
-    var activePreset by remember { mutableStateOf<Int?>(null) }
+    val presets by viewModel.presets.collectAsState()
+    val activePreset by viewModel.activePreset.collectAsState()
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -143,18 +144,20 @@ fun PerformScreen(
             }
         }
 
-        // Scene presets
+        // Scene Presets
         Spacer(Modifier.height(8.dp))
         Text(
-            text = "Scene Presets",
+            text = "Presets",
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(horizontal = 16.dp),
         )
         Spacer(Modifier.height(4.dp))
         ScenePresetRow(
+            presets = presets,
             activePreset = activePreset,
-            onPresetTap = { activePreset = it },
+            onPresetTap = { viewModel.loadPreset(it) },
+            getPresetThumbnailColors = { name -> viewModel.getPreset(name)?.thumbnailColors ?: emptyList() },
             modifier = Modifier.padding(bottom = 8.dp),
         )
     }

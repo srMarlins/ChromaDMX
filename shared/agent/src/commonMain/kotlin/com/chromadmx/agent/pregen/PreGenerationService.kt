@@ -1,6 +1,7 @@
 package com.chromadmx.agent.pregen
 
-import com.chromadmx.agent.scene.Scene
+import com.chromadmx.agent.scene.ScenePreset
+import com.chromadmx.agent.scene.EffectLayerConfig
 import com.chromadmx.agent.scene.SceneStore
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
@@ -51,13 +52,13 @@ class PreGenerationService(
      * @return List of generated scenes (may be partial if cancelled).
      * @throws IllegalStateException if generation is already in progress.
      */
-    suspend fun generate(genre: String, count: Int): List<Scene> {
+    suspend fun generate(genre: String, count: Int): List<ScenePreset> {
         if (count <= 0) return emptyList()
 
         check(!_progress.value.isRunning) { "Generation already in progress" }
         _progress.value = PreGenProgress(current = 0, total = count, isRunning = true)
 
-        val scenes = mutableListOf<Scene>()
+        val scenes = mutableListOf<ScenePreset>()
 
         // Store the current coroutine's Job so cancel() can cancel it
         generationJob = coroutineContext[Job]
@@ -99,15 +100,15 @@ class PreGenerationService(
      *
      * When the LLM pipeline is connected, this will send a prompt like:
      * "Create a ${genre} lighting scene named $name with dramatic effects"
-     * and parse the agent's tool calls into a Scene.
+     * and parse the agent's tool calls into a ScenePreset.
      *
      * For now, uses deterministic genre-based presets.
      */
-    private fun generateSceneForGenre(genre: String, name: String, index: Int): Scene {
+    private fun generateSceneForGenre(genre: String, name: String, index: Int): ScenePreset {
         val presets = genrePresets[genre.lowercase()] ?: genrePresets["default"]!!
         val preset = presets[index % presets.size]
 
-        return Scene(
+        return ScenePreset(
             name = name,
             layers = preset.layers,
             masterDimmer = preset.masterDimmer,
@@ -118,23 +119,23 @@ class PreGenerationService(
 
     companion object {
         /** Built-in genre presets for offline scene generation. */
-        private val genrePresets: Map<String, List<Scene>> = mapOf(
+        private val genrePresets: Map<String, List<ScenePreset>> = mapOf(
             "techno" to listOf(
-                Scene(
+                ScenePreset(
                     name = "techno_template_1",
                     layers = listOf(
-                        Scene.LayerConfig(effectId = "strobe", params = mapOf("speed" to 4.0f), blendMode = "NORMAL", opacity = 0.7f),
-                        Scene.LayerConfig(effectId = "radial_pulse_3d", params = mapOf("speed" to 2.0f), blendMode = "ADDITIVE", opacity = 0.5f)
+                        EffectLayerConfig(effectId = "strobe", params = mapOf("speed" to 4.0f), blendMode = "NORMAL", opacity = 0.7f),
+                        EffectLayerConfig(effectId = "radial_pulse_3d", params = mapOf("speed" to 2.0f), blendMode = "ADDITIVE", opacity = 0.5f)
                     ),
                     masterDimmer = 0.9f,
                     colorPalette = listOf("#FF0000", "#000000", "#FF4400"),
                     tempoMultiplier = 1.0f
                 ),
-                Scene(
+                ScenePreset(
                     name = "techno_template_2",
                     layers = listOf(
-                        Scene.LayerConfig(effectId = "chase_3d", params = mapOf("speed" to 3.0f), blendMode = "NORMAL", opacity = 0.8f),
-                        Scene.LayerConfig(effectId = "perlin_noise_3d", params = mapOf("scale" to 0.5f), blendMode = "MULTIPLY", opacity = 0.4f)
+                        EffectLayerConfig(effectId = "chase_3d", params = mapOf("speed" to 3.0f), blendMode = "NORMAL", opacity = 0.8f),
+                        EffectLayerConfig(effectId = "perlin_noise_3d", params = mapOf("scale" to 0.5f), blendMode = "MULTIPLY", opacity = 0.4f)
                     ),
                     masterDimmer = 0.85f,
                     colorPalette = listOf("#0000FF", "#FF00FF", "#000088"),
@@ -142,19 +143,19 @@ class PreGenerationService(
                 )
             ),
             "ambient" to listOf(
-                Scene(
+                ScenePreset(
                     name = "ambient_template_1",
                     layers = listOf(
-                        Scene.LayerConfig(effectId = "gradient_sweep_3d", params = mapOf("speed" to 0.3f), blendMode = "NORMAL", opacity = 0.6f)
+                        EffectLayerConfig(effectId = "gradient_sweep_3d", params = mapOf("speed" to 0.3f), blendMode = "NORMAL", opacity = 0.6f)
                     ),
                     masterDimmer = 0.4f,
                     colorPalette = listOf("#0044FF", "#004488", "#002244"),
                     tempoMultiplier = 0.25f
                 ),
-                Scene(
+                ScenePreset(
                     name = "ambient_template_2",
                     layers = listOf(
-                        Scene.LayerConfig(effectId = "perlin_noise_3d", params = mapOf("scale" to 0.2f, "speed" to 0.1f), blendMode = "NORMAL", opacity = 0.5f)
+                        EffectLayerConfig(effectId = "perlin_noise_3d", params = mapOf("scale" to 0.2f, "speed" to 0.1f), blendMode = "NORMAL", opacity = 0.5f)
                     ),
                     masterDimmer = 0.3f,
                     colorPalette = listOf("#220044", "#440088", "#110022"),
@@ -162,20 +163,20 @@ class PreGenerationService(
                 )
             ),
             "house" to listOf(
-                Scene(
+                ScenePreset(
                     name = "house_template_1",
                     layers = listOf(
-                        Scene.LayerConfig(effectId = "wave_3d", params = mapOf("speed" to 1.5f), blendMode = "NORMAL", opacity = 0.7f),
-                        Scene.LayerConfig(effectId = "rainbow_sweep_3d", params = mapOf("speed" to 1.0f), blendMode = "ADDITIVE", opacity = 0.3f)
+                        EffectLayerConfig(effectId = "wave_3d", params = mapOf("speed" to 1.5f), blendMode = "NORMAL", opacity = 0.7f),
+                        EffectLayerConfig(effectId = "rainbow_sweep_3d", params = mapOf("speed" to 1.0f), blendMode = "ADDITIVE", opacity = 0.3f)
                     ),
                     masterDimmer = 0.75f,
                     colorPalette = listOf("#FF8800", "#FFAA00", "#FF6600"),
                     tempoMultiplier = 1.0f
                 ),
-                Scene(
+                ScenePreset(
                     name = "house_template_2",
                     layers = listOf(
-                        Scene.LayerConfig(effectId = "radial_pulse_3d", params = mapOf("speed" to 1.0f), blendMode = "NORMAL", opacity = 0.6f)
+                        EffectLayerConfig(effectId = "radial_pulse_3d", params = mapOf("speed" to 1.0f), blendMode = "NORMAL", opacity = 0.6f)
                     ),
                     masterDimmer = 0.7f,
                     colorPalette = listOf("#FF0088", "#FF00FF", "#8800FF"),
@@ -183,10 +184,10 @@ class PreGenerationService(
                 )
             ),
             "default" to listOf(
-                Scene(
+                ScenePreset(
                     name = "default_template_1",
                     layers = listOf(
-                        Scene.LayerConfig(effectId = "solid_color", params = mapOf("r" to 1.0f, "g" to 1.0f, "b" to 1.0f), blendMode = "NORMAL", opacity = 1.0f)
+                        EffectLayerConfig(effectId = "solid_color", params = mapOf("r" to 1.0f, "g" to 1.0f, "b" to 1.0f), blendMode = "NORMAL", opacity = 1.0f)
                     ),
                     masterDimmer = 0.8f,
                     colorPalette = listOf("#FFFFFF"),

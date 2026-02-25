@@ -13,9 +13,10 @@ import com.chromadmx.engine.util.ColorUtils
  * scrolling over time.
  *
  * **Params:**
- * - `axis`    (String)      — "x", "y", or "z". Default: "x".
- * - `speed`   (Float)       — scroll speed in units/sec. Default: 1.0.
- * - `palette` (List<Color>) — gradient palette (>=2 colors). Default: red->blue.
+ * - `axis`     (String)      — "x", "y", or "z". Default: "x".
+ * - `speed`    (Float)       — scroll speed in units/sec. Default: 1.0.
+ * - `palette`  (List<Color>) — gradient palette (>=2 colors). Default: red->blue.
+ * - `beatSync` (Boolean)     — if true, scroll is driven by beat phase. Default: false.
  */
 class GradientSweep3DEffect : SpatialEffect {
 
@@ -26,6 +27,7 @@ class GradientSweep3DEffect : SpatialEffect {
         val axis = params.getString("axis", "x")
         val speed = params.getFloat("speed", 1.0f)
         val palette = params.getColorList("palette", DEFAULT_PALETTE)
+        val beatSync = params.getBoolean("beatSync", false)
 
         val axisValue = when (axis) {
             "y" -> pos.y
@@ -34,7 +36,11 @@ class GradientSweep3DEffect : SpatialEffect {
         }
 
         // Scrolling normalized position (wraps 0..1)
-        val t = MathUtils.wrap(axisValue + time * speed, 1f)
+        val t = if (beatSync) {
+            MathUtils.wrap(axisValue + beat.beatPhase * speed, 1f)
+        } else {
+            MathUtils.wrap(axisValue + time * speed, 1f)
+        }
 
         return ColorUtils.samplePalette(palette, t)
     }

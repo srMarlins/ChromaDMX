@@ -1,6 +1,6 @@
 package com.chromadmx.agent.controller
 
-import com.chromadmx.agent.scene.Scene
+import com.chromadmx.agent.scene.ScenePreset
 
 /**
  * Abstraction over the effect engine for agent tool operations.
@@ -24,9 +24,9 @@ interface EngineController {
     /** Set the tempo multiplier. */
     fun setTempoMultiplier(multiplier: Float)
 
-    /** Capture the current engine state as a [Scene]. */
-    fun captureScene(): Scene
+    /** Capture the current engine state as a [ScenePreset]. */
+    fun captureScene(): ScenePreset
 
-    /** Apply a saved [Scene] to the engine. */
-    fun applyScene(scene: Scene)
+    /** Apply a saved [ScenePreset] to the engine. */
+    fun applyScene(scene: ScenePreset)
 }

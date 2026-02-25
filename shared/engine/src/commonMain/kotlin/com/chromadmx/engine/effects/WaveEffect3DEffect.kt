@@ -17,6 +17,7 @@ import kotlin.math.sin
  * - `wavelength` (Float)       — spatial wavelength in units. Default: 1.0.
  * - `speed`      (Float)       — wave speed in units/sec. Default: 1.0.
  * - `colors`     (List<Color>) — two colors to oscillate between. Default: [BLACK, WHITE].
+ * - `beatSync`   (Boolean)     — if true, wave phase is driven by beat phase. Default: false.
  */
 class WaveEffect3DEffect : SpatialEffect {
 
@@ -28,6 +29,7 @@ class WaveEffect3DEffect : SpatialEffect {
         val wavelength = params.getFloat("wavelength", 1.0f).coerceAtLeast(0.001f)
         val speed = params.getFloat("speed", 1.0f)
         val colors = params.getColorList("colors", DEFAULT_COLORS)
+        val beatSync = params.getBoolean("beatSync", false)
 
         val colorA = colors.getOrElse(0) { Color.BLACK }
         val colorB = colors.getOrElse(1) { Color.WHITE }
@@ -38,10 +40,11 @@ class WaveEffect3DEffect : SpatialEffect {
             else -> pos.x
         }
 
-        // Sinusoidal wave: sin(2*pi*(pos/wavelength - time*speed))
+        // Sinusoidal wave: sin(2*pi*(pos/wavelength - phase))
         // Remap from -1..1 to 0..1 for interpolation
-        val phase = (2.0 * PI * (axisValue / wavelength - time * speed)).toFloat()
-        val t = (sin(phase) + 1f) * 0.5f
+        val timeOrBeat = if (beatSync) beat.beatPhase else time
+        val phase = (2.0 * PI * (axisValue / wavelength - timeOrBeat * speed)).toFloat()
+        val t = (sin(phase.toDouble()) + 1.0).toFloat() * 0.5f
 
         return colorA.lerp(colorB, t)
     }

@@ -1,6 +1,7 @@
 package com.chromadmx.agent.tools
 
-import com.chromadmx.agent.scene.Scene
+import com.chromadmx.agent.scene.ScenePreset
+import com.chromadmx.agent.scene.EffectLayerConfig
 import com.chromadmx.agent.scene.SceneStore
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -76,15 +77,15 @@ class SceneToolsTest {
     @Test
     fun createSceneSavesToStore() = runTest {
         val tool = CreateSceneTool(controller, sceneStore)
-        val result = tool.execute(CreateSceneTool.Args(name = "Test Scene"))
-        val saved = sceneStore.load("Test Scene")
+        val result = tool.execute(CreateSceneTool.Args(name = "Test ScenePreset"))
+        val saved = sceneStore.load("Test ScenePreset")
         assertTrue(saved != null)
-        assertContains(result, "Test Scene")
+        assertContains(result, "Test ScenePreset")
     }
 
     @Test
     fun loadSceneRestoresFromStore() = runTest {
-        sceneStore.save(Scene(name = "Saved", masterDimmer = 0.5f))
+        sceneStore.save(ScenePreset(name = "Saved", masterDimmer = 0.5f))
         val tool = LoadSceneTool(controller, sceneStore)
         val result = tool.execute(LoadSceneTool.Args(name = "Saved"))
         assertContains(result, "Saved")

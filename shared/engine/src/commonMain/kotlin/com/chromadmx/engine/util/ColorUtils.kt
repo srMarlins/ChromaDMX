@@ -54,4 +54,35 @@ object ColorUtils {
 
         return palette[lo].lerp(palette[hi], frac)
     }
+
+    /**
+     * Convert a hex string (e.g., "#FF00FF" or "FF00FF") to a [Color].
+     * Supports both 3-digit and 6-digit hex formats.
+     */
+    fun parseHex(hex: String): Color {
+        val s = hex.removePrefix("#")
+        return when (s.length) {
+            6 -> Color(
+                (s.substring(0, 2).toInt(16) / 255f),
+                (s.substring(2, 4).toInt(16) / 255f),
+                (s.substring(4, 6).toInt(16) / 255f)
+            )
+            3 -> Color(
+                (s.substring(0, 1).repeat(2).toInt(16) / 255f),
+                (s.substring(1, 2).repeat(2).toInt(16) / 255f),
+                (s.substring(2, 3).repeat(2).toInt(16) / 255f)
+            )
+            else -> Color.WHITE
+        }
+    }
+
+    /**
+     * Convert a [Color] to a 6-digit hex string (e.g., "#FF00FF").
+     */
+    fun toHex(color: Color): String {
+        val r = (color.r * 255f + 0.5f).toInt().coerceIn(0, 255)
+        val g = (color.g * 255f + 0.5f).toInt().coerceIn(0, 255)
+        val b = (color.b * 255f + 0.5f).toInt().coerceIn(0, 255)
+        return "#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}".uppercase()
+    }
 }

@@ -1,9 +1,12 @@
 package com.chromadmx.agent.controller
 
-import com.chromadmx.agent.scene.Scene
+import com.chromadmx.agent.scene.ScenePreset
+import com.chromadmx.agent.scene.EffectLayerConfig
 import com.chromadmx.core.EffectParams
 import com.chromadmx.core.model.BlendMode
+import com.chromadmx.core.model.Color
 import com.chromadmx.engine.effect.EffectLayer
+import com.chromadmx.engine.util.ColorUtils
 import com.chromadmx.engine.effect.EffectRegistry
 import com.chromadmx.engine.effect.EffectStack
 import kotlinx.atomicfu.atomic
@@ -84,18 +87,30 @@ class RealEngineController(
         _currentTempoMultiplier.value = multiplier
     }
 
-    override fun captureScene(): Scene {
+    override fun captureScene(): ScenePreset {
         val layers = effectStack.layers.map { layer ->
-            Scene.LayerConfig(
+            val paramsMap = layer.params.toMap()
+
+            EffectLayerConfig(
                 effectId = layer.effect.id,
-                params = layer.params.toMap()
+                params = paramsMap
                     .filterValues { it is Number }
                     .mapValues { (_, v) -> (v as Number).toFloat() },
+                stringParams = paramsMap
+                    .filterValues { it is String }
+                    .mapValues { (_, v) -> v as String },
+                colors = paramsMap
+                    .filterValues { it is Color }
+                    .mapValues { (_, v) -> ColorUtils.toHex(v as Color) },
+                colorLists = paramsMap
+                    .filterValues { it is List<*> && it.firstOrNull() is Color }
+                    .mapValues { (_, v) -> (v as List<Color>).map { ColorUtils.toHex(it) } },
                 blendMode = layer.blendMode.name,
-                opacity = layer.opacity
+                opacity = layer.opacity,
+                enabled = layer.enabled
             )
         }
-        return Scene(
+        return ScenePreset(
             name = "",
             layers = layers,
             masterDimmer = effectStack.masterDimmer,
@@ -104,14 +119,28 @@ class RealEngineController(
         )
     }
 
-    override fun applyScene(scene: Scene) {
+    override fun applyScene(scene: ScenePreset) {
         // Build all layers first, then swap atomically to avoid
         // the engine seeing a partially-applied scene.
         val newLayers = scene.layers.mapNotNull { layerConfig ->
             val effect = effectRegistry.get(layerConfig.effectId) ?: return@mapNotNull null
-            val params = layerConfig.params.entries.fold(EffectParams.EMPTY) { acc, (key, value) ->
+
+            var params = layerConfig.params.entries.fold(EffectParams.EMPTY) { acc, (key, value) ->
                 acc.with(key, value)
             }
+
+            layerConfig.stringParams.forEach { (key, value) ->
+                params = params.with(key, value)
+            }
+
+            layerConfig.colors.forEach { (key, value) ->
+                params = params.with(key, ColorUtils.parseHex(value))
+            }
+
+            layerConfig.colorLists.forEach { (key, value) ->
+                params = params.with(key, value.map { ColorUtils.parseHex(it) })
+            }
+
             val blendMode = try {
                 BlendMode.valueOf(layerConfig.blendMode)
             } catch (_: IllegalArgumentException) {
@@ -122,7 +151,7 @@ class RealEngineController(
                 params = params,
                 blendMode = blendMode,
                 opacity = layerConfig.opacity,
-                enabled = true
+                enabled = layerConfig.enabled
             )
         }
         effectStack.replaceLayers(newLayers)
