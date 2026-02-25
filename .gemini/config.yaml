@@ -14,13 +14,6 @@ reviews:
       - "**/*.jpg"
   context:
     instructions: |
-      This is a Kotlin Multiplatform (Android + iOS) DMX lighting controller.
-      Shared code lives in shared/, platform code in android/ and ios/.
-      Key conventions:
-      - Dependency injection via Koin Multiplatform
-      - Coroutines for async, StateFlow for observable state
-      - expect/actual for platform abstractions
-      - DMX output path must be pure shared Kotlin
-      - Three independent loops (UI/Engine/DMX) must never block each other
+      See AGENTS.md in the repo root for full project context.
       Review for: thread safety, coroutine misuse, platform leaks in shared code,
       proper DI scoping, and DMX timing constraints.
