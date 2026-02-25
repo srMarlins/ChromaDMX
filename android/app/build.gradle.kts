@@ -1,5 +1,12 @@
+import java.util.Properties
+
 plugins {
     id("chromadmx.android.application")
+}
+
+val localProps = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) load(file.inputStream())
 }
 
 android {
@@ -9,6 +16,13 @@ android {
         applicationId = "com.chromadmx.android"
         versionCode = 1
         versionName = "0.1.0"
+
+        buildConfigField("String", "GOOGLE_API_KEY", "\"${localProps.getProperty("GOOGLE_API_KEY", "")}\"")
+        buildConfigField("String", "ANTHROPIC_API_KEY", "\"${localProps.getProperty("ANTHROPIC_API_KEY", "")}\"")
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {
