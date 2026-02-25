@@ -9,14 +9,24 @@ jobs:
     if: github.event.label.name == 'jules'
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      pull-requests: write
-      issues: write
+      contents: read
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Dispatch to Jules
-        uses: google/jules-github-action@v1
+      - name: Invoke Jules
+        if: ${{ contains(fromJSON('["srMarlins"]'), github.event.issue.user.login) }}
+        uses: google-labs-code/jules-invoke@v1
         with:
-          api_key: ${{ secrets.JULES_API_KEY }}
-          issue_number: ${{ github.event.issue.number }}
+          prompt: |
+            Fix the following GitHub issue for the ChromaDMX project.
+
+            Issue #${{ github.event.issue.number }}: ${{ github.event.issue.title }}
+
+            ${{ github.event.issue.body }}
+
+            Instructions:
+            - This is a Kotlin Multiplatform project (Android + iOS)
+            - Shared code lives in shared/, platform code in android/ and ios/
+            - Use Compose Multiplatform for UI (shared UI elements)
+            - Follow existing code conventions and patterns
+            - Run tests with ./gradlew testAndroidHostTest for relevant modules
+            - Create a PR with your changes when done
+          jules_api_key: ${{ secrets.JULES_API_KEY }}
