@@ -4,7 +4,6 @@ import com.chromadmx.agent.scene.Scene
 import com.chromadmx.core.EffectParams
 import com.chromadmx.core.model.BeatState
 import com.chromadmx.core.model.BlendMode
-import com.chromadmx.core.model.ScenePreset
 import com.chromadmx.engine.effect.EffectLayer
 import com.chromadmx.engine.effect.EffectRegistry
 import com.chromadmx.engine.effect.EffectStack
@@ -16,11 +15,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
@@ -53,14 +49,8 @@ class PerformViewModel(
     private val _layers = MutableStateFlow(effectStack.layers)
     val layers: StateFlow<List<EffectLayer>> = _layers.asStateFlow()
 
-    private val _scenes = MutableStateFlow<List<String>>(emptyList())
-    val scenes: StateFlow<List<String>> = _scenes.asStateFlow()
-
-    val allScenes: StateFlow<List<Scene>> = _scenes.map { names ->
-        names.mapNotNull { name ->
-            presetLibrary.listPresets().find { it.name == name }?.toScene()
-        }
-    }.stateIn(scope, SharingStarted.Eagerly, emptyList())
+    private val _scenes = MutableStateFlow<List<Scene>>(emptyList())
+    val allScenes: StateFlow<List<Scene>> = _scenes.asStateFlow()
 
     private var layersBeforePreview: List<EffectLayer>? = null
     private var masterDimmerBeforePreview: Float? = null
@@ -88,7 +78,30 @@ class PerformViewModel(
     private fun syncFromEngine() {
         _masterDimmer.value = effectStack.masterDimmer
         _layers.value = effectStack.layers
-        _scenes.value = presetLibrary.listPresets().map { it.name }
+        _scenes.value = presetLibrary.listPresets().map { preset ->
+            Scene(
+                name = preset.name,
+                layers = preset.layers.map { config ->
+                    @Suppress("UNCHECKED_CAST")
+                    val floatParams = config.params.toMap().mapValues { (_, v) ->
+                        when (v) {
+                            is Float -> v
+                            is Double -> v.toFloat()
+                            is Int -> v.toFloat()
+                            is Number -> v.toFloat()
+                            else -> 0f
+                        }
+                    }
+                    Scene.LayerConfig(
+                        effectId = config.effectId,
+                        params = floatParams,
+                        blendMode = config.blendMode.name,
+                        opacity = config.opacity,
+                    )
+                },
+                masterDimmer = preset.masterDimmer,
+            )
+        }
     }
 
     fun availableEffects(): Set<String> = effectRegistry.ids()
@@ -149,10 +162,11 @@ class PerformViewModel(
     }
 
     fun applyScene(name: String) {
-        val preset = presetLibrary.listPresets().find { it.name == name } ?: return
+        val presets = presetLibrary.listPresets()
+        val preset = presets.find { it.name == name } ?: return
         layersBeforePreview = null
         masterDimmerBeforePreview = null
-        applyPresetToStack(preset)
+        presetLibrary.loadPreset(preset.id)
         syncFromEngine()
     }
 
@@ -169,54 +183,16 @@ class PerformViewModel(
             }
             syncFromEngine()
         } else {
-            val preset = presetLibrary.listPresets().find { it.name == name } ?: return
+            val presets = presetLibrary.listPresets()
+            val preset = presets.find { it.name == name } ?: return
             if (layersBeforePreview == null) {
                 layersBeforePreview = effectStack.layers
                 masterDimmerBeforePreview = effectStack.masterDimmer
             }
-            applyPresetToStack(preset)
+            presetLibrary.loadPreset(preset.id)
             syncFromEngine()
         }
     }
-
-    private fun applyPresetToStack(preset: ScenePreset) {
-        val newLayers = preset.layers.mapNotNull { config ->
-            val effect = effectRegistry.get(config.effectId) ?: return@mapNotNull null
-            EffectLayer(
-                effect = effect,
-                params = config.params,
-                blendMode = config.blendMode,
-                opacity = config.opacity,
-                enabled = config.enabled
-            )
-        }
-        effectStack.replaceLayers(newLayers)
-        effectStack.masterDimmer = preset.masterDimmer
-    }
-
-    /** Convert a [ScenePreset] to a [Scene] for UI compatibility. */
-    @Suppress("UNCHECKED_CAST")
-    private fun ScenePreset.toScene(): Scene = Scene(
-        name = name,
-        layers = layers.map { config ->
-            val floatParams = config.params.toMap().mapValues { (_, v) ->
-                when (v) {
-                    is Float -> v
-                    is Double -> v.toFloat()
-                    is Int -> v.toFloat()
-                    is Number -> v.toFloat()
-                    else -> 0f
-                }
-            }
-            Scene.LayerConfig(
-                effectId = config.effectId,
-                params = floatParams,
-                blendMode = config.blendMode.name,
-                opacity = config.opacity
-            )
-        },
-        masterDimmer = masterDimmer
-    )
 
     fun addLayer() {
         val ids = effectRegistry.ids()
