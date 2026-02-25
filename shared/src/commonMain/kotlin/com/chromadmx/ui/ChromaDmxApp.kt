@@ -17,10 +17,12 @@ import androidx.compose.ui.Modifier
 import com.chromadmx.ui.mascot.MascotOverlay
 import com.chromadmx.ui.navigation.AppState
 import com.chromadmx.ui.navigation.AppStateManager
+import com.chromadmx.ui.screen.chat.ChatPanel
 import com.chromadmx.ui.screen.onboarding.OnboardingScreen
 import com.chromadmx.ui.screen.settings.SettingsScreen
 import com.chromadmx.ui.screen.stage.StagePreviewScreen
 import com.chromadmx.ui.theme.ChromaDmxTheme
+import com.chromadmx.ui.viewmodel.AgentViewModel
 import com.chromadmx.ui.viewmodel.MascotViewModel
 import com.chromadmx.ui.viewmodel.SettingsViewModel
 import com.chromadmx.ui.viewmodel.StageViewModel
@@ -84,6 +86,17 @@ fun ChromaDmxApp() {
                     MascotOverlay(
                         viewModel = mascotVm,
                         onMascotTap = { mascotVm.toggleChat() },
+                    )
+                }
+
+                // Chat panel overlay — slides up when mascot is tapped
+                val agentVm = resolveOrNull<AgentViewModel>()
+                if (mascotVm != null && agentVm != null) {
+                    val isChatOpen by mascotVm.isChatOpen.collectAsState()
+                    ChatPanel(
+                        isOpen = isChatOpen,
+                        agentViewModel = agentVm,
+                        onDismiss = { mascotVm.toggleChat() },
                     )
                 }
             }
