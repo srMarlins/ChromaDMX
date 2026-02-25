@@ -23,15 +23,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.chromadmx.core.model.Fixture3D
+import com.chromadmx.ui.components.VenueCanvas
 import com.chromadmx.ui.viewmodel.PerformViewModel
+import com.chromadmx.core.model.Color as DmxColor
 
 /**
- * Main perform screen: beat visualization at top, effect layer cards in
- * a scrollable column, master dimmer, and scene presets at bottom.
+ * Main perform screen: venue canvas visualization at top, beat visualization,
+ * effect layer cards in a scrollable column, master dimmer, and scene presets.
  */
 @Composable
 fun PerformScreen(
     viewModel: PerformViewModel,
+    fixtures: List<Fixture3D> = emptyList(),
+    fixtureColors: List<DmxColor> = emptyList(),
 ) {
     val beatState by viewModel.beatState.collectAsState()
     val masterDimmer by viewModel.masterDimmer.collectAsState()
@@ -42,6 +47,17 @@ fun PerformScreen(
     Column(
         modifier = Modifier.fillMaxSize(),
     ) {
+        // Venue canvas visualization (when fixtures are mapped)
+        if (fixtures.isNotEmpty()) {
+            VenueCanvas(
+                fixtures = fixtures,
+                fixtureColors = fixtureColors,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp),
+            )
+        }
+
         // Beat visualization + tap button
         Row(
             modifier = Modifier
