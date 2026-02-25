@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
@@ -21,6 +22,9 @@ import kotlinx.coroutines.launch
  * Integrates with [BeatClock] to sync mascot animations to the musical beat:
  * - When the clock is running and BPM > 0, the mascot auto-transitions to DANCING.
  * - When the clock stops, the mascot returns to IDLE.
+ *
+ * Includes a proactive idle timer that shows random tip bubbles after 30 seconds
+ * of inactivity (no state changes or bubble activity).
  */
 class MascotViewModel(
     private val scope: CoroutineScope,
@@ -42,14 +46,27 @@ class MascotViewModel(
     val isChatOpen: StateFlow<Boolean> = _isChatOpen.asStateFlow()
 
     private var autoDismissJob: Job? = null
+    private var idleTimerJob: Job? = null
     private var beatSyncJob: Job? = null
 
     /** Whether the dancing state was auto-triggered by BeatClock (vs. manual). */
     private var beatDriven = false
 
+    companion object {
+        /** How long (ms) the mascot must be idle before showing a proactive tip. */
+        internal const val IDLE_TIMEOUT_MS = 30_000L
+
+        internal val IDLE_TIPS = listOf(
+            "Tap me to chat with the AI!",
+            "Try generating some scenes for tonight",
+            "Swipe down on the preset strip for more options",
+        )
+    }
+
     init {
         animationController.start()
         startBeatSync()
+        resetIdleTimer()
     }
 
     // ── Beat-reactive sync ──────────────────────────────────────────
@@ -76,10 +93,28 @@ class MascotViewModel(
         }
     }
 
+    // ── Proactive idle timer ────────────────────────────────────────
+
+    /**
+     * Reset (or start) the idle timer. After [IDLE_TIMEOUT_MS] of no state
+     * changes or bubble activity, shows a random tip bubble.
+     */
+    internal fun resetIdleTimer() {
+        idleTimerJob?.cancel()
+        idleTimerJob = scope.launch {
+            delay(IDLE_TIMEOUT_MS)
+            if (isActive) {
+                val tip = IDLE_TIPS.random()
+                showBubble(SpeechBubble(text = tip, type = BubbleType.INFO))
+            }
+        }
+    }
+
     // ── State triggers ──────────────────────────────────────────────
 
     fun showBubble(bubble: SpeechBubble) {
         _currentBubble.value = bubble
+        resetIdleTimer()
         autoDismissJob?.cancel()
         if (bubble.autoDismissMs > 0) {
             autoDismissJob = scope.launch {
@@ -92,11 +127,13 @@ class MascotViewModel(
     fun dismissBubble() {
         autoDismissJob?.cancel()
         _currentBubble.value = null
+        resetIdleTimer()
     }
 
     fun triggerHappy() {
         _mascotState.value = MascotState.HAPPY
         animationController.transitionTo(MascotState.HAPPY)
+        resetIdleTimer()
     }
 
     fun triggerAlert(message: String) {
@@ -108,6 +145,7 @@ class MascotViewModel(
     fun triggerThinking() {
         _mascotState.value = MascotState.THINKING
         animationController.transitionTo(MascotState.THINKING)
+        resetIdleTimer()
     }
 
     fun triggerConfused(message: String) {
@@ -120,20 +158,24 @@ class MascotViewModel(
     fun triggerDancing() {
         _mascotState.value = MascotState.DANCING
         animationController.transitionTo(MascotState.DANCING)
+        resetIdleTimer()
     }
 
     fun returnToIdle() {
         _mascotState.value = MascotState.IDLE
         animationController.transitionTo(MascotState.IDLE)
+        resetIdleTimer()
     }
 
     fun toggleChat() {
         _isChatOpen.value = !_isChatOpen.value
+        resetIdleTimer()
     }
 
     fun onCleared() {
         animationController.stop()
         autoDismissJob?.cancel()
+        idleTimerJob?.cancel()
         beatSyncJob?.cancel()
     }
 }

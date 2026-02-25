@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -127,5 +128,53 @@ class MascotViewModelTest {
         val vm = MascotViewModel(scope = backgroundScope, beatClock = stubBeatClock())
         // Frame index starts at 0
         assertEquals(0, vm.currentFrameIndex.first())
+    }
+
+    // ── Idle timer / proactive suggestions ──────────────────────────
+
+    @Test
+    fun idleTimerShowsBubbleAfterTimeout() = runTest {
+        val vm = MascotViewModel(scope = backgroundScope, beatClock = stubBeatClock())
+
+        // No bubble initially
+        assertNull(vm.currentBubble.first())
+
+        // Advance past idle timeout (30s)
+        advanceTimeBy(MascotViewModel.IDLE_TIMEOUT_MS + 100)
+
+        // Should have shown a tip bubble
+        val bubble = vm.currentBubble.first()
+        assertNotNull(bubble)
+        assertEquals(BubbleType.INFO, bubble.type)
+        assert(bubble.text in MascotViewModel.IDLE_TIPS) {
+            "Expected tip from IDLE_TIPS, got: '${bubble.text}'"
+        }
+    }
+
+    @Test
+    fun idleTimerResetsOnStateChange() = runTest {
+        val vm = MascotViewModel(scope = backgroundScope, beatClock = stubBeatClock())
+
+        // Advance partway through idle timeout (20s of 30s)
+        advanceTimeBy(20_000L)
+
+        // Trigger a state change — resets the idle timer
+        vm.triggerHappy()
+
+        // Advance another 20s — should NOT have shown a tip yet
+        // (timer was reset at t=20s, so it fires at t=50s)
+        advanceTimeBy(20_000L)
+        // The bubble should be null (triggerHappy doesn't set a bubble,
+        // and only 20s have passed since the timer reset)
+        assertNull(vm.currentBubble.first())
+
+        // Advance just past the idle timeout from the reset point (another 10.1s)
+        // Total: 20s + 20s + 10.1s = 50.1s, idle timer fires at 50s
+        advanceTimeBy(10_100L)
+
+        // Now a tip bubble should appear
+        val bubble = vm.currentBubble.first()
+        assertNotNull(bubble)
+        assertEquals(BubbleType.INFO, bubble.type)
     }
 }
