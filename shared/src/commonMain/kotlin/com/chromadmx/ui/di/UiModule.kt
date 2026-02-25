@@ -6,6 +6,7 @@ import com.chromadmx.ui.viewmodel.AgentViewModel
 import com.chromadmx.ui.viewmodel.MapViewModel
 import com.chromadmx.ui.viewmodel.NetworkViewModel
 import com.chromadmx.ui.viewmodel.PerformViewModel
+import com.chromadmx.ui.viewmodel.SettingsViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -24,6 +25,7 @@ import org.koin.dsl.module
  * - NetworkViewModel requires: NodeDiscovery
  * - MapViewModel: standalone
  * - AgentViewModel: requires LightingAgent, PreGenerationService
+ * - SettingsViewModel (single): requires NodeDiscovery
  */
 val uiModule = module {
     // CoroutineScope provided by chromaDiModule
@@ -35,7 +37,7 @@ val uiModule = module {
         PerformViewModel(
             engine = get(),
             effectRegistry = get(),
-            sceneStore = get(),
+            presetLibrary = get(),
             beatClock = get(),
             scope = vmScope,
         )
@@ -67,6 +69,16 @@ val uiModule = module {
         AgentViewModel(
             agent = get(),
             preGenService = get(),
+            scope = vmScope,
+        )
+    }
+
+    single {
+        val parentScope: CoroutineScope = get()
+        val childJob = SupervisorJob(parentScope.coroutineContext[Job])
+        val vmScope = CoroutineScope(Dispatchers.Default + childJob)
+        SettingsViewModel(
+            nodeDiscovery = get(),
             scope = vmScope,
         )
     }
