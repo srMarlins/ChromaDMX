@@ -1,5 +1,6 @@
 package com.chromadmx.di
 
+import com.chromadmx.agent.scene.SceneStore
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.engine.effect.EffectRegistry
 import com.chromadmx.engine.effects.Chase3DEffect
@@ -66,8 +67,9 @@ val chromaDiModule = module {
     }
     single { get<EffectEngine>().effectStack }
 
-    // --- Presets ---
+    // --- Presets & Scenes ---
     single { PresetLibrary(get(), get(), get()) }
+    single { SceneStore() }
 
     // --- Fixture provider (empty default — MapViewModel manages fixtures) ---
     single<() -> List<Fixture3D>> { { emptyList() } }

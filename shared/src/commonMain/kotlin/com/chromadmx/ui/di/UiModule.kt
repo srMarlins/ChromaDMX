@@ -2,6 +2,7 @@ package com.chromadmx.ui.di
 
 import com.chromadmx.agent.LightingAgent
 import com.chromadmx.agent.pregen.PreGenerationService
+import com.chromadmx.agent.scene.SceneStore
 import com.chromadmx.ui.viewmodel.AgentViewModel
 import com.chromadmx.ui.viewmodel.MapViewModel
 import com.chromadmx.ui.viewmodel.NetworkViewModel
@@ -35,7 +36,7 @@ val uiModule = module {
         PerformViewModel(
             engine = get(),
             effectRegistry = get(),
-            sceneStore = get(),
+            sceneStore = get<SceneStore>(),
             beatClock = get(),
             scope = vmScope,
         )

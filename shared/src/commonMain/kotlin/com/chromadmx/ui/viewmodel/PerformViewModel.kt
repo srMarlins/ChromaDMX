@@ -57,7 +57,7 @@ class PerformViewModel(
 
     val allScenes: StateFlow<List<Scene>> = _scenes.map { names ->
         names.mapNotNull { sceneStore.load(it) }
-    }.stateIn(scope, SharingStarted.Eagerly, emptyList())
+    }.stateIn(scope, SharingStarted.Eagerly, emptyList<Scene>())
 
     private var layersBeforePreview: List<EffectLayer>? = null
     private var masterDimmerBeforePreview: Float? = null
