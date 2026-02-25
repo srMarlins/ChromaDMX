@@ -33,4 +33,5 @@ rootProject.name = "ChromaDMX"
 include(":shared")
 include(":shared:core")
 include(":shared:networking")
+include(":shared:tempo")
 include(":android:app")
