@@ -2,6 +2,7 @@ package com.chromadmx.agent.tools
 
 import com.chromadmx.agent.scene.Scene
 import com.chromadmx.agent.scene.SceneStore
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -12,7 +13,7 @@ class SceneToolsTest {
     private val sceneStore = SceneStore()
 
     @Test
-    fun setEffectAppliesEffectToLayer() {
+    fun setEffectAppliesEffectToLayer() = runTest {
         val tool = SetEffectTool(controller)
         val result = tool.execute(SetEffectTool.Args(layer = 0, effectId = "solid_color", params = mapOf("r" to 1.0f)))
         assertContains(result, "solid_color")
@@ -20,7 +21,7 @@ class SceneToolsTest {
     }
 
     @Test
-    fun setEffectWithEmptyParams() {
+    fun setEffectWithEmptyParams() = runTest {
         val tool = SetEffectTool(controller)
         val result = tool.execute(SetEffectTool.Args(layer = 2, effectId = "rainbow_sweep_3d"))
         assertContains(result, "rainbow_sweep_3d")
@@ -28,7 +29,7 @@ class SceneToolsTest {
     }
 
     @Test
-    fun setBlendModeUpdatesLayer() {
+    fun setBlendModeUpdatesLayer() = runTest {
         val tool = SetBlendModeTool(controller)
         val result = tool.execute(SetBlendModeTool.Args(layer = 0, mode = "ADDITIVE"))
         assertContains(result, "ADDITIVE")
@@ -36,21 +37,21 @@ class SceneToolsTest {
     }
 
     @Test
-    fun setMasterDimmerClampsAboveOne() {
+    fun setMasterDimmerClampsAboveOne() = runTest {
         val tool = SetMasterDimmerTool(controller)
         tool.execute(SetMasterDimmerTool.Args(value = 1.5f))
         assertEquals(1.0f, controller.lastMasterDimmer)
     }
 
     @Test
-    fun setMasterDimmerClampsBelowZero() {
+    fun setMasterDimmerClampsBelowZero() = runTest {
         val tool = SetMasterDimmerTool(controller)
         tool.execute(SetMasterDimmerTool.Args(value = -0.5f))
         assertEquals(0.0f, controller.lastMasterDimmer)
     }
 
     @Test
-    fun setMasterDimmerNormalValue() {
+    fun setMasterDimmerNormalValue() = runTest {
         val tool = SetMasterDimmerTool(controller)
         val result = tool.execute(SetMasterDimmerTool.Args(value = 0.75f))
         assertEquals(0.75f, controller.lastMasterDimmer)
@@ -58,7 +59,7 @@ class SceneToolsTest {
     }
 
     @Test
-    fun setColorPaletteStoresColors() {
+    fun setColorPaletteStoresColors() = runTest {
         val tool = SetColorPaletteTool(controller)
         tool.execute(SetColorPaletteTool.Args(colors = listOf("#FF0000", "#00FF00")))
         assertEquals(2, controller.lastPalette.size)
@@ -66,14 +67,14 @@ class SceneToolsTest {
     }
 
     @Test
-    fun setTempoMultiplierUpdates() {
+    fun setTempoMultiplierUpdates() = runTest {
         val tool = SetTempoMultiplierTool(controller)
         tool.execute(SetTempoMultiplierTool.Args(multiplier = 2.0f))
         assertEquals(2.0f, controller.lastTempoMultiplier)
     }
 
     @Test
-    fun createSceneSavesToStore() {
+    fun createSceneSavesToStore() = runTest {
         val tool = CreateSceneTool(controller, sceneStore)
         val result = tool.execute(CreateSceneTool.Args(name = "Test Scene"))
         val saved = sceneStore.load("Test Scene")
@@ -82,7 +83,7 @@ class SceneToolsTest {
     }
 
     @Test
-    fun loadSceneRestoresFromStore() {
+    fun loadSceneRestoresFromStore() = runTest {
         sceneStore.save(Scene(name = "Saved", masterDimmer = 0.5f))
         val tool = LoadSceneTool(controller, sceneStore)
         val result = tool.execute(LoadSceneTool.Args(name = "Saved"))
@@ -91,7 +92,7 @@ class SceneToolsTest {
     }
 
     @Test
-    fun loadSceneReturnsErrorForMissing() {
+    fun loadSceneReturnsErrorForMissing() = runTest {
         val tool = LoadSceneTool(controller, sceneStore)
         val result = tool.execute(LoadSceneTool.Args(name = "Nope"))
         assertContains(result, "not found")

@@ -14,6 +14,7 @@ import com.chromadmx.agent.tools.FakeEngineController
 import com.chromadmx.agent.tools.FakeFixtureController
 import com.chromadmx.agent.tools.FakeNetworkController
 import com.chromadmx.agent.tools.FakeStateController
+import com.chromadmx.agent.tools.buildToolRegistry
 import com.chromadmx.core.model.Fixture
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.core.model.Vec3
@@ -21,7 +22,6 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -39,11 +39,13 @@ class AgentIntegrationTest {
 
     private val agent = LightingAgent(
         config = AgentConfig(),
-        engineController = engineController,
-        networkController = networkController,
-        fixtureController = fixtureController,
-        stateController = stateController,
-        sceneStore = sceneStore
+        toolRegistry = buildToolRegistry(
+            engineController = engineController,
+            networkController = networkController,
+            fixtureController = fixtureController,
+            stateController = stateController,
+            sceneStore = sceneStore,
+        ),
     )
 
     // ---- Scene tool dispatch ----

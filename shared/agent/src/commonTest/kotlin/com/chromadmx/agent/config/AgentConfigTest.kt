@@ -11,6 +11,8 @@ class AgentConfigTest {
         val config = AgentConfig()
         assertEquals(30, config.maxIterations)
         assertEquals(0.7f, config.temperature)
+        assertEquals("sonnet_4_5", config.modelId)
+        assertEquals(50, config.historyCompressionThreshold)
         assertFalse(config.isAvailable)
     }
 
@@ -39,5 +41,17 @@ class AgentConfigTest {
         assertEquals("key-2", copy.apiKey)
         assertEquals(50, copy.maxIterations)
         assertEquals(0.9f, copy.temperature)
+    }
+
+    @Test
+    fun configModelIdCanBeOverridden() {
+        val config = AgentConfig(modelId = "haiku_4_5")
+        assertEquals("haiku_4_5", config.modelId)
+    }
+
+    @Test
+    fun configHistoryCompressionCanBeOverridden() {
+        val config = AgentConfig(historyCompressionThreshold = 100)
+        assertEquals(100, config.historyCompressionThreshold)
     }
 }

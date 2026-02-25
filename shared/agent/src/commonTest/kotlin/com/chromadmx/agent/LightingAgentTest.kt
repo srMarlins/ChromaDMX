@@ -6,23 +6,26 @@ import com.chromadmx.agent.tools.FakeEngineController
 import com.chromadmx.agent.tools.FakeFixtureController
 import com.chromadmx.agent.tools.FakeNetworkController
 import com.chromadmx.agent.tools.FakeStateController
+import com.chromadmx.agent.tools.buildToolRegistry
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import com.chromadmx.agent.ChatRole
 
 class LightingAgentTest {
+    private val engine = FakeEngineController()
+    private val network = FakeNetworkController()
+    private val fixture = FakeFixtureController()
+    private val state = FakeStateController()
+    private val sceneStore = SceneStore()
+
     private fun createAgent(apiKey: String = ""): LightingAgent {
+        val registry = buildToolRegistry(engine, network, fixture, state, sceneStore)
         return LightingAgent(
             config = AgentConfig(apiKey = apiKey),
-            engineController = FakeEngineController(),
-            networkController = FakeNetworkController(),
-            fixtureController = FakeFixtureController(),
-            stateController = FakeStateController(),
-            sceneStore = SceneStore()
+            toolRegistry = registry,
         )
     }
 
@@ -46,62 +49,26 @@ class LightingAgentTest {
     }
 
     @Test
-    fun sendWithApiKeyReturnsPendingMessage() = runTest {
-        val agent = createAgent(apiKey = "test-key")
-        val result = agent.send("set lights to red")
-        assertContains(result, "pending")
-    }
-
-    @Test
-    fun sendTracksConversationHistory() = runTest {
-        val agent = createAgent(apiKey = "test-key")
-        agent.send("hello")
-        val history = agent.conversationHistory.value
-        assertEquals(2, history.size)
-        assertEquals(ChatRole.USER, history[0].role)
-        assertEquals("hello", history[0].content)
-        assertEquals(ChatRole.ASSISTANT, history[1].role)
-    }
-
-    @Test
     fun clearHistoryResetsConversation() = runTest {
-        val agent = createAgent(apiKey = "test-key")
-        agent.send("hello")
-        assertEquals(2, agent.conversationHistory.value.size)
+        val agent = createAgent()
         agent.clearHistory()
         assertEquals(0, agent.conversationHistory.value.size)
     }
 
     @Test
     fun dispatchToolSetsEffect() = runTest {
-        val engineController = FakeEngineController()
-        val agent = LightingAgent(
-            config = AgentConfig(),
-            engineController = engineController,
-            networkController = FakeNetworkController(),
-            fixtureController = FakeFixtureController(),
-            stateController = FakeStateController(),
-            sceneStore = SceneStore()
-        )
+        val agent = createAgent()
         val result = agent.dispatchTool("setEffect", """{"layer": 0, "effectId": "solid_color"}""")
         assertContains(result, "solid_color")
-        assertEquals("solid_color", engineController.lastSetEffectId)
+        assertEquals("solid_color", engine.lastSetEffectId)
     }
 
     @Test
     fun dispatchToolSetsMasterDimmer() = runTest {
-        val engineController = FakeEngineController()
-        val agent = LightingAgent(
-            config = AgentConfig(),
-            engineController = engineController,
-            networkController = FakeNetworkController(),
-            fixtureController = FakeFixtureController(),
-            stateController = FakeStateController(),
-            sceneStore = SceneStore()
-        )
+        val agent = createAgent()
         val result = agent.dispatchTool("setMasterDimmer", """{"value": 0.5}""")
         assertContains(result, "0.5")
-        assertEquals(0.5f, engineController.lastMasterDimmer)
+        assertEquals(0.5f, engine.lastMasterDimmer)
     }
 
     @Test

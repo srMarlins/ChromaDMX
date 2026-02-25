@@ -26,15 +26,12 @@ import org.koin.dsl.module
  * - AgentViewModel: requires LightingAgent, PreGenerationService
  */
 val uiModule = module {
-    // Shared UI coroutine scope — uses SupervisorJob so child failures don't cancel siblings
-    single {
-        CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    }
+    // CoroutineScope provided by chromaDiModule
 
     factory {
         val parentScope: CoroutineScope = get()
         val childJob = SupervisorJob(parentScope.coroutineContext[Job])
-        val vmScope = CoroutineScope(childJob + Dispatchers.Default)
+        val vmScope = CoroutineScope(Dispatchers.Default + childJob)
         PerformViewModel(
             engine = get(),
             effectRegistry = get(),
@@ -46,7 +43,7 @@ val uiModule = module {
     factory {
         val parentScope: CoroutineScope = get()
         val childJob = SupervisorJob(parentScope.coroutineContext[Job])
-        val vmScope = CoroutineScope(childJob + Dispatchers.Default)
+        val vmScope = CoroutineScope(Dispatchers.Default + childJob)
         NetworkViewModel(
             nodeDiscovery = get(),
             scope = vmScope,
@@ -56,7 +53,7 @@ val uiModule = module {
     factory {
         val parentScope: CoroutineScope = get()
         val childJob = SupervisorJob(parentScope.coroutineContext[Job])
-        val vmScope = CoroutineScope(childJob + Dispatchers.Default)
+        val vmScope = CoroutineScope(Dispatchers.Default + childJob)
         MapViewModel(
             scope = vmScope,
         )
@@ -65,7 +62,7 @@ val uiModule = module {
     factory {
         val parentScope: CoroutineScope = get()
         val childJob = SupervisorJob(parentScope.coroutineContext[Job])
-        val vmScope = CoroutineScope(childJob + Dispatchers.Default)
+        val vmScope = CoroutineScope(Dispatchers.Default + childJob)
         AgentViewModel(
             agent = get(),
             preGenService = get(),

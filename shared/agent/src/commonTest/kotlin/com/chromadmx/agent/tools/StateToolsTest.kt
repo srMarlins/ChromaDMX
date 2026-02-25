@@ -3,6 +3,7 @@ package com.chromadmx.agent.tools
 import com.chromadmx.agent.controller.BeatStateSnapshot
 import com.chromadmx.agent.controller.EngineStateSnapshot
 import com.chromadmx.agent.controller.NetworkStateSnapshot
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertContains
 
@@ -10,7 +11,7 @@ class StateToolsTest {
     private val controller = FakeStateController()
 
     @Test
-    fun getEngineStateReturnsInfo() {
+    fun getEngineStateReturnsInfo() = runTest {
         controller.fakeEngineState = EngineStateSnapshot(
             isRunning = true,
             layerCount = 3,
@@ -20,7 +21,7 @@ class StateToolsTest {
             effectIds = listOf("solid_color", "rainbow_sweep_3d", "strobe")
         )
         val tool = GetEngineStateTool(controller)
-        val result = tool.execute()
+        val result = tool.execute(GetEngineStateTool.Args())
         assertContains(result, "running")
         assertContains(result, "3 layers")
         assertContains(result, "12 fixtures")
@@ -28,7 +29,7 @@ class StateToolsTest {
     }
 
     @Test
-    fun getEngineStateStoppedReturnsInfo() {
+    fun getEngineStateStoppedReturnsInfo() = runTest {
         controller.fakeEngineState = EngineStateSnapshot(
             isRunning = false,
             layerCount = 0,
@@ -38,12 +39,12 @@ class StateToolsTest {
             effectIds = emptyList()
         )
         val tool = GetEngineStateTool(controller)
-        val result = tool.execute()
+        val result = tool.execute(GetEngineStateTool.Args())
         assertContains(result, "stopped")
     }
 
     @Test
-    fun getBeatStateReturnsInfo() {
+    fun getBeatStateReturnsInfo() = runTest {
         controller.fakeBeatState = BeatStateSnapshot(
             bpm = 128.0f,
             beatPhase = 0.5f,
@@ -52,14 +53,14 @@ class StateToolsTest {
             source = "TapTempo"
         )
         val tool = GetBeatStateTool(controller)
-        val result = tool.execute()
+        val result = tool.execute(GetBeatStateTool.Args())
         assertContains(result, "128.0")
         assertContains(result, "TapTempo")
         assertContains(result, "running")
     }
 
     @Test
-    fun getBeatStateStoppedReturnsInfo() {
+    fun getBeatStateStoppedReturnsInfo() = runTest {
         controller.fakeBeatState = BeatStateSnapshot(
             bpm = 120.0f,
             beatPhase = 0f,
@@ -68,12 +69,12 @@ class StateToolsTest {
             source = "None"
         )
         val tool = GetBeatStateTool(controller)
-        val result = tool.execute()
+        val result = tool.execute(GetBeatStateTool.Args())
         assertContains(result, "stopped")
     }
 
     @Test
-    fun getNetworkStateReturnsInfo() {
+    fun getNetworkStateReturnsInfo() = runTest {
         controller.fakeNetworkState = NetworkStateSnapshot(
             nodeCount = 3,
             totalUniverses = 5,
@@ -82,7 +83,7 @@ class StateToolsTest {
             frameRate = 40
         )
         val tool = GetNetworkStateTool(controller)
-        val result = tool.execute()
+        val result = tool.execute(GetNetworkStateTool.Args())
         assertContains(result, "3 nodes")
         assertContains(result, "5 universes")
         assertContains(result, "Art-Net")
@@ -90,7 +91,7 @@ class StateToolsTest {
     }
 
     @Test
-    fun getNetworkStateInactiveReturnsInfo() {
+    fun getNetworkStateInactiveReturnsInfo() = runTest {
         controller.fakeNetworkState = NetworkStateSnapshot(
             nodeCount = 0,
             totalUniverses = 0,
@@ -99,7 +100,7 @@ class StateToolsTest {
             frameRate = 0
         )
         val tool = GetNetworkStateTool(controller)
-        val result = tool.execute()
+        val result = tool.execute(GetNetworkStateTool.Args())
         assertContains(result, "inactive")
     }
 }

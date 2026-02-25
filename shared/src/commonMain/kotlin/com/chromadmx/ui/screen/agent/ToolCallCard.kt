@@ -20,7 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.chromadmx.ui.viewmodel.ToolCallInfo
+import com.chromadmx.agent.ToolCallRecord
 
 /**
  * Expandable card showing a tool call made by the agent.
@@ -30,7 +30,7 @@ import com.chromadmx.ui.viewmodel.ToolCallInfo
  */
 @Composable
 fun ToolCallCard(
-    toolCall: ToolCallInfo,
+    toolCall: ToolCallRecord,
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -63,7 +63,7 @@ fun ToolCallCard(
 
             AnimatedVisibility(visible = expanded) {
                 Column {
-                    if (toolCall.parameters.isNotEmpty()) {
+                    if (toolCall.arguments.isNotEmpty()) {
                         Spacer(Modifier.height(6.dp))
                         Text(
                             text = "Parameters:",
@@ -71,7 +71,7 @@ fun ToolCallCard(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         Text(
-                            text = toolCall.parameters,
+                            text = toolCall.arguments,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface,
                         )

@@ -3,6 +3,7 @@ package com.chromadmx.agent.tools
 import com.chromadmx.core.model.Fixture
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.core.model.Vec3
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -12,7 +13,7 @@ class FixtureToolsTest {
     private val controller = FakeFixtureController()
 
     @Test
-    fun listFixturesReturnsAll() {
+    fun listFixturesReturnsAll() = runTest {
         controller.fixtures = listOf(
             Fixture3D(
                 fixture = Fixture("fix-1", "Par Left", 1, 6, 0),
@@ -26,22 +27,22 @@ class FixtureToolsTest {
             )
         )
         val tool = ListFixturesTool(controller)
-        val result = tool.execute()
+        val result = tool.execute(ListFixturesTool.Args())
         assertContains(result, "2 fixtures")
         assertContains(result, "Par Left")
         assertContains(result, "Par Right")
     }
 
     @Test
-    fun listFixturesEmptyReturnsMessage() {
+    fun listFixturesEmptyReturnsMessage() = runTest {
         controller.fixtures = emptyList()
         val tool = ListFixturesTool(controller)
-        val result = tool.execute()
+        val result = tool.execute(ListFixturesTool.Args())
         assertContains(result, "0 fixtures")
     }
 
     @Test
-    fun fireFixtureSuccess() {
+    fun fireFixtureSuccess() = runTest {
         controller.fireResult = true
         val tool = FireFixtureTool(controller)
         val result = tool.execute(FireFixtureTool.Args(fixtureId = "fix-1", colorHex = "#FF0000"))
@@ -52,7 +53,7 @@ class FixtureToolsTest {
     }
 
     @Test
-    fun fireFixtureFailure() {
+    fun fireFixtureFailure() = runTest {
         controller.fireResult = false
         val tool = FireFixtureTool(controller)
         val result = tool.execute(FireFixtureTool.Args(fixtureId = "unknown", colorHex = "#FF0000"))
@@ -60,7 +61,7 @@ class FixtureToolsTest {
     }
 
     @Test
-    fun setFixtureGroupSuccess() {
+    fun setFixtureGroupSuccess() = runTest {
         controller.groupResult = true
         val tool = SetFixtureGroupTool(controller)
         val result = tool.execute(SetFixtureGroupTool.Args(
@@ -74,7 +75,7 @@ class FixtureToolsTest {
     }
 
     @Test
-    fun setFixtureGroupFailure() {
+    fun setFixtureGroupFailure() = runTest {
         controller.groupResult = false
         val tool = SetFixtureGroupTool(controller)
         val result = tool.execute(SetFixtureGroupTool.Args(

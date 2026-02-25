@@ -13,8 +13,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.chromadmx.ui.viewmodel.ChatMessage
-import com.chromadmx.ui.viewmodel.ChatRole
+import com.chromadmx.agent.ChatMessage
+import com.chromadmx.agent.ChatRole
 
 /**
  * Chat bubble for a single message in the agent conversation.

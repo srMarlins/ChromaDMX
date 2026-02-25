@@ -19,7 +19,7 @@ class NetworkToolsTest {
             NodeSummary(id = "node-2", ip = "192.168.1.101", name = "Back Truss", universes = listOf(1, 2))
         )
         val tool = ScanNetworkTool(controller)
-        val result = tool.execute()
+        val result = tool.execute(ScanNetworkTool.Args())
         assertContains(result, "2 nodes")
         assertContains(result, "Front Bar")
         assertContains(result, "Back Truss")
@@ -29,7 +29,7 @@ class NetworkToolsTest {
     fun scanNetworkEmptyReturnsMessage() = runTest {
         controller.nodes = emptyList()
         val tool = ScanNetworkTool(controller)
-        val result = tool.execute()
+        val result = tool.execute(ScanNetworkTool.Args())
         assertContains(result, "0 nodes")
     }
 

@@ -1,14 +1,19 @@
 package com.chromadmx.agent.tools
 
+import ai.koog.agents.core.tools.SimpleTool
+import ai.koog.agents.core.tools.annotations.LLMDescription
 import com.chromadmx.agent.controller.FixtureController
 import kotlinx.serialization.Serializable
 
-/**
- * Tool: List all known fixtures with their positions and groups.
- */
-class ListFixturesTool(private val controller: FixtureController) {
+class ListFixturesTool(private val controller: FixtureController) : SimpleTool<ListFixturesTool.Args>(
+    argsSerializer = Args.serializer(),
+    name = "listFixtures",
+    description = "List all known DMX fixtures with their 3D positions, channels, universes, and group assignments."
+) {
+    @Serializable
+    class Args
 
-    fun execute(): String {
+    override suspend fun execute(args: Args): String {
         val fixtures = controller.listFixtures()
         if (fixtures.isEmpty()) {
             return "0 fixtures configured. Use vision mapping or manual setup to add fixtures."
@@ -25,31 +30,43 @@ class ListFixturesTool(private val controller: FixtureController) {
     }
 }
 
-/**
- * Tool: Fire a single fixture with a specific color for identification.
- */
-class FireFixtureTool(private val controller: FixtureController) {
+class FireFixtureTool(private val controller: FixtureController) : SimpleTool<FireFixtureTool.Args>(
+    argsSerializer = Args.serializer(),
+    name = "fireFixture",
+    description = "Flash a single fixture with a specific color for identification purposes."
+) {
     @Serializable
-    data class Args(val fixtureId: String, val colorHex: String)
+    data class Args(
+        @property:LLMDescription("The fixture ID to flash")
+        val fixtureId: String,
+        @property:LLMDescription("Hex color to flash (e.g. #FF0000 for red, #FFFFFF for white)")
+        val colorHex: String
+    )
 
-    fun execute(args: Args): String {
+    override suspend fun execute(args: Args): String {
         val success = controller.fireFixture(args.fixtureId, args.colorHex)
         return if (success) {
-            "Identified fixture '${args.fixtureId}' with color ${args.colorHex} (DMX output pending implementation)"
+            "Identified fixture '${args.fixtureId}' with color ${args.colorHex}"
         } else {
             "Fixture '${args.fixtureId}' not found. Check fixture ID."
         }
     }
 }
 
-/**
- * Tool: Assign fixtures to a named group.
- */
-class SetFixtureGroupTool(private val controller: FixtureController) {
+class SetFixtureGroupTool(private val controller: FixtureController) : SimpleTool<SetFixtureGroupTool.Args>(
+    argsSerializer = Args.serializer(),
+    name = "setFixtureGroup",
+    description = "Assign one or more fixtures to a named group for batch control (e.g. 'stage_left', 'wash_lights')."
+) {
     @Serializable
-    data class Args(val groupName: String, val fixtureIds: List<String>)
+    data class Args(
+        @property:LLMDescription("Name for the fixture group")
+        val groupName: String,
+        @property:LLMDescription("List of fixture IDs to include in the group")
+        val fixtureIds: List<String>
+    )
 
-    fun execute(args: Args): String {
+    override suspend fun execute(args: Args): String {
         val success = controller.setFixtureGroup(args.groupName, args.fixtureIds)
         return if (success) {
             "Created group '${args.groupName}' with ${args.fixtureIds.size} fixtures"
