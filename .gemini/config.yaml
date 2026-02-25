@@ -1,0 +1,19 @@
+reviews:
+  auto_review:
+    enabled: true
+    pull_requests:
+      opened: true
+      synchronize: true
+    comments:
+      inline: true
+      summary: true
+    ignore_paths:
+      - "*.lock"
+      - "gradle/wrapper/**"
+      - "**/*.png"
+      - "**/*.jpg"
+  context:
+    instructions: |
+      See AGENTS.md in the repo root for full project context.
+      Review for: thread safety, coroutine misuse, platform leaks in shared code,
+      proper DI scoping, and DMX timing constraints.

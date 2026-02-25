@@ -1,0 +1,58 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard"
+  ],
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "Auto-merge patch updates after CI passes",
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "description": "Group Kotlin-related updates together",
+      "matchPackagePrefixes": ["org.jetbrains.kotlin"],
+      "groupName": "kotlin"
+    },
+    {
+      "description": "Group KotlinX updates together",
+      "matchPackagePrefixes": ["org.jetbrains.kotlinx"],
+      "groupName": "kotlinx"
+    },
+    {
+      "description": "Group Compose Multiplatform updates together",
+      "matchPackagePrefixes": ["org.jetbrains.compose"],
+      "groupName": "compose-multiplatform"
+    },
+    {
+      "description": "Group Koin updates together",
+      "matchPackagePrefixes": ["io.insert-koin"],
+      "groupName": "koin"
+    },
+    {
+      "description": "Group AndroidX updates together",
+      "matchPackagePrefixes": ["androidx."],
+      "groupName": "androidx"
+    },
+    {
+      "description": "Group Ktor updates together",
+      "matchPackagePrefixes": ["io.ktor"],
+      "groupName": "ktor"
+    },
+    {
+      "description": "Group GitHub Actions updates together",
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions"
+    }
+  ],
+  "gradle": {
+    "fileMatch": [
+      "(^|/)build\\.gradle\\.kts$",
+      "(^|/)settings\\.gradle\\.kts$",
+      "(^|/)gradle/libs\\.versions\\.toml$"
+    ]
+  }
+}
