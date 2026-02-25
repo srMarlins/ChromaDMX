@@ -14,7 +14,8 @@ data class Fixture(
     val name: String,
     val channelStart: Int,
     val channelCount: Int,
-    val universeId: Int
+    val universeId: Int,
+    val profileId: String = "generic-rgb-par"
 )
 
 /**
