@@ -25,6 +25,7 @@ dependencyResolutionManagement {
             }
         }
         mavenCentral()
+        maven("https://packages.jetbrains.team/maven/p/grazi/grazie-platform-public")
     }
 }
 
@@ -37,4 +38,5 @@ include(":shared:tempo")
 include(":shared:vision")
 include(":shared:simulation")
 include(":shared:engine")
+include(":shared:agent")
 include(":android:app")

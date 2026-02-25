@@ -31,6 +31,9 @@ ktor = "3.1.0"
 # Atomicfu
 kotlinx-atomicfu = "0.27.0"
 
+# Koog AI Agent
+koog = "0.6.3"
+
 # Testing
 junit = "4.13.2"
 kotlin-test = "2.1.10"
@@ -80,6 +83,14 @@ androidx-camera-view = { module = "androidx.camera:camera-view", version.ref = "
 
 # Atomicfu
 kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "kotlinx-atomicfu" }
+
+# Koog AI Agent
+koog-agents = { module = "ai.koog:koog-agents", version.ref = "koog" }
+koog-agents-core = { module = "ai.koog:agents-core", version.ref = "koog" }
+koog-agents-tools = { module = "ai.koog:agents-tools", version.ref = "koog" }
+koog-agents-ext = { module = "ai.koog:agents-ext", version.ref = "koog" }
+koog-executor-anthropic = { module = "ai.koog:prompt-executor-anthropic-client", version.ref = "koog" }
+koog-agents-test = { module = "ai.koog:agents-test", version.ref = "koog" }
 
 # Testing
 junit = { module = "junit:junit", version.ref = "junit" }
