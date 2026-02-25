@@ -27,6 +27,10 @@ class RealDmxController(
     private var wasRunning: Boolean = false
 
     override suspend fun fireFixture(fixtureId: String) = mutex.withLock {
+        fireFixtureInternal(fixtureId)
+    }
+
+    private fun fireFixtureInternal(fixtureId: String) {
         prepareForCalibration()
 
         val fixtures = fixturesProvider()
@@ -50,7 +54,7 @@ class RealDmxController(
         // For simple integration tests, we treat this the same as fireFixture.
         // In a full implementation, this would look up the fixture's pixel count
         // and only set the first/last elements if it's a pixel bar.
-        fireFixture(fixtureId)
+        fireFixtureInternal(fixtureId)
     }
 
     override suspend fun blackout() = mutex.withLock {
