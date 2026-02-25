@@ -1,5 +1,8 @@
 package com.chromadmx.ui.screen.stage
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -15,9 +18,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.chromadmx.ui.components.SimulationBadge
 import com.chromadmx.ui.components.VenueCanvas
 import com.chromadmx.ui.viewmodel.StageViewModel
 
@@ -26,6 +33,9 @@ import com.chromadmx.ui.viewmodel.StageViewModel
  *
  * Shows the venue canvas with fixture colors, preset strip at bottom,
  * BPM/network info at top, and settings gear icon.
+ *
+ * When simulation mode is active, a pulsing "SIMULATION" badge appears
+ * in the top-left corner. Tapping it shows an info tooltip.
  */
 @Composable
 fun StagePreviewScreen(
@@ -36,6 +46,11 @@ fun StagePreviewScreen(
     val fixtures by viewModel.fixtures.collectAsState()
     val bpm by viewModel.bpm.collectAsState()
     val masterDimmer by viewModel.masterDimmer.collectAsState()
+    val isSimulationMode by viewModel.isSimulationMode.collectAsState()
+    val simPresetName by viewModel.simulationPresetName.collectAsState()
+    val simFixtureCount by viewModel.simulationFixtureCount.collectAsState()
+
+    var showSimTooltip by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.fillMaxSize()) {
         // Main venue canvas
@@ -64,6 +79,43 @@ fun StagePreviewScreen(
                     tint = MaterialTheme.colorScheme.onSurface,
                 )
             }
+        }
+
+        // Simulation badge (top-left, below BPM)
+        AnimatedVisibility(
+            visible = isSimulationMode,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(start = 16.dp, top = 56.dp),
+        ) {
+            SimulationBadge(
+                onTap = { showSimTooltip = !showSimTooltip },
+            )
+        }
+
+        // Simulation tooltip
+        AnimatedVisibility(
+            visible = showSimTooltip && isSimulationMode,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(start = 16.dp, top = 84.dp),
+        ) {
+            val tooltipText = buildString {
+                append("Running with virtual fixtures")
+                if (simPresetName != null) {
+                    append(" ($simPresetName, $simFixtureCount fixtures)")
+                }
+            }
+            Text(
+                text = tooltipText,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(8.dp),
+            )
         }
 
         // Master dimmer (bottom-left)
