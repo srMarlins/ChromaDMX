@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.chromadmx.core.model.Fixture3D
+import com.chromadmx.core.model.ScenePreset
 import com.chromadmx.ui.components.VenueCanvas
 import com.chromadmx.ui.theme.DmxBackground
 import com.chromadmx.ui.viewmodel.PerformViewModel
@@ -129,7 +130,7 @@ fun PerformScreen(
             // Bottom section: Scene Presets
             Spacer(Modifier.height(4.dp))
             ScenePresetRow(
-                scenes = scenes,
+                presets = scenes,
                 activePreset = activePreset,
                 fixtures = fixtures,
                 effectRegistry = viewModel.effectRegistry,
@@ -190,7 +191,7 @@ fun PerformScreen(
             exit = fadeOut()
         ) {
             PresetLibrary(
-                scenes = scenes,
+                presets = scenes,
                 genres = genres,
                 fixtures = fixtures,
                 effectRegistry = viewModel.effectRegistry,

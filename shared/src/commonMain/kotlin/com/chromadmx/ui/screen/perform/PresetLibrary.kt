@@ -24,8 +24,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.chromadmx.agent.scene.Scene
 import com.chromadmx.core.model.Fixture3D
+import com.chromadmx.core.model.ScenePreset
 import com.chromadmx.engine.effect.EffectRegistry
 import com.chromadmx.ui.theme.DmxBackground
 
@@ -34,7 +34,7 @@ import com.chromadmx.ui.theme.DmxBackground
  */
 @Composable
 fun PresetLibrary(
-    scenes: List<Scene>,
+    presets: List<ScenePreset>,
     genres: List<String>,
     fixtures: List<Fixture3D>,
     effectRegistry: EffectRegistry,
@@ -45,9 +45,9 @@ fun PresetLibrary(
     var selectedGenre by remember { mutableStateOf<String?>(null) }
 
     val filteredScenes = if (selectedGenre == null) {
-        scenes
+        presets
     } else {
-        scenes.filter { it.name.startsWith(selectedGenre!!, ignoreCase = true) }
+        presets.filter { it.genre?.name?.equals(selectedGenre, ignoreCase = true) == true }
     }
 
     Column(
@@ -98,14 +98,14 @@ fun PresetLibrary(
             verticalArrangement = Arrangement.spacedBy(20.dp),
             modifier = Modifier.weight(1f)
         ) {
-            items(filteredScenes, key = { it.name }) { scene ->
+            items(filteredScenes, key = { it.id }) { preset ->
                 PresetThumbnailItem(
-                    scene = scene,
+                    preset = preset,
                     isActive = false,
                     fixtures = fixtures,
                     effectRegistry = effectRegistry,
                     onTap = {
-                        onPresetTap(scene.name)
+                        onPresetTap(preset.id)
                         onClose()
                     },
                     onLongPress = {},

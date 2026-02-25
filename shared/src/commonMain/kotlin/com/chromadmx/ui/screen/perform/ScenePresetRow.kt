@@ -30,11 +30,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.chromadmx.agent.scene.Scene
 import com.chromadmx.core.EffectParams
 import com.chromadmx.core.model.BeatState
 import com.chromadmx.core.model.BlendMode
 import com.chromadmx.core.model.Fixture3D
+import com.chromadmx.core.model.ScenePreset
 import com.chromadmx.engine.effect.EffectLayer
 import com.chromadmx.engine.effect.EffectRegistry
 import com.chromadmx.engine.effect.EffectStack
@@ -49,7 +49,7 @@ import com.chromadmx.ui.theme.DmxSurface
  */
 @Composable
 fun ScenePresetRow(
-    scenes: List<Scene>,
+    presets: List<ScenePreset>,
     activePreset: String? = null,
     fixtures: List<Fixture3D>,
     effectRegistry: EffectRegistry,
@@ -71,14 +71,14 @@ fun ScenePresetRow(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        items(scenes, key = { it.name }) { scene ->
+        items(presets, key = { it.id }) { preset ->
             PresetThumbnailItem(
-                scene = scene,
-                isActive = scene.name == activePreset,
+                preset = preset,
+                isActive = preset.id == activePreset,
                 fixtures = fixtures,
                 effectRegistry = effectRegistry,
-                onTap = { onPresetTap(scene.name) },
-                onLongPress = { onPresetLongPress(scene.name) },
+                onTap = { onPresetTap(preset.id) },
+                onLongPress = { onPresetLongPress(preset.id) },
                 onRelease = { onPresetLongPress(null) }
             )
         }
@@ -87,7 +87,7 @@ fun ScenePresetRow(
 
 @Composable
 fun PresetThumbnailItem(
-    scene: Scene,
+    preset: ScenePreset,
     isActive: Boolean,
     fixtures: List<Fixture3D>,
     effectRegistry: EffectRegistry,
@@ -123,7 +123,7 @@ fun PresetThumbnailItem(
                 }
         ) {
             PresetThumbnail(
-                scene = scene,
+                preset = preset,
                 fixtures = fixtures,
                 effectRegistry = effectRegistry
             )
@@ -141,7 +141,7 @@ fun PresetThumbnailItem(
         }
 
         Text(
-            text = scene.name,
+            text = preset.name,
             style = MaterialTheme.typography.labelSmall,
             color = if (isActive) DmxPrimary else Color.Gray,
             maxLines = 1,
@@ -153,30 +153,30 @@ fun PresetThumbnailItem(
 
 @Composable
 fun PresetThumbnail(
-    scene: Scene,
+    preset: ScenePreset,
     fixtures: List<Fixture3D>,
     effectRegistry: EffectRegistry,
     modifier: Modifier = Modifier,
 ) {
-    val thumbnailStack = remember(scene) {
+    val thumbnailStack = remember(preset) {
         EffectStack().apply {
-            replaceLayers(scene.layers.mapNotNull { config ->
+            replaceLayers(preset.layers.mapNotNull { config ->
                 val effect = effectRegistry.get(config.effectId) ?: return@mapNotNull null
                 EffectLayer(
                     effect = effect,
-                    params = EffectParams(config.params),
-                    blendMode = try { BlendMode.valueOf(config.blendMode.uppercase()) } catch(e: Exception) { BlendMode.NORMAL },
+                    params = config.params,
+                    blendMode = config.blendMode,
                     opacity = config.opacity
                 )
             })
-            masterDimmer = scene.masterDimmer
+            masterDimmer = preset.masterDimmer
         }
     }
 
     Canvas(modifier = modifier.fillMaxSize().padding(4.dp)) {
         if (fixtures.isEmpty()) {
             // Draw a generic pixel-art pattern if no fixtures
-            val hash = scene.name.hashCode()
+            val hash = preset.name.hashCode()
             for (i in 0..4) {
                 for (j in 0..4) {
                     if ((hash shr (i * 5 + j)) and 1 == 1) {
