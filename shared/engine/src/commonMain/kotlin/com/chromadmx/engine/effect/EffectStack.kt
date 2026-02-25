@@ -4,6 +4,9 @@ import com.chromadmx.core.model.BeatState
 import com.chromadmx.core.model.Color
 import com.chromadmx.core.model.Vec3
 import com.chromadmx.core.util.ColorBlending
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
 
 /**
  * A compositing stack of [EffectLayer]s with a master dimmer.
@@ -12,41 +15,68 @@ import com.chromadmx.core.util.ColorBlending
  * computing each enabled layer's effect, blending its output onto the
  * running result using the layer's blend mode and opacity, and finally
  * multiplying by [masterDimmer].
+ *
+ * Thread safety: mutations use copy-on-write on an atomic snapshot,
+ * synchronized via [lock]. The hot-path [evaluate] reads the atomic
+ * snapshot without locking, so it is wait-free for the 60 fps engine loop.
  */
 class EffectStack(
     layers: List<EffectLayer> = emptyList(),
     masterDimmer: Float = 1.0f
-) {
-    private val _layers = layers.toMutableList()
+) : SynchronizedObject() {
+    private val lock = this // use self as SynchronizedObject lock
 
-    /** Current ordered list of layers (bottom-to-top). */
-    val layers: List<EffectLayer> get() = _layers.toList()
+    private val _layersRef = atomic(layers.toList())
+
+    /** Current ordered list of layers (bottom-to-top). Returns an immutable snapshot. */
+    val layers: List<EffectLayer> get() = _layersRef.value
+
+    private val _masterDimmer = atomic(masterDimmer.coerceIn(0f, 1f))
 
     /** Master dimmer applied after all layer compositing, 0.0-1.0. */
-    var masterDimmer: Float = masterDimmer.coerceIn(0f, 1f)
-        set(value) { field = value.coerceIn(0f, 1f) }
+    var masterDimmer: Float
+        get() = _masterDimmer.value
+        set(value) { _masterDimmer.value = value.coerceIn(0f, 1f) }
 
     /* ------------------------------------------------------------------ */
-    /*  Layer manipulation                                                 */
+    /*  Layer manipulation (copy-on-write, synchronized)                   */
     /* ------------------------------------------------------------------ */
 
     fun addLayer(layer: EffectLayer) {
-        _layers.add(layer)
+        synchronized(lock) {
+            _layersRef.value = _layersRef.value + layer
+        }
     }
 
     fun removeLayerAt(index: Int) {
-        _layers.removeAt(index)
+        synchronized(lock) {
+            _layersRef.value = _layersRef.value.toMutableList().apply { removeAt(index) }
+        }
     }
 
     fun setLayer(index: Int, layer: EffectLayer) {
-        _layers[index] = layer
+        synchronized(lock) {
+            _layersRef.value = _layersRef.value.toMutableList().apply { this[index] = layer }
+        }
     }
 
     fun clearLayers() {
-        _layers.clear()
+        synchronized(lock) {
+            _layersRef.value = emptyList()
+        }
     }
 
-    val layerCount: Int get() = _layers.size
+    /**
+     * Atomically replace all layers. Use this instead of clearLayers() + addLayer()
+     * sequences to avoid intermediate states visible to the engine loop.
+     */
+    fun replaceLayers(newLayers: List<EffectLayer>) {
+        synchronized(lock) {
+            _layersRef.value = newLayers.toList()
+        }
+    }
+
+    val layerCount: Int get() = _layersRef.value.size
 
     /* ------------------------------------------------------------------ */
     /*  Evaluation                                                         */
@@ -55,12 +85,15 @@ class EffectStack(
     /**
      * Evaluate the full stack for a single 3D position.
      *
+     * Reads the atomic layer snapshot without locking (wait-free).
+     *
      * @return The final composited and dimmed color.
      */
     fun evaluate(pos: Vec3, time: Float, beat: BeatState): Color {
+        val snapshot = _layersRef.value  // single atomic read
         var result = Color.BLACK
 
-        for (layer in _layers) {
+        for (layer in snapshot) {
             if (!layer.enabled) continue
 
             val layerColor = layer.effect.compute(pos, time, beat, layer.params)
@@ -73,6 +106,6 @@ class EffectStack(
         }
 
         // Apply master dimmer
-        return (result * masterDimmer).clamped()
+        return (result * _masterDimmer.value).clamped()
     }
 }

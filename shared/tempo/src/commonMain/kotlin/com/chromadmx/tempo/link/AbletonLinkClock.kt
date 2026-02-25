@@ -1,6 +1,5 @@
 package com.chromadmx.tempo.link
 
-import com.chromadmx.tempo.clock.BeatClock
 import kotlinx.coroutines.CoroutineScope
 
 /**
@@ -34,4 +33,4 @@ import kotlinx.coroutines.CoroutineScope
  *
  * @param scope Coroutine scope for the phase polling loop.
  */
-expect class AbletonLinkClock(scope: CoroutineScope) : BeatClock
+expect class AbletonLinkClock(scope: CoroutineScope)

@@ -9,7 +9,3 @@ kotlin {
         }
     }
 }
-
-android {
-    namespace = "com.chromadmx.vision"
-}

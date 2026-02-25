@@ -10,7 +10,3 @@ kotlin {
         }
     }
 }
-
-android {
-    namespace = "com.chromadmx.simulation"
-}

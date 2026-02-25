@@ -18,6 +18,15 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(project(":shared:core"))
+            api(project(":shared:engine"))
+            api(project(":shared:networking"))
+            api(project(":shared:tempo"))
+            api(project(":shared:simulation"))
+            api(project(":shared:agent"))
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose)
+            implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.atomicfu)
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
@@ -32,8 +41,4 @@ kotlin {
             implementation(libs.ktor.client.darwin)
         }
     }
-}
-
-android {
-    namespace = "com.chromadmx.shared"
 }
