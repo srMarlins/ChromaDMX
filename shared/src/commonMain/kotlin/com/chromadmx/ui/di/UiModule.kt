@@ -4,6 +4,7 @@ import com.chromadmx.agent.LightingAgent
 import com.chromadmx.agent.pregen.PreGenerationService
 import com.chromadmx.ui.viewmodel.AgentViewModel
 import com.chromadmx.ui.viewmodel.MapViewModel
+import com.chromadmx.ui.viewmodel.MascotViewModel
 import com.chromadmx.ui.viewmodel.NetworkViewModel
 import com.chromadmx.ui.viewmodel.PerformViewModel
 import com.chromadmx.ui.viewmodel.SettingsViewModel
@@ -26,6 +27,7 @@ import org.koin.dsl.module
  * - MapViewModel: standalone
  * - AgentViewModel: requires LightingAgent, PreGenerationService
  * - SettingsViewModel (single): requires NodeDiscovery
+ * - MascotViewModel: requires BeatClock
  */
 val uiModule = module {
     // CoroutineScope provided by chromaDiModule
@@ -80,6 +82,16 @@ val uiModule = module {
         SettingsViewModel(
             nodeDiscovery = get(),
             scope = vmScope,
+        )
+    }
+
+    factory {
+        val parentScope: CoroutineScope = get()
+        val childJob = SupervisorJob(parentScope.coroutineContext[Job])
+        val vmScope = CoroutineScope(Dispatchers.Default + childJob)
+        MascotViewModel(
+            scope = vmScope,
+            beatClock = get(),
         )
     }
 }

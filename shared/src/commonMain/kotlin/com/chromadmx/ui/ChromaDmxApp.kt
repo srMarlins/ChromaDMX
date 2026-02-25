@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.chromadmx.ui.mascot.MascotOverlay
 import com.chromadmx.ui.navigation.Screen
 import com.chromadmx.ui.screen.agent.AgentScreen
 import com.chromadmx.ui.screen.map.MapScreen
@@ -34,6 +35,7 @@ import com.chromadmx.ui.theme.ChromaDmxTheme
 import com.chromadmx.ui.theme.pixelGrid
 import com.chromadmx.ui.viewmodel.AgentViewModel
 import com.chromadmx.ui.viewmodel.MapViewModel
+import com.chromadmx.ui.viewmodel.MascotViewModel
 import com.chromadmx.ui.viewmodel.NetworkViewModel
 import com.chromadmx.ui.viewmodel.PerformViewModel
 import org.koin.compose.getKoin
@@ -121,6 +123,18 @@ fun ChromaDmxApp() {
                             ScreenPlaceholder("Agent", "Agent services not yet registered in DI.")
                         }
                     }
+                }
+
+                // Pixel mascot overlay — always visible on top of all screens
+                val mascotVm = resolveOrNull<MascotViewModel>()
+                if (mascotVm != null) {
+                    DisposableEffect(mascotVm) {
+                        onDispose { mascotVm.onCleared() }
+                    }
+                    MascotOverlay(
+                        viewModel = mascotVm,
+                        onMascotTap = { mascotVm.toggleChat() },
+                    )
                 }
             }
         }
