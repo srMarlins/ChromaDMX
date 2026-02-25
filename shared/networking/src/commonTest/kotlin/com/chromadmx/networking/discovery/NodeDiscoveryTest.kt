@@ -110,6 +110,50 @@ class NodeDiscoveryTest {
     }
 
     @Test
+    fun processReply_maxNodesReached_evictsOldest() {
+        // Create discovery with maxNodes = 2
+        val discovery = NodeDiscovery(transport, maxNodes = 2)
+        val mac1 = byteArrayOf(0x01, 0x01, 0x01, 0x01, 0x01, 0x01)
+        val mac2 = byteArrayOf(0x02, 0x02, 0x02, 0x02, 0x02, 0x02)
+        val mac3 = byteArrayOf(0x03, 0x03, 0x03, 0x03, 0x03, 0x03)
+
+        // Add Node 1 (Time 1000)
+        val reply1 = ArtNetCodec.encodeArtPollReply(
+            ipAddress = byteArrayOf(192.toByte(), 168.toByte(), 1, 10),
+            macAddress = mac1,
+            shortName = "Node1"
+        )
+        discovery.processReply(reply1, 1000L)
+
+        // Add Node 2 (Time 2000)
+        val reply2 = ArtNetCodec.encodeArtPollReply(
+            ipAddress = byteArrayOf(192.toByte(), 168.toByte(), 1, 20),
+            macAddress = mac2,
+            shortName = "Node2"
+        )
+        discovery.processReply(reply2, 2000L)
+
+        assertEquals(2, discovery.nodes.value.size)
+
+        // Add Node 3 (Time 3000) - Should evict Node 1 (oldest)
+        val reply3 = ArtNetCodec.encodeArtPollReply(
+            ipAddress = byteArrayOf(192.toByte(), 168.toByte(), 1, 30),
+            macAddress = mac3,
+            shortName = "Node3"
+        )
+        discovery.processReply(reply3, 3000L)
+
+        assertEquals(2, discovery.nodes.value.size)
+
+        val nodes = discovery.nodes.value
+        // Node 1 (192.168.1.10) should be gone
+        assertNull(nodes.values.find { it.ipAddress == "192.168.1.10" })
+        // Node 2 and 3 should be present
+        assertNotNull(nodes.values.find { it.ipAddress == "192.168.1.20" })
+        assertNotNull(nodes.values.find { it.ipAddress == "192.168.1.30" })
+    }
+
+    @Test
     fun pruneStaleNodes_removesOldNodes() {
         val discovery = NodeDiscovery(transport, nodeTimeoutMs = 5_000L)
 
