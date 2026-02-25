@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.chromadmx.core.model.Fixture3D
+import com.chromadmx.core.model.ScenePreset
 import com.chromadmx.ui.components.VenueCanvas
 import com.chromadmx.ui.theme.DmxBackground
 import com.chromadmx.ui.viewmodel.PerformViewModel
