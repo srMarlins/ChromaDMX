@@ -5,7 +5,6 @@ import com.chromadmx.networking.model.UdpPacket
 import com.chromadmx.networking.protocol.ArtNetCodec
 import com.chromadmx.networking.protocol.ArtNetConstants
 import com.chromadmx.networking.transport.PlatformUdpTransport
-import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -55,7 +54,7 @@ class NodeDiscovery(
     private var pollJob: Job? = null
     private var listenJob: Job? = null
 
-    private val lastPollTimeMs = atomic(0L)
+    private var lastPollTimeMs: Long = 0L
 
     /** Whether discovery is currently running. */
     val isRunning: Boolean get() = scope != null
@@ -97,7 +96,7 @@ class NodeDiscovery(
      * Send a single ArtPoll broadcast immediately.
      */
     suspend fun sendPoll() {
-        lastPollTimeMs.value = currentTimeMillis()
+        lastPollTimeMs = currentTimeMillis()
         val pollPacket = ArtNetCodec.encodeArtPoll(
             flags = 0x02  // Request ArtPollReply from targeted nodes and diagnostics
         )
@@ -117,7 +116,7 @@ class NodeDiscovery(
     fun processReply(packet: ByteArray, currentTimeMs: Long): DmxNode? {
         val reply = ArtNetCodec.decodeArtPollReply(packet) ?: return null
 
-        val latency = if (lastPollTimeMs.value > 0) currentTimeMs - lastPollTimeMs.value else 0L
+        val latency = if (lastPollTimeMs > 0) currentTimeMs - lastPollTimeMs else 0L
 
         val universes = buildList {
             for (i in 0 until minOf(reply.numPorts, 4)) {
@@ -172,7 +171,7 @@ class NodeDiscovery(
         while (scope?.isActive == true) {
             try {
                 sendPoll()
-                pruneStaleNodes(currentTimeMillis())
+                pruneStaleNodes(lastPollTimeMs)
             } catch (_: CancellationException) {
                 break
             } catch (_: Exception) {
