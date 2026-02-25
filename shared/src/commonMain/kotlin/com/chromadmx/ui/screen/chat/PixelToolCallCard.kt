@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.chromadmx.agent.ToolCallRecord
 import com.chromadmx.ui.components.pixelBorder
+import com.chromadmx.ui.theme.NeonGreen
 import com.chromadmx.ui.theme.NeonPurple
 
 /**
@@ -86,7 +87,7 @@ fun PixelToolCallCard(
                         .size(8.dp)
                         .background(
                             if (toolCall.result.isNotEmpty()) {
-                                Color(0xFF00FF00).copy(alpha = 0.8f) // success green
+                                NeonGreen.copy(alpha = 0.8f) // success green
                             } else {
                                 NeonPurple.copy(alpha = 0.5f)
                             },

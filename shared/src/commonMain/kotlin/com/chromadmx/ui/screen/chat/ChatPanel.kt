@@ -12,6 +12,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -47,6 +49,9 @@ import com.chromadmx.ui.components.pixelBorder
 import com.chromadmx.ui.theme.DmxPrimary
 import com.chromadmx.ui.theme.NeonMagenta
 import com.chromadmx.ui.viewmodel.AgentViewModel
+
+/** Available genre options for the pre-generation panel. */
+private val genres = listOf("Techno", "House", "DnB", "Ambient", "Hip-Hop", "Pop", "Rock")
 
 /**
  * Slide-up chat panel overlay for the pixel mascot AI assistant.
@@ -395,10 +400,48 @@ private fun ChatInputRow(
 }
 
 /**
+ * A single genre chip rendered as a [PixelButton].
+ *
+ * Extracted to file-level to avoid creating a new function class on
+ * each recomposition of the parent composable.
+ */
+@Composable
+private fun GenreChip(
+    genre: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+) {
+    PixelButton(
+        onClick = onClick,
+        backgroundColor = if (isSelected) {
+            NeonMagenta.copy(alpha = 0.6f)
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant
+        },
+        contentColor = if (isSelected) {
+            Color.White
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        },
+        borderColor = if (isSelected) NeonMagenta else Color.DarkGray,
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+            horizontal = 8.dp,
+            vertical = 4.dp,
+        ),
+    ) {
+        Text(
+            text = genre,
+            style = MaterialTheme.typography.labelSmall,
+        )
+    }
+}
+
+/**
  * Inline pre-generation panel for the chat.
  *
  * Genre chips, count slider, generate button, and progress bar.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun InlinePreGenPanel(
     isGenerating: Boolean,
@@ -409,8 +452,6 @@ private fun InlinePreGenPanel(
 ) {
     var selectedGenre by remember { mutableStateOf("") }
     var sceneCount by remember { mutableStateOf(10f) }
-
-    val genres = listOf("Techno", "House", "DnB", "Ambient", "Hip-Hop", "Pop", "Rock")
 
     Column(
         modifier = modifier
@@ -431,52 +472,20 @@ private fun InlinePreGenPanel(
         )
         Spacer(Modifier.height(8.dp))
 
-        // Genre chips
-        Row(
+        // Genre chips — responsive wrapping layout
+        FlowRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            @Composable
-            fun GenreChipRow(genreList: List<String>) {
-                genreList.forEach { genre ->
-                    val isSelected = genre == selectedGenre
-                    PixelButton(
-                        onClick = { selectedGenre = genre },
-                        backgroundColor = if (isSelected) {
-                            NeonMagenta.copy(alpha = 0.6f)
-                        } else {
-                            MaterialTheme.colorScheme.surfaceVariant
-                        },
-                        contentColor = if (isSelected) {
-                            Color.White
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                        borderColor = if (isSelected) NeonMagenta else Color.DarkGray,
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                            horizontal = 8.dp,
-                            vertical = 4.dp,
-                        ),
-                    ) {
-                        Text(
-                            text = genre,
-                            style = MaterialTheme.typography.labelSmall,
-                        )
-                    }
-                }
-            }
-
-            // Split genres across wrapping — show first row
-            Column {
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    GenreChipRow(genres.take(4))
-                }
-                Spacer(Modifier.height(4.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    GenreChipRow(genres.drop(4))
-                }
+            genres.forEach { genre ->
+                GenreChip(
+                    genre = genre,
+                    isSelected = genre == selectedGenre,
+                    onClick = { selectedGenre = genre },
+                )
             }
         }
 
@@ -506,6 +515,8 @@ private fun InlinePreGenPanel(
         }
 
         // Generate / Cancel buttons
+        val isEnabled = selectedGenre.isNotBlank() && !isGenerating
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End,
@@ -524,21 +535,21 @@ private fun InlinePreGenPanel(
 
             PixelButton(
                 onClick = {
-                    if (selectedGenre.isNotBlank() && !isGenerating) {
+                    if (isEnabled) {
                         onGenerate(selectedGenre, sceneCount.toInt())
                     }
                 },
-                backgroundColor = if (selectedGenre.isNotBlank() && !isGenerating) {
+                backgroundColor = if (isEnabled) {
                     NeonMagenta.copy(alpha = 0.8f)
                 } else {
                     MaterialTheme.colorScheme.surfaceVariant
                 },
-                contentColor = if (selectedGenre.isNotBlank() && !isGenerating) {
+                contentColor = if (isEnabled) {
                     Color.White
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
                 },
-                borderColor = if (selectedGenre.isNotBlank() && !isGenerating) {
+                borderColor = if (isEnabled) {
                     NeonMagenta
                 } else {
                     Color.DarkGray

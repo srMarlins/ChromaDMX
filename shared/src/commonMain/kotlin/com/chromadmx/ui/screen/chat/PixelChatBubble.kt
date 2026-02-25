@@ -19,6 +19,7 @@ import com.chromadmx.agent.ChatRole
 import com.chromadmx.ui.components.pixelBorder
 import com.chromadmx.ui.theme.DmxPrimary
 import com.chromadmx.ui.theme.NeonGreen
+import com.chromadmx.ui.theme.NeonPurple
 
 /**
  * Pixel-art styled chat message bubble.
@@ -128,8 +129,8 @@ private fun ToolBubble(
         Column(
             modifier = Modifier
                 .widthIn(max = 280.dp)
-                .pixelBorder(color = Color(0xFF6C63FF).copy(alpha = 0.6f), pixelSize = 2.dp)
-                .background(Color(0xFF6C63FF).copy(alpha = 0.08f))
+                .pixelBorder(color = NeonPurple.copy(alpha = 0.6f), pixelSize = 2.dp)
+                .background(NeonPurple.copy(alpha = 0.08f))
                 .padding(2.dp)
                 .padding(8.dp),
         ) {
