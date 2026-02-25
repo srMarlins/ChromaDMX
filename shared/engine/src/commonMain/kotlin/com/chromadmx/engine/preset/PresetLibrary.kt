@@ -32,6 +32,22 @@ class PresetLibrary(
 
     init {
         storage.mkdirs(presetsDir)
+        ensureBuiltIns()
+    }
+
+    /**
+     * Persist any missing built-in presets.
+     *
+     * Called once at construction. Each built-in preset is saved only if a
+     * file with its ID does not already exist, so user customizations or
+     * updated versions are never silently overwritten.
+     */
+    private fun ensureBuiltIns() {
+        for (preset in builtInPresets()) {
+            if (getPreset(preset.id) == null) {
+                savePreset(preset)
+            }
+        }
     }
 
     /** Save a preset to disk. Overwrites existing. */
