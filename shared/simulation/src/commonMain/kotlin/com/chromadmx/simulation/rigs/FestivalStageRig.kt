@@ -69,7 +69,8 @@ object FestivalStageRig {
                         name = "Ground PAR ${i + 1}",
                         channelStart = ch,
                         channelCount = 3,
-                        universeId = uni
+                        universeId = uni,
+                        profileId = "generic-rgb-par"
                     ),
                     position = Vec3(
                         x = groundStartX + i * groundSpacing,
@@ -94,7 +95,8 @@ object FestivalStageRig {
                         name = "Low Bar ${i + 1}",
                         channelStart = ch,
                         channelCount = 24,
-                        universeId = uni
+                        universeId = uni,
+                        profileId = "pixel-bar-8"
                     ),
                     position = Vec3(
                         x = lowStartX + i * lowSpacing,
@@ -119,7 +121,8 @@ object FestivalStageRig {
                         name = "Mid Bar ${i + 1}",
                         channelStart = ch,
                         channelCount = 24,
-                        universeId = uni
+                        universeId = uni,
+                        profileId = "pixel-bar-8"
                     ),
                     position = Vec3(
                         x = midStartX + i * midSpacing,
@@ -144,7 +147,8 @@ object FestivalStageRig {
                         name = "Moving Head ${i + 1}",
                         channelStart = ch,
                         channelCount = 16,
-                        universeId = uni
+                        universeId = uni,
+                        profileId = "generic-moving-head"
                     ),
                     position = Vec3(
                         x = mhStartX + i * mhSpacing,
@@ -169,7 +173,8 @@ object FestivalStageRig {
                         name = "High PAR ${i + 1}",
                         channelStart = ch,
                         channelCount = 3,
-                        universeId = uni
+                        universeId = uni,
+                        profileId = "generic-rgb-par"
                     ),
                     position = Vec3(
                         x = highStartX + i * highSpacing,
@@ -194,7 +199,8 @@ object FestivalStageRig {
                         name = "Strobe ${i + 1}",
                         channelStart = ch,
                         channelCount = 2,
-                        universeId = uni
+                        universeId = uni,
+                        profileId = "generic-strobe"
                     ),
                     position = Vec3(
                         x = strobeStartX + i * strobeSpacing,
@@ -217,7 +223,8 @@ object FestivalStageRig {
                         name = "Side Left PAR ${i + 1}",
                         channelStart = ch,
                         channelCount = 3,
-                        universeId = uni
+                        universeId = uni,
+                        profileId = "generic-rgb-par"
                     ),
                     position = Vec3(
                         x = -STAGE_WIDTH / 2f - 1.0f,
@@ -239,7 +246,8 @@ object FestivalStageRig {
                         name = "Side Right PAR ${i + 1}",
                         channelStart = ch,
                         channelCount = 3,
-                        universeId = uni
+                        universeId = uni,
+                        profileId = "generic-rgb-par"
                     ),
                     position = Vec3(
                         x = STAGE_WIDTH / 2f + 1.0f,
