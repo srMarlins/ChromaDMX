@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Invoke Jules
         if: ${{ contains(fromJSON('["srMarlins"]'), github.event.issue.user.login) }}
-        uses: google-labs-code/jules-invoke@v1
+        uses: google-labs-code/jules-action@v1
         with:
           prompt: |
             Fix the following GitHub issue for the ChromaDMX project.
