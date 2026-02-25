@@ -54,6 +54,8 @@ class NodeDiscovery(
     private var pollJob: Job? = null
     private var listenJob: Job? = null
 
+    private var lastPollTimeMs: Long = 0L
+
     /** Whether discovery is currently running. */
     val isRunning: Boolean get() = scope != null
 
@@ -94,6 +96,7 @@ class NodeDiscovery(
      * Send a single ArtPoll broadcast immediately.
      */
     suspend fun sendPoll() {
+        lastPollTimeMs = currentTimeMillis()
         val pollPacket = ArtNetCodec.encodeArtPoll(
             flags = 0x02  // Request ArtPollReply from targeted nodes and diagnostics
         )
@@ -113,6 +116,8 @@ class NodeDiscovery(
     fun processReply(packet: ByteArray, currentTimeMs: Long): DmxNode? {
         val reply = ArtNetCodec.decodeArtPollReply(packet) ?: return null
 
+        val latency = if (lastPollTimeMs > 0) currentTimeMs - lastPollTimeMs else 0L
+
         val universes = buildList {
             for (i in 0 until minOf(reply.numPorts, 4)) {
                 val universe = ((reply.netSwitch and 0x7F) shl 8) or
@@ -121,6 +126,10 @@ class NodeDiscovery(
                 add(universe)
             }
         }
+
+        val nodeKey = reply.macString.ifEmpty { reply.ipString }
+        val existingNode = _nodes.value[nodeKey]
+        val firstSeen = existingNode?.firstSeenMs ?: currentTimeMs
 
         val node = DmxNode(
             ipAddress = reply.ipString,
@@ -131,7 +140,9 @@ class NodeDiscovery(
             numPorts = reply.numPorts,
             universes = universes,
             style = reply.style.toInt() and 0xFF,
-            lastSeenMs = currentTimeMs
+            lastSeenMs = currentTimeMs,
+            firstSeenMs = firstSeen,
+            latencyMs = latency
         )
 
         val current = _nodes.value.toMutableMap()
@@ -160,7 +171,7 @@ class NodeDiscovery(
         while (scope?.isActive == true) {
             try {
                 sendPoll()
-                pruneStaleNodes(currentTimeMillis())
+                pruneStaleNodes(lastPollTimeMs)
             } catch (_: CancellationException) {
                 break
             } catch (_: Exception) {

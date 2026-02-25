@@ -46,6 +46,7 @@ val uiModule = module {
         val vmScope = CoroutineScope(Dispatchers.Default + childJob)
         NetworkViewModel(
             nodeDiscovery = get(),
+            agent = get(),
             scope = vmScope,
         )
     }

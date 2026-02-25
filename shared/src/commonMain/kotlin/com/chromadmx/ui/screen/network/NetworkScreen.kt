@@ -136,6 +136,8 @@ fun NetworkScreen(
                     NodeCard(
                         node = node,
                         health = health,
+                        currentTimeMs = currentTimeMs,
+                        onDiagnose = { viewModel.diagnoseNode(node.nodeKey) }
                     )
                 }
             }

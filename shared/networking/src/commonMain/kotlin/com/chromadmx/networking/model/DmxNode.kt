@@ -16,6 +16,8 @@ import kotlinx.serialization.Serializable
  * @property universes   List of universe numbers this node handles
  * @property style       Node style code (0 = Node, 1 = Controller)
  * @property lastSeenMs  System time (ms) when this node was last seen
+ * @property firstSeenMs System time (ms) when this node was first discovered
+ * @property latencyMs   Round-trip time (ms) from last ArtPollReply
  */
 @Serializable
 data class DmxNode(
@@ -27,7 +29,9 @@ data class DmxNode(
     val numPorts: Int = 0,
     val universes: List<Int> = emptyList(),
     val style: Int = 0,
-    val lastSeenMs: Long = 0L
+    val lastSeenMs: Long = 0L,
+    val firstSeenMs: Long = 0L,
+    val latencyMs: Long = 0L
 ) {
     /**
      * Unique key for this node in the device registry.
