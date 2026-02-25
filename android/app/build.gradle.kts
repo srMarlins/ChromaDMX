@@ -16,6 +16,16 @@ android {
             isMinifyEnabled = false
         }
     }
+
+    packaging {
+        resources {
+            excludes += setOf(
+                "META-INF/INDEX.LIST",
+                "META-INF/DEPENDENCIES",
+                "META-INF/io.netty.versions.properties",
+            )
+        }
+    }
 }
 
 dependencies {
