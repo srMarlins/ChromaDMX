@@ -12,7 +12,7 @@ import java.net.InetAddress
  *
  * All blocking socket operations are dispatched to [Dispatchers.IO].
  */
-actual class PlatformUdpTransport actual constructor() {
+actual class PlatformUdpTransport actual constructor() : UdpTransport {
 
     private val socket: DatagramSocket = DatagramSocket(null).apply {
         reuseAddress = true

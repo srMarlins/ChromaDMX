@@ -16,11 +16,16 @@ import com.chromadmx.engine.pipeline.EffectEngine
 import com.chromadmx.networking.discovery.NodeDiscovery
 import com.chromadmx.networking.output.DmxOutputService
 import com.chromadmx.networking.transport.PlatformUdpTransport
+import com.chromadmx.pipeline.DmxPipeline
 import com.chromadmx.tempo.clock.BeatClock
 import com.chromadmx.tempo.tap.TapTempoClock
+import com.chromadmx.vision.RealDmxController
+import com.chromadmx.vision.calibration.DmxController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 /**
@@ -65,6 +70,28 @@ val chromaDiModule = module {
     }
     single { get<EffectEngine>().effectStack }
 
-    // --- Fixture provider (empty default — MapViewModel manages fixtures) ---
-    single<() -> List<Fixture3D>> { { emptyList() } }
+    // --- Fixture provider (shared state) ---
+    single { MutableStateFlow<List<Fixture3D>>(emptyList()) }
+    single<() -> List<Fixture3D>> {
+        val state = get<MutableStateFlow<List<Fixture3D>>>()
+        { state.value }
+    }
+
+    // --- DMX Pipeline (bridging engine to networking) ---
+    single {
+        DmxPipeline(
+            scope = get(),
+            engine = get(),
+            dmxOutput = get(),
+            fixturesProvider = get()
+        )
+    }
+
+    // --- Vision calibration ---
+    single<DmxController> {
+        RealDmxController(
+            engine = get(),
+            fixturesProvider = get()
+        )
+    }
 }

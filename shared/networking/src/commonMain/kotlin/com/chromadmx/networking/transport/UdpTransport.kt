@@ -6,12 +6,8 @@ import com.chromadmx.networking.model.UdpPacket
  * Platform-agnostic UDP transport abstraction.
  *
  * Provides suspend functions for sending/receiving UDP datagrams.
- * Actual implementations use platform-specific socket APIs:
- * - Android: `java.net.DatagramSocket`
- * - iOS: NWConnection / native sockets (stub for now)
  */
-expect class PlatformUdpTransport() {
-
+interface UdpTransport {
     /**
      * Send a UDP datagram.
      *
@@ -36,4 +32,15 @@ expect class PlatformUdpTransport() {
      * Close the transport and release resources.
      */
     fun close()
+}
+
+/**
+ * Actual implementations use platform-specific socket APIs:
+ * - Android: `java.net.DatagramSocket`
+ * - iOS: NWConnection / native sockets (stub for now)
+ */
+expect class PlatformUdpTransport() : UdpTransport {
+    override suspend fun send(data: ByteArray, address: String, port: Int)
+    override suspend fun receive(buffer: ByteArray, timeoutMs: Long): UdpPacket?
+    override fun close()
 }

@@ -1,7 +1,7 @@
 package com.chromadmx.simulation.network
 
 import com.chromadmx.networking.model.UdpPacket
-import com.chromadmx.networking.transport.PlatformUdpTransport
+import com.chromadmx.networking.transport.UdpTransport
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -28,7 +28,7 @@ class SimulatedNetwork(
     val packetLossRate: Float = 0f,
     val latencyMs: Long = 0L,
     private val random: Random = Random.Default
-) {
+) : UdpTransport {
     /**
      * Internal buffer for packets routed to this transport.
      * Channel capacity is generous to avoid blocking senders.
@@ -52,7 +52,7 @@ class SimulatedNetwork(
      * routed to the bus (if connected) or to this transport's own
      * inbound queue (loopback mode).
      */
-    suspend fun send(data: ByteArray, address: String, port: Int) {
+    override suspend fun send(data: ByteArray, address: String, port: Int) {
         if (closed) return
 
         // Simulate packet loss
@@ -89,7 +89,7 @@ class SimulatedNetwork(
      * @param timeoutMs  Maximum wait time in milliseconds
      * @return received packet, or null on timeout
      */
-    suspend fun receive(buffer: ByteArray, timeoutMs: Long): UdpPacket? {
+    override suspend fun receive(buffer: ByteArray, timeoutMs: Long): UdpPacket? {
         if (closed) return null
 
         val effectiveTimeout = timeoutMs + latencyMs
@@ -121,7 +121,7 @@ class SimulatedNetwork(
     /**
      * Close the transport and release resources.
      */
-    fun close() {
+    override fun close() {
         closed = true
         inboundPackets.close()
     }

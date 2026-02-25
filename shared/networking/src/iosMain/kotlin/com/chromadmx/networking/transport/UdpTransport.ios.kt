@@ -8,18 +8,18 @@ import com.chromadmx.networking.model.UdpPacket
  * TODO: Implement using NWConnection (Network framework) or POSIX sockets.
  * This stub allows the module to compile for iOS targets.
  */
-actual class PlatformUdpTransport actual constructor() {
+actual class PlatformUdpTransport actual constructor() : UdpTransport {
 
-    actual suspend fun send(data: ByteArray, address: String, port: Int) {
+    actual override suspend fun send(data: ByteArray, address: String, port: Int) {
         // Stub: iOS UDP send not yet implemented
     }
 
-    actual suspend fun receive(buffer: ByteArray, timeoutMs: Long): UdpPacket? {
+    actual override suspend fun receive(buffer: ByteArray, timeoutMs: Long): UdpPacket? {
         // Stub: iOS UDP receive not yet implemented
         return null
     }
 
-    actual fun close() {
+    actual override fun close() {
         // Stub: nothing to close
     }
 }
