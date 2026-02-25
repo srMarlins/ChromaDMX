@@ -39,7 +39,8 @@ import kotlinx.coroutines.launch
 class NodeDiscovery(
     private val transport: PlatformUdpTransport,
     private val pollIntervalMs: Long = DEFAULT_POLL_INTERVAL_MS,
-    private val nodeTimeoutMs: Long = DmxNode.DEFAULT_TIMEOUT_MS
+    private val nodeTimeoutMs: Long = DmxNode.DEFAULT_TIMEOUT_MS,
+    private val maxNodes: Int = DEFAULT_MAX_NODES
 ) {
 
     private val _nodes = MutableStateFlow<Map<String, DmxNode>>(emptyMap())
@@ -135,6 +136,16 @@ class NodeDiscovery(
         )
 
         val current = _nodes.value.toMutableMap()
+
+        // If this is a new node and we've reached the capacity limit,
+        // evict the node that hasn't been seen for the longest time.
+        if (!current.containsKey(node.nodeKey) && current.size >= maxNodes) {
+            val oldestKey = current.values.minByOrNull { it.lastSeenMs }?.nodeKey
+            if (oldestKey != null) {
+                current.remove(oldestKey)
+            }
+        }
+
         current[node.nodeKey] = node
         _nodes.value = current
 
@@ -192,6 +203,9 @@ class NodeDiscovery(
 
         /** Receive timeout per iteration. */
         const val RECEIVE_TIMEOUT_MS: Long = 1_000L
+
+        /** Maximum number of discovered nodes to track to prevent memory exhaustion. */
+        const val DEFAULT_MAX_NODES: Int = 256
     }
 }
 
