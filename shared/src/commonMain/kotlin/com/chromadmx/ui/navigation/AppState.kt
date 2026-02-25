@@ -7,6 +7,7 @@ package com.chromadmx.ui.navigation
  * - In the onboarding flow (first launch)
  * - On the main stage preview screen
  * - Viewing settings (overlay)
+ * - Selecting a rig preset (from onboarding or settings)
  *
  * Chat panel and mascot are overlays managed independently.
  */
@@ -14,6 +15,13 @@ sealed class AppState {
     data class Onboarding(val step: OnboardingStep) : AppState()
     data object StagePreview : AppState()
     data object Settings : AppState()
+
+    /**
+     * Rig preset selection screen.
+     * @param returnToOnboarding If true, confirming returns to the onboarding flow
+     *                           (FIXTURE_SCAN step). Otherwise returns to settings.
+     */
+    data class RigSelection(val returnToOnboarding: Boolean = false) : AppState()
 }
 
 /**
