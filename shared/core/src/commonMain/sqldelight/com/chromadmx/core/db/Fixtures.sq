@@ -50,3 +50,47 @@ DELETE FROM fixture_group WHERE group_id = ?;
 
 selectFixturesByGroup:
 SELECT * FROM fixture WHERE group_id = ?;
+
+CREATE TABLE preset (
+    preset_id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    genre TEXT,
+    layer_data TEXT NOT NULL,
+    is_builtin INTEGER NOT NULL DEFAULT 0,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL
+);
+
+CREATE TABLE known_node (
+    node_id TEXT NOT NULL PRIMARY KEY,
+    ip_address TEXT NOT NULL,
+    name TEXT NOT NULL,
+    universes TEXT NOT NULL,
+    last_seen INTEGER NOT NULL
+);
+
+selectAllPresets:
+SELECT * FROM preset ORDER BY sort_order ASC, name ASC;
+
+insertPreset:
+INSERT OR REPLACE INTO preset (preset_id, name, genre, layer_data, is_builtin, sort_order, created_at)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+updatePreset:
+UPDATE preset SET name = ?, genre = ?, layer_data = ?, is_builtin = ?, sort_order = ? WHERE preset_id = ?;
+
+deletePreset:
+DELETE FROM preset WHERE preset_id = ?;
+
+selectAllKnownNodes:
+SELECT * FROM known_node ORDER BY last_seen DESC;
+
+insertKnownNode:
+INSERT OR REPLACE INTO known_node (node_id, ip_address, name, universes, last_seen)
+VALUES (?, ?, ?, ?, ?);
+
+updateKnownNode:
+UPDATE known_node SET ip_address = ?, name = ?, universes = ?, last_seen = ? WHERE node_id = ?;
+
+deleteKnownNode:
+DELETE FROM known_node WHERE node_id = ?;
