@@ -90,6 +90,7 @@ fun SetupScreen(
                 targetState = isDiscoveryPhase(state.currentStep),
                 transitionSpec = { fadeIn() togetherWith fadeOut() },
                 label = "setup-phase-crossfade",
+                modifier = Modifier.weight(1f),
             ) { isDiscovery ->
                 if (isDiscovery) {
                     DiscoveryPhase(

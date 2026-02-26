@@ -12,6 +12,7 @@ import com.chromadmx.ui.state.SetupStep
 import com.chromadmx.ui.state.SetupUiState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -135,6 +136,12 @@ class SetupViewModel(
     private fun startScan() {
         scanJob?.cancel()
         fixtureDiscovery.startScan()
+        scanJob = scope.launch {
+            delay(SCAN_DURATION_MS)
+            if (_state.value.discoveredNodes.isEmpty()) {
+                fixtureDiscovery.stopScan()
+            }
+        }
     }
 
     /**
