@@ -7,6 +7,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
+/**
+ * SQLDelight-backed repository for app settings persistence.
+ *
+ * Uses a single-row app_settings table with typed columns.
+ * Provides reactive [Flow]-based reads and synchronous setters.
+ */
 class SettingsRepository(private val db: ChromaDmxDatabase) {
 
     private val queries = db.settingsQueries
