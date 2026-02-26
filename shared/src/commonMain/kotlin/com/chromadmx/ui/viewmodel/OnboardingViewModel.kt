@@ -398,22 +398,22 @@ class OnboardingViewModel(
         _generationError.value = null
         generationJob?.cancel()
         generationJob = scope.launch {
-            try {
-                val progressJob = launch {
-                    service.progress.collect { p ->
-                        if (p.total > 0) {
-                            _generationProgress.value = p.current.toFloat() / p.total
-                        }
+            val progressJob = launch {
+                service.progress.collect { p ->
+                    if (p.total > 0) {
+                        _generationProgress.value = p.current.toFloat() / p.total
                     }
                 }
+            }
+            try {
                 service.generate(genre.id, DEFAULT_SCENE_COUNT)
-                progressJob.cancel()
                 _generationProgress.value = 1f
             } catch (e: Exception) {
                 if (e !is CancellationException) {
                     _generationError.value = "Generation failed \u2014 using universal presets"
                 }
             } finally {
+                progressJob.cancel()
                 _isGenerating.value = false
             }
             advance()
