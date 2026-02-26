@@ -3,6 +3,7 @@ package com.chromadmx.engine.pipeline
 import com.chromadmx.core.model.BeatState
 import com.chromadmx.core.model.Color
 import com.chromadmx.core.model.Fixture3D
+import com.chromadmx.core.model.FixtureOutput
 import com.chromadmx.engine.effect.EffectStack
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,6 +20,7 @@ import kotlin.time.TimeSource
  * 1. Read the current [BeatState] from [beatStateProvider].
  * 2. Evaluate the [effectStack] at every fixture position.
  * 3. Write the resulting color array into the [colorOutput] triple buffer.
+ * 4. If movement layers are present, write [FixtureOutput] into [fixtureOutputBuffer].
  *
  * The engine runs on [Dispatchers.Default] to avoid blocking the UI thread.
  * The DMX output thread reads from the other side of the triple buffer.
@@ -35,6 +37,13 @@ class EffectEngine(
         initialA = Array(fixtures.size) { Color.BLACK },
         initialB = Array(fixtures.size) { Color.BLACK },
         initialC = Array(fixtures.size) { Color.BLACK }
+    )
+
+    /** Triple-buffered fixture output: one [FixtureOutput] per fixture (includes movement data). */
+    val fixtureOutputBuffer: TripleBuffer<Array<FixtureOutput>> = TripleBuffer(
+        initialA = Array(fixtures.size) { FixtureOutput.DEFAULT },
+        initialB = Array(fixtures.size) { FixtureOutput.DEFAULT },
+        initialC = Array(fixtures.size) { FixtureOutput.DEFAULT }
     )
 
     /** Provider for the current beat state. Defaults to [BeatState.IDLE]. */
@@ -90,10 +99,23 @@ class EffectEngine(
         // Prepare frame once (O(Layers * Params))
         val evaluator = effectStack.buildFrame(time, beat)
 
-        val writeSlot = colorOutput.writeSlot()
-        // Evaluate per fixture (O(Pixels * Layers)) - now faster!
-        for (i in fixtures.indices) {
-            writeSlot[i] = evaluator.evaluate(fixtures[i].position)
+        val colorSlot = colorOutput.writeSlot()
+        val hasMovement = evaluator.hasMovementLayers
+
+        if (hasMovement) {
+            val fixtureSlot = fixtureOutputBuffer.writeSlot()
+            // Evaluate per fixture (O(Pixels * Layers)) — full output path
+            for (i in fixtures.indices) {
+                val output = evaluator.evaluateFixtureOutput(fixtures[i].position)
+                colorSlot[i] = output.color
+                fixtureSlot[i] = output
+            }
+            fixtureOutputBuffer.swapWrite()
+        } else {
+            // Evaluate per fixture (O(Pixels * Layers)) — color-only fast path
+            for (i in fixtures.indices) {
+                colorSlot[i] = evaluator.evaluate(fixtures[i].position)
+            }
         }
         colorOutput.swapWrite()
     }
@@ -107,6 +129,17 @@ class EffectEngine(
         val evaluator = effectStack.buildFrame(time, beat)
         return Array(fixtures.size) { i ->
             evaluator.evaluate(fixtures[i].position)
+        }
+    }
+
+    /**
+     * Evaluate a single frame at the given [time] and [beat], returning
+     * the full [FixtureOutput] array including movement data.
+     */
+    fun evaluateFrameOutput(time: Float, beat: BeatState): Array<FixtureOutput> {
+        val evaluator = effectStack.buildFrame(time, beat)
+        return Array(fixtures.size) { i ->
+            evaluator.evaluateFixtureOutput(fixtures[i].position)
         }
     }
 }
