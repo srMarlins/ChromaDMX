@@ -26,17 +26,28 @@ data class FixtureGroup(
 )
 
 /**
+ * Abstraction for fixture persistence, enabling fake implementations in tests.
+ */
+interface FixtureStore {
+    fun allFixtures(): Flow<List<Fixture3D>>
+    fun saveFixture(fixture: Fixture3D)
+    fun saveAll(fixtures: List<Fixture3D>)
+    fun deleteFixture(fixtureId: String)
+    fun deleteAll()
+}
+
+/**
  * SQLDelight-backed repository for fixture and group persistence.
  *
  * Provides reactive [Flow]-based reads and synchronous writes for
  * fixture positions, group assignments, and group CRUD.
  */
-class FixtureRepository(private val db: ChromaDmxDatabase) {
+class FixtureRepository(private val db: ChromaDmxDatabase) : FixtureStore {
 
     private val queries get() = db.fixturesQueries
 
     /** Observe all fixtures as [Fixture3D] instances, ordered by name. */
-    fun allFixtures(): Flow<List<Fixture3D>> {
+    override fun allFixtures(): Flow<List<Fixture3D>> {
         return queries.selectAllFixtures()
             .asFlow()
             .mapToList(Dispatchers.Default)
@@ -59,7 +70,7 @@ class FixtureRepository(private val db: ChromaDmxDatabase) {
     }
 
     /** Insert or replace a single fixture. */
-    fun saveFixture(fixture: Fixture3D) {
+    override fun saveFixture(fixture: Fixture3D) {
         queries.insertOrReplaceFixture(
             fixture_id = fixture.fixture.fixtureId,
             name = fixture.fixture.name,
@@ -75,7 +86,7 @@ class FixtureRepository(private val db: ChromaDmxDatabase) {
     }
 
     /** Insert or replace all fixtures in a single transaction. */
-    fun saveAll(fixtures: List<Fixture3D>) {
+    override fun saveAll(fixtures: List<Fixture3D>) {
         db.transaction {
             fixtures.forEach { saveFixture(it) }
         }
@@ -97,12 +108,12 @@ class FixtureRepository(private val db: ChromaDmxDatabase) {
     }
 
     /** Delete a fixture by its ID. */
-    fun deleteFixture(fixtureId: String) {
+    override fun deleteFixture(fixtureId: String) {
         queries.deleteFixture(fixtureId)
     }
 
     /** Delete all fixtures. */
-    fun deleteAll() {
+    override fun deleteAll() {
         queries.deleteAllFixtures()
     }
 

@@ -1,45 +1,61 @@
 package com.chromadmx.ui.navigation
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
+/**
+ * Basic smoke tests for [AppStateManager] using the new [AppScreen] model.
+ * More thorough scenarios are in [AppNavigationTest].
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
 class AppStateManagerTest {
+
+    private fun emptyFixtures() = MutableStateFlow<List<com.chromadmx.core.model.Fixture3D>>(emptyList())
+
     @Test
-    fun firstLaunchStartsWithOnboarding() = runTest {
-        val manager = AppStateManager(isFirstLaunch = true)
-        val state = manager.currentState.first()
-        assertIs<AppState.Onboarding>(state)
+    fun defaultScreenIsSetupWhenNoFixtures() = runTest {
+        val manager = AppStateManager(
+            allFixtures = { emptyFixtures() },
+            setSetupCompleted = {},
+            scope = this,
+        )
+        advanceUntilIdle()
+        assertIs<AppScreen.Setup>(manager.currentScreen.first())
     }
 
     @Test
-    fun repeatLaunchStartsWithStagePreview() = runTest {
-        val manager = AppStateManager(isFirstLaunch = false)
-        val state = manager.currentState.first()
-        assertIs<AppState.StagePreview>(state)
-    }
+    fun navigateToAndBack() = runTest {
+        val manager = AppStateManager(
+            allFixtures = { emptyFixtures() },
+            setSetupCompleted = {},
+            scope = this,
+        )
+        advanceUntilIdle()
 
-    @Test
-    fun navigateToSettings() = runTest {
-        val manager = AppStateManager(isFirstLaunch = false)
-        manager.navigateTo(AppState.Settings)
-        assertEquals(AppState.Settings, manager.currentState.first())
-    }
+        manager.navigateTo(AppScreen.Settings)
+        assertEquals(AppScreen.Settings, manager.currentScreen.first())
 
-    @Test
-    fun navigateBackFromSettings() = runTest {
-        val manager = AppStateManager(isFirstLaunch = false)
-        manager.navigateTo(AppState.Settings)
         manager.navigateBack()
-        assertIs<AppState.StagePreview>(manager.currentState.first())
+        assertIs<AppScreen.Setup>(manager.currentScreen.first())
     }
 
     @Test
-    fun completeOnboardingGoesToStagePreview() = runTest {
-        val manager = AppStateManager(isFirstLaunch = true)
-        manager.completeOnboarding()
-        assertIs<AppState.StagePreview>(manager.currentState.first())
+    fun completeSetupGoesToStage() = runTest {
+        val manager = AppStateManager(
+            allFixtures = { emptyFixtures() },
+            setSetupCompleted = {},
+            scope = this,
+        )
+        advanceUntilIdle()
+
+        manager.completeSetup()
+        advanceUntilIdle()
+        assertIs<AppScreen.Stage>(manager.currentScreen.first())
     }
 }
