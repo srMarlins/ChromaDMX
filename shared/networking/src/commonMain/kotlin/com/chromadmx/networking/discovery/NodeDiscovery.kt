@@ -1,5 +1,6 @@
 package com.chromadmx.networking.discovery
 
+import com.chromadmx.networking.FixtureDiscovery
 import com.chromadmx.networking.model.DmxNode
 import com.chromadmx.networking.model.UdpPacket
 import com.chromadmx.networking.protocol.ArtNetCodec
@@ -43,7 +44,7 @@ class NodeDiscovery(
     private val pollIntervalMs: Long = DEFAULT_POLL_INTERVAL_MS,
     private val nodeTimeoutMs: Long = DmxNode.DEFAULT_TIMEOUT_MS,
     private val maxNodes: Int = DEFAULT_MAX_NODES
-) {
+) : FixtureDiscovery {
 
     private val _nodes = MutableStateFlow<Map<String, DmxNode>>(emptyMap())
 
@@ -63,6 +64,28 @@ class NodeDiscovery(
     /** Whether discovery is currently running. */
     val isRunning: Boolean get() = scope != null
 
+    // -- FixtureDiscovery ------------------------------------------------- //
+
+    private val _isScanning = MutableStateFlow(false)
+    override val isScanning: StateFlow<Boolean> = _isScanning.asStateFlow()
+
+    /**
+     * Derived list of discovered nodes for the [FixtureDiscovery] interface.
+     * Maps the internal keyed map to a flat list.
+     */
+    override val discoveredNodes: StateFlow<List<DmxNode>>
+        get() = _discoveredNodesState
+
+    private val _discoveredNodesState: MutableStateFlow<List<DmxNode>> = MutableStateFlow(emptyList())
+
+    override fun startScan() {
+        start()
+    }
+
+    override fun stopScan() {
+        stop()
+    }
+
     /**
      * Start the discovery service.
      *
@@ -75,6 +98,14 @@ class NodeDiscovery(
 
         val newScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
         scope = newScope
+        _isScanning.value = true
+
+        // Keep discoveredNodes in sync with the internal nodes map
+        newScope.launch {
+            _nodes.collect { map ->
+                _discoveredNodesState.value = map.values.toList()
+            }
+        }
 
         pollJob = newScope.launch {
             pollLoop()
@@ -94,6 +125,8 @@ class NodeDiscovery(
         pollJob = null
         listenJob = null
         _nodes.value = emptyMap()
+        _isScanning.value = false
+        _discoveredNodesState.value = emptyList()
     }
 
     /**

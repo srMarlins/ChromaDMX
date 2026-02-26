@@ -1,13 +1,17 @@
 package com.chromadmx.simulation.fixtures
 
+import com.chromadmx.simulation.network.NetworkProfile
+
 /**
  * Predefined fixture rig layouts for testing.
  *
  * Each preset represents a realistic venue configuration with
  * fixtures at realistic 3D positions (in meters, relative to a
  * center point at the stage front).
+ *
+ * @property networkProfile Default network behavior profile for this rig.
  */
-enum class RigPreset {
+enum class RigPreset(val networkProfile: NetworkProfile = NetworkProfile.Stable) {
     /**
      * Small DJ setup: 8 RGB PAR fixtures in a line.
      * Typical bar/club scenario with a single truss at 2.5m height.
