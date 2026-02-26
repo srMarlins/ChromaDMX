@@ -158,21 +158,30 @@ class DmxBridge(
                     (white * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
                 }
                 ChannelType.PAN -> {
-                    val value = output.pan ?: (channel.defaultValue / 255f)
-                    (value * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
+                    // Compute full 16-bit value; coarse channel = MSB
+                    val coarseDefault = channel.defaultValue / 255f
+                    val value = output.pan ?: coarseDefault
+                    val full16 = (value * 65535f + 0.5f).toInt().coerceIn(0, 65535)
+                    (full16 shr 8 and 0xFF).toByte()
                 }
                 ChannelType.TILT -> {
-                    val value = output.tilt ?: (channel.defaultValue / 255f)
-                    (value * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
+                    // Compute full 16-bit value; coarse channel = MSB
+                    val coarseDefault = channel.defaultValue / 255f
+                    val value = output.tilt ?: coarseDefault
+                    val full16 = (value * 65535f + 0.5f).toInt().coerceIn(0, 65535)
+                    (full16 shr 8 and 0xFF).toByte()
                 }
                 ChannelType.PAN_FINE -> {
-                    // Fine channels use lower 8 bits of 16-bit value
-                    val value = output.pan ?: (channel.defaultValue / 255f)
+                    // Fine channel = LSB of 16-bit value; derive default from coarse PAN channel
+                    val coarseDefault = profile.channelByType(ChannelType.PAN)?.defaultValue?.let { it / 255f } ?: 0f
+                    val value = output.pan ?: coarseDefault
                     val full16 = (value * 65535f + 0.5f).toInt().coerceIn(0, 65535)
                     (full16 and 0xFF).toByte()
                 }
                 ChannelType.TILT_FINE -> {
-                    val value = output.tilt ?: (channel.defaultValue / 255f)
+                    // Fine channel = LSB of 16-bit value; derive default from coarse TILT channel
+                    val coarseDefault = profile.channelByType(ChannelType.TILT)?.defaultValue?.let { it / 255f } ?: 0f
+                    val value = output.tilt ?: coarseDefault
                     val full16 = (value * 65535f + 0.5f).toInt().coerceIn(0, 65535)
                     (full16 and 0xFF).toByte()
                 }

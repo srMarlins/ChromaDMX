@@ -63,7 +63,7 @@ class SweepMovementEffect : MovementEffect {
         val tilt = when (ctx.axis) {
             "tilt" -> (ctx.centerTilt + sweep * ctx.range * 0.5f).coerceIn(0f, 1f)
             "both" -> {
-                // For "both", offset tilt by 90 degrees (cos) for a figure-8-like motion
+                // For "both", offset tilt by 90 degrees (cos) for circular or elliptical motion
                 val tiltSweep = sin(ctx.timePhase.toDouble() + spatialPhase.toDouble() + PI * 0.5).toFloat()
                 (ctx.centerTilt + tiltSweep * ctx.range * 0.5f).coerceIn(0f, 1f)
             }

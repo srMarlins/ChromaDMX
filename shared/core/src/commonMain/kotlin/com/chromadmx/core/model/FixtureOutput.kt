@@ -31,7 +31,7 @@ data class FixtureOutput(
      *
      * For color: uses the standard blend mode math.
      * For nullable float channels (pan, tilt, focus, zoom, strobeRate):
-     *   - NORMAL / MULTIPLY / OVERLAY: overlay replaces base if non-null.
+     *   - NORMAL / MULTIPLY / OVERLAY: overlay is blended with base, controlled by opacity.
      *   - ADDITIVE: overlay value is added as an offset to the base (clamped to 0-1).
      * For gobo: overlay replaces base if non-null (no additive blending for integer slots).
      *
