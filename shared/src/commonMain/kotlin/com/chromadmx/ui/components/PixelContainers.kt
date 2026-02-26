@@ -112,7 +112,6 @@ fun PixelIconButton(
                 scaleX = scale
                 scaleY = scale
             }
-            .clip(shape)
             .let { mod ->
                 if (glowing && enabled) {
                     mod.pixelBorderGlowing(chamfer = 6.dp)
@@ -120,6 +119,7 @@ fun PixelIconButton(
                     mod.pixelBorder(chamfer = 6.dp)
                 }
             }
+            .clip(shape)
             .background(bgColor, shape)
             .clickable(
                 interactionSource = interactionSource,
@@ -165,8 +165,8 @@ fun PixelDropdown(
         // Trigger button
         Row(
             modifier = Modifier
-                .clip(PixelShape.Small)
                 .pixelBorder(chamfer = 6.dp)
+                .clip(PixelShape.Small)
                 .background(PixelDesign.colors.surface, PixelShape.Small)
                 .clickable { expanded = true }
                 .padding(horizontal = 12.dp, vertical = 8.dp),
@@ -199,8 +199,8 @@ fun PixelDropdown(
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
                 modifier = Modifier
-                    .clip(PixelShape.Large)
                     .pixelBorderGlowing(chamfer = 9.dp)
+                    .clip(PixelShape.Large)
                     .background(PixelDesign.colors.surface, PixelShape.Large)
                     .heightIn(max = 220.dp) // ~5 items worth of height
                     .verticalScroll(rememberScrollState()),
@@ -300,8 +300,8 @@ fun PixelDialog(
                         scaleY = scale
                     }
                     .fillMaxWidth(0.85f)
-                    .clip(PixelShape.Large)
                     .pixelBorderGlowing(chamfer = 9.dp)
+                    .clip(PixelShape.Large)
                     .background(PixelDesign.colors.surface, PixelShape.Large)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
@@ -451,8 +451,8 @@ fun PixelBottomSheet(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(topChamferShape)
                     .pixelBorder(chamfer = 9.dp)
+                    .clip(topChamferShape)
                     .background(PixelDesign.colors.surface, topChamferShape)
                     // Consume clicks so they don't go through to scrim
                     .clickable(

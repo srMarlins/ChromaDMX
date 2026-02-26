@@ -40,8 +40,8 @@ import com.chromadmx.ui.theme.PixelShape
 fun PixelProgressBar(
     progress: Float,
     modifier: Modifier = Modifier,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceVariant,
-    progressColor: Color = MaterialTheme.colorScheme.primary,
+    containerColor: Color = PixelDesign.colors.surfaceVariant,
+    progressColor: Color = PixelDesign.colors.primary,
     pixelSize: Dp = PixelDesign.spacing.pixelSize,
     segments: Int = 10,
     indeterminate: Boolean = false,
@@ -92,8 +92,8 @@ fun PixelProgressBar(
         modifier = modifier
             .fillMaxWidth()
             .height(pixelSize * 4)
-            .clip(barShape)
             .pixelBorder(chamfer = 6.dp)
+            .clip(barShape)
             .background(containerColor, barShape)
             .padding(pixelSize),
         contentAlignment = Alignment.Center,

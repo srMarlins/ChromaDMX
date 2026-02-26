@@ -17,9 +17,7 @@ import androidx.compose.ui.unit.dp
 import com.chromadmx.agent.ChatMessage
 import com.chromadmx.agent.ChatRole
 import com.chromadmx.ui.components.pixelBorder
-import com.chromadmx.ui.theme.DmxPrimary
-import com.chromadmx.ui.theme.NeonGreen
-import com.chromadmx.ui.theme.NeonPurple
+import com.chromadmx.ui.theme.PixelDesign
 
 /**
  * Pixel-art styled chat message bubble.
@@ -53,18 +51,19 @@ private fun UserBubble(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.End,
     ) {
+        val colors = PixelDesign.colors
         Column(
             modifier = Modifier
                 .widthIn(max = 280.dp)
-                .pixelBorder(color = DmxPrimary.copy(alpha = 0.8f), pixelSize = 3.dp)
-                .background(DmxPrimary.copy(alpha = 0.15f))
+                .pixelBorder(color = colors.primary.copy(alpha = 0.8f), pixelSize = 3.dp)
+                .background(colors.primary.copy(alpha = 0.15f))
                 .padding(3.dp) // border padding
                 .padding(12.dp),
         ) {
             Text(
                 text = message.content,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = colors.onSurface,
             )
         }
     }
@@ -79,18 +78,19 @@ private fun AssistantBubble(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Start,
     ) {
+        val colors = PixelDesign.colors
         Column(
             modifier = Modifier
                 .widthIn(max = 280.dp)
-                .pixelBorder(color = NeonGreen.copy(alpha = 0.8f), pixelSize = 3.dp)
-                .background(NeonGreen.copy(alpha = 0.1f))
+                .pixelBorder(color = colors.success.copy(alpha = 0.8f), pixelSize = 3.dp)
+                .background(colors.success.copy(alpha = 0.1f))
                 .padding(3.dp)
                 .padding(12.dp),
         ) {
             Text(
                 text = message.content,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = colors.onSurface,
             )
         }
     }
@@ -108,7 +108,7 @@ private fun SystemBubble(
         Text(
             text = message.content,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            color = PixelDesign.colors.onSurfaceDim,
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .widthIn(max = 240.dp)
@@ -126,18 +126,19 @@ private fun ToolBubble(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Start,
     ) {
+        val colors = PixelDesign.colors
         Column(
             modifier = Modifier
                 .widthIn(max = 280.dp)
-                .pixelBorder(color = NeonPurple.copy(alpha = 0.6f), pixelSize = 2.dp)
-                .background(NeonPurple.copy(alpha = 0.08f))
+                .pixelBorder(color = colors.info.copy(alpha = 0.6f), pixelSize = 2.dp)
+                .background(colors.info.copy(alpha = 0.08f))
                 .padding(2.dp)
                 .padding(8.dp),
         ) {
             Text(
                 text = message.content,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = colors.onSurfaceVariant,
             )
         }
     }

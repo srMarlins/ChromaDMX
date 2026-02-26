@@ -79,13 +79,11 @@ fun PixelCard(
                     .matchParentSize()
                     .offset(x = elevation, y = elevation)
                     .clip(PixelShape.Large)
-                    .pixelBorder(chamfer = 9.dp)
                     .background(Color.Black.copy(alpha = 0.2f), PixelShape.Large)
             )
 
             // Card Body — glowing border when requested
             val bodyModifier = Modifier
-                .clip(PixelShape.Large)
                 .let { mod ->
                     if (glowing) {
                         mod.pixelBorderGlowing(color = borderColor, chamfer = 9.dp)
@@ -93,6 +91,7 @@ fun PixelCard(
                         mod.pixelBorder(color = borderColor, chamfer = 9.dp)
                     }
                 }
+                .clip(PixelShape.Large)
                 .background(backgroundColor, PixelShape.Large)
                 .padding(16.dp)
 

@@ -13,6 +13,8 @@ import androidx.compose.ui.unit.dp
 import com.chromadmx.core.model.DmxNode
 import com.chromadmx.ui.screen.network.NodeHealthIndicator
 import com.chromadmx.ui.screen.network.healthLevel
+import com.chromadmx.ui.theme.PixelDesign
+import com.chromadmx.ui.theme.PixelFontFamily
 
 /**
  * Compact network health summary for the top bar.
@@ -48,8 +50,10 @@ fun NodeHealthCompact(
         if (overflow > 0) {
             Text(
                 text = "+$overflow",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontFamily = PixelFontFamily,
+                ),
+                color = PixelDesign.colors.onSurfaceVariant,
                 modifier = Modifier.padding(start = 2.dp)
             )
         }
@@ -57,8 +61,10 @@ fun NodeHealthCompact(
         if (nodes.isEmpty()) {
             Text(
                 text = "No Nodes",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.error
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontFamily = PixelFontFamily,
+                ),
+                color = PixelDesign.colors.warning
             )
         }
     }

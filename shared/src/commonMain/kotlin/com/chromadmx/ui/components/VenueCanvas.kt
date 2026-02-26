@@ -27,22 +27,14 @@ import com.chromadmx.core.model.BuiltInProfiles
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.core.model.RenderHint
 import com.chromadmx.core.model.Vec3
+import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.core.model.Color as DmxColor
 
 /** Scanline color for the subtle CRT-like horizontal lines. */
-private val ScanlineColor = Color.White.copy(alpha = 0.015f)
+private val ScanlineColor = Color.White.copy(alpha = 0.02f)
 
 /** Grid line color for the LED matrix background. */
-private val GridLineColor = Color.White.copy(alpha = 0.04f)
-
-/** Background color for the canvas. */
-private val CanvasBackground = Color(0xFF060612)
-
-/** Highlight color for selected fixture border. */
-private val SelectionColor = Color(0xFF00FBFF)
-
-/** Highlight color for edit-mode drag crosshair. */
-private val EditDragColor = Color(0xFFFFFF00)
+private val GridLineColor = Color.White.copy(alpha = 0.05f)
 
 /**
  * Canvas-based top-down venue visualization with profile-aware rendering.
@@ -84,10 +76,14 @@ fun VenueCanvas(
     // Edit mode drag tracking
     var dragTargetIndex by remember { mutableIntStateOf(-1) }
 
+    val canvasBg = PixelDesign.colors.background
+    val selectionColor = PixelDesign.colors.primary
+    val editDragColor = PixelDesign.colors.warning
+
     Canvas(
         modifier = modifier
             .fillMaxSize()
-            .background(CanvasBackground)
+            .background(canvasBg)
             .pointerInput(isEditMode) {
                 if (!isEditMode) {
                     detectTransformGestures { _, pan, gestureZoom, _ ->
@@ -254,12 +250,12 @@ fun VenueCanvas(
                 val renderHint = profile?.renderHint ?: RenderHint.POINT
 
                 when (renderHint) {
-                    RenderHint.POINT -> drawPointFixture(cx, cy, composeColor, isSelected)
+                    RenderHint.POINT -> drawPointFixture(cx, cy, composeColor, isSelected, selectionColor)
                     RenderHint.BAR -> {
                         val pixelCount = profile?.physical?.pixelCount ?: 8
-                        drawBarFixture(cx, cy, composeColor, pixelCount, isSelected)
+                        drawBarFixture(cx, cy, composeColor, pixelCount, isSelected, selectionColor)
                     }
-                    RenderHint.BEAM_CONE -> drawBeamConeFixture(cx, cy, composeColor, isSelected, reusablePath)
+                    RenderHint.BEAM_CONE -> drawBeamConeFixture(cx, cy, composeColor, isSelected, reusablePath, selectionColor)
                 }
             }
 
@@ -268,7 +264,7 @@ fun VenueCanvas(
                 val editIndex = if (dragTargetIndex >= 0) dragTargetIndex else selectedFixtureIndex
                 if (editIndex != null && editIndex in positions.indices) {
                     val pos = positions[editIndex]
-                    drawEditDragHandle(pos.x, pos.y)
+                    drawEditDragHandle(pos.x, pos.y, editDragColor)
                 }
             }
 
@@ -297,28 +293,29 @@ private fun DrawScope.drawPointFixture(
     cy: Float,
     color: Color,
     isSelected: Boolean,
+    selectionColor: Color = Color(0xFF9CCC65),
 ) {
     // Outer glow halo
     drawCircle(
-        color = color.copy(alpha = 0.25f),
-        radius = 22f,
+        color = color.copy(alpha = 0.3f),
+        radius = 28f,
         center = Offset(cx, cy),
     )
     // Mid glow
     drawCircle(
-        color = color.copy(alpha = 0.5f),
-        radius = 14f,
+        color = color.copy(alpha = 0.55f),
+        radius = 18f,
         center = Offset(cx, cy),
     )
     // Inner bright core
     drawCircle(
         color = color,
-        radius = 10f,
+        radius = 12f,
         center = Offset(cx, cy),
     )
 
     if (isSelected) {
-        drawSelectionBorder(cx, cy, 16f)
+        drawSelectionBorder(cx, cy, 20f, selectionColor)
     }
 }
 
@@ -331,6 +328,7 @@ private fun DrawScope.drawBarFixture(
     color: Color,
     pixelCount: Int,
     isSelected: Boolean,
+    selectionColor: Color = Color(0xFF9CCC65),
 ) {
     val segmentW = 8f
     val segmentH = 12f
@@ -367,7 +365,7 @@ private fun DrawScope.drawBarFixture(
 
     if (isSelected) {
         val selRadius = (totalW / 2f).coerceAtLeast(16f)
-        drawSelectionBorder(cx, cy, selRadius)
+        drawSelectionBorder(cx, cy, selRadius, selectionColor)
     }
 }
 
@@ -380,6 +378,7 @@ private fun DrawScope.drawBeamConeFixture(
     color: Color,
     isSelected: Boolean,
     reusablePath: Path,
+    selectionColor: Color = Color(0xFF9CCC65),
 ) {
     // Beam cone (downward triangle-like glow)
     val beamLength = 30f
@@ -415,25 +414,25 @@ private fun DrawScope.drawBeamConeFixture(
     )
 
     if (isSelected) {
-        drawSelectionBorder(cx, cy, 16f)
+        drawSelectionBorder(cx, cy, 16f, selectionColor)
     }
 }
 
 /**
  * Draw a pixelated selection border around a fixture.
  */
-private fun DrawScope.drawSelectionBorder(cx: Float, cy: Float, radius: Float) {
+private fun DrawScope.drawSelectionBorder(cx: Float, cy: Float, radius: Float, color: Color) {
     val r = radius + 4f
     val pixel = 3f
 
     // Top edge
-    drawRect(SelectionColor, Offset(cx - r, cy - r), Size(2 * r, pixel))
+    drawRect(color, Offset(cx - r, cy - r), Size(2 * r, pixel))
     // Bottom edge
-    drawRect(SelectionColor, Offset(cx - r, cy + r - pixel), Size(2 * r, pixel))
+    drawRect(color, Offset(cx - r, cy + r - pixel), Size(2 * r, pixel))
     // Left edge
-    drawRect(SelectionColor, Offset(cx - r, cy - r), Size(pixel, 2 * r))
+    drawRect(color, Offset(cx - r, cy - r), Size(pixel, 2 * r))
     // Right edge
-    drawRect(SelectionColor, Offset(cx + r - pixel, cy - r), Size(pixel, 2 * r))
+    drawRect(color, Offset(cx + r - pixel, cy - r), Size(pixel, 2 * r))
 }
 
 /**
@@ -466,13 +465,13 @@ private fun DrawScope.drawScanlines() {
 /**
  * Draw a crosshair drag handle for edit mode on the selected fixture.
  */
-private fun DrawScope.drawEditDragHandle(cx: Float, cy: Float) {
+private fun DrawScope.drawEditDragHandle(cx: Float, cy: Float, color: Color) {
     val armLen = 28f
     val dashEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 4f), phase = 0f)
 
     // Horizontal crosshair
     drawLine(
-        color = EditDragColor,
+        color = color,
         start = Offset(cx - armLen, cy),
         end = Offset(cx + armLen, cy),
         strokeWidth = 2f,
@@ -480,7 +479,7 @@ private fun DrawScope.drawEditDragHandle(cx: Float, cy: Float) {
     )
     // Vertical crosshair
     drawLine(
-        color = EditDragColor,
+        color = color,
         start = Offset(cx, cy - armLen),
         end = Offset(cx, cy + armLen),
         strokeWidth = 2f,
@@ -489,7 +488,7 @@ private fun DrawScope.drawEditDragHandle(cx: Float, cy: Float) {
 
     // Dashed circle border
     drawCircle(
-        color = EditDragColor,
+        color = color,
         radius = 24f,
         center = Offset(cx, cy),
         style = Stroke(width = 2f, pathEffect = dashEffect),

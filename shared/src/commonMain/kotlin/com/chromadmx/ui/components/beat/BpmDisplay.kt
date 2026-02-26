@@ -16,12 +16,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.chromadmx.ui.components.pixelBorder
-import com.chromadmx.ui.theme.BeatActive
-import com.chromadmx.ui.theme.DmxSurface
 import com.chromadmx.ui.theme.LocalPixelTheme
-import com.chromadmx.ui.theme.NeonGreen
-import com.chromadmx.ui.theme.NeonYellow
-import com.chromadmx.ui.theme.NodeUnknown
+import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.theme.PixelFontFamily
 
 /**
@@ -58,10 +54,11 @@ fun BpmDisplay(
     modifier: Modifier = Modifier,
     pixelSize: Dp = LocalPixelTheme.current.pixelSize,
 ) {
+    val colors = PixelDesign.colors
     val bpmColor: Color = when (source) {
-        BpmSource.LINK -> NeonGreen
-        BpmSource.TAP -> NeonYellow
-        BpmSource.IDLE -> NodeUnknown
+        BpmSource.LINK -> colors.success
+        BpmSource.TAP -> colors.tertiary
+        BpmSource.IDLE -> colors.onSurfaceDim
     }
 
     // Pulse: opacity is 1.0 at the downbeat (phase=0), fades to 0.6 by mid-beat,
@@ -86,7 +83,7 @@ fun BpmDisplay(
                 onClick = onTap,
             )
             .pixelBorder(color = bpmColor.copy(alpha = 0.5f), pixelSize = pixelSize)
-            .background(DmxSurface)
+            .background(colors.surface)
             .padding(horizontal = 12.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center,
     ) {

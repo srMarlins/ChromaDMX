@@ -45,7 +45,7 @@ fun PixelSlider(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
-    accentColor: Color = MaterialTheme.colorScheme.primary,
+    accentColor: Color = PixelDesign.colors.primary,
     showValueLabel: Boolean = false,
     valueLabelFormatter: (Float) -> String = { "${(it * 100).toInt()}%" },
 ) {
@@ -149,7 +149,7 @@ fun PixelSlider(
                     .fillMaxWidth()
                     .height(pixelSize * 2)
                     .clip(PixelShape(4.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant, PixelShape(4.dp))
+                    .background(PixelDesign.colors.surfaceVariant, PixelShape(4.dp))
                     .pixelBorder(chamfer = 4.dp)
             )
 

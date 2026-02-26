@@ -27,12 +27,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.chromadmx.agent.scene.Scene
-import com.chromadmx.ui.theme.NeonCyan
+import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.theme.PixelFontFamily
 import com.chromadmx.core.model.Color as DmxColor
-
-/** Background for the preset strip area. */
-private val StripBackground = Color(0xFF0A0A16)
 
 /**
  * Horizontal scrollable strip of preset thumbnails.
@@ -54,16 +51,19 @@ fun PresetStrip(
     onSceneLongPress: (String?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val colors = PixelDesign.colors
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(StripBackground.copy(alpha = 0.85f)),
+            .background(colors.surface.copy(alpha = 0.95f)),
     ) {
         if (scenes.isEmpty()) {
             Text(
                 text = "No presets",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontFamily = PixelFontFamily,
+                ),
+                color = colors.onSurfaceDim,
                 modifier = Modifier.align(Alignment.Center).padding(vertical = 12.dp),
             )
         } else {
@@ -96,7 +96,8 @@ private fun PresetThumbnail(
     onLongPress: () -> Unit,
     onRelease: () -> Unit,
 ) {
-    val borderColor = if (isActive) NeonCyan else Color.White.copy(alpha = 0.2f)
+    val colors = PixelDesign.colors
+    val borderColor = if (isActive) colors.primary else colors.outlineVariant
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -121,7 +122,7 @@ private fun PresetThumbnail(
                 .width(56.dp)
                 .height(36.dp)
                 .pixelBorder(width = 2.dp, color = borderColor, pixelSize = 2.dp)
-                .background(Color(0xFF0E0E1E))
+                .background(colors.background)
                 .padding(2.dp),
         ) {
             PresetMiniCanvas(
@@ -137,7 +138,7 @@ private fun PresetThumbnail(
                 fontSize = 8.sp,
                 fontFamily = PixelFontFamily,
             ),
-            color = if (isActive) NeonCyan else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            color = if (isActive) colors.primary else colors.onSurfaceDim,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,

@@ -34,8 +34,7 @@ import com.chromadmx.simulation.fixtures.RigPreset
 import com.chromadmx.simulation.fixtures.SimulatedFixtureRig
 import com.chromadmx.ui.components.PixelButton
 import com.chromadmx.ui.components.pixelBorder
-import com.chromadmx.ui.theme.NeonCyan
-import com.chromadmx.ui.theme.NeonMagenta
+import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.theme.PixelFontFamily
 import com.chromadmx.ui.util.presetDisplayName
 import com.chromadmx.ui.util.shortDescription
@@ -84,9 +83,10 @@ fun RigPresetSelector(
         }
     }
 
+    val colors = PixelDesign.colors
     Surface(
         modifier = modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
+        color = colors.background,
     ) {
         Column(
             modifier = Modifier
@@ -98,7 +98,7 @@ fun RigPresetSelector(
                 text = "SELECT YOUR RIG",
                 style = MaterialTheme.typography.headlineMedium.copy(fontFamily = PixelFontFamily),
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
+                color = colors.primary,
                 letterSpacing = 2.sp,
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
@@ -107,7 +107,7 @@ fun RigPresetSelector(
             Text(
                 text = "Choose a virtual fixture layout",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = colors.onSurfaceVariant,
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
             )
@@ -136,8 +136,8 @@ fun RigPresetSelector(
             PixelButton(
                 onClick = onConfirm,
                 modifier = Modifier.fillMaxWidth(),
-                backgroundColor = NeonCyan,
-                contentColor = Color.Black,
+                backgroundColor = colors.primary,
+                contentColor = colors.onPrimary,
             ) {
                 Text("START VIRTUAL STAGE")
             }
@@ -154,11 +154,12 @@ private fun PresetCard(
     isSelected: Boolean,
     onClick: () -> Unit,
 ) {
-    val borderColor = if (isSelected) NeonCyan else Color.White.copy(alpha = 0.3f)
+    val colors = PixelDesign.colors
+    val borderColor = if (isSelected) colors.primary else colors.outlineVariant
     val bgColor = if (isSelected) {
-        NeonCyan.copy(alpha = 0.1f)
+        colors.primary.copy(alpha = 0.1f)
     } else {
-        MaterialTheme.colorScheme.surface
+        colors.surface
     }
 
     Column(
@@ -174,7 +175,7 @@ private fun PresetCard(
         // Mini canvas preview
         RigPreviewCanvas(
             preset = info.preset,
-            accentColor = if (isSelected) NeonCyan else NeonMagenta.copy(alpha = 0.6f),
+            accentColor = if (isSelected) colors.primary else colors.secondary.copy(alpha = 0.6f),
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(1.2f),
@@ -187,7 +188,7 @@ private fun PresetCard(
             text = info.displayName,
             style = MaterialTheme.typography.titleSmall.copy(fontFamily = PixelFontFamily),
             fontWeight = FontWeight.Bold,
-            color = if (isSelected) NeonCyan else MaterialTheme.colorScheme.onSurface,
+            color = if (isSelected) colors.primary else colors.onSurface,
             textAlign = TextAlign.Center,
         )
 
@@ -195,7 +196,7 @@ private fun PresetCard(
         Text(
             text = "${info.fixtureCount} fixtures",
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = colors.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
 
@@ -203,7 +204,7 @@ private fun PresetCard(
         Text(
             text = info.description,
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            color = colors.onSurfaceDim,
             textAlign = TextAlign.Center,
         )
     }
@@ -223,8 +224,9 @@ private fun RigPreviewCanvas(
         SimulatedFixtureRig(preset).fixtures
     }
 
+    val canvasColors = PixelDesign.colors
     Canvas(
-        modifier = modifier.background(Color(0xFF080818)),
+        modifier = modifier.background(canvasColors.background),
     ) {
         if (fixtures.isEmpty()) return@Canvas
 

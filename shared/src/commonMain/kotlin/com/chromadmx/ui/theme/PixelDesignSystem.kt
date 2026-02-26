@@ -62,7 +62,7 @@ data class PixelColors(
     val onSurfaceDim: Color = MatchaLightColor.copy(alpha = 0.6f),
     val primaryDark: Color = MatchaDark,
     val primaryLight: Color = MatchaLightColor,
-    val scrim: Color = Color.Black.copy(alpha = 0.6f),
+    val scrim: Color = Color.Black.copy(alpha = 0.45f),
     val outline: Color = MatchaPrimary.copy(alpha = 0.6f),
     val outlineVariant: Color = MatchaPrimary.copy(alpha = 0.3f),
     val glow: Color = MatchaPrimary,

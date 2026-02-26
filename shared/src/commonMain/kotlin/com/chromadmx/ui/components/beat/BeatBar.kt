@@ -43,7 +43,7 @@ fun BeatBar(
             beatPhase = beatState.beatPhase,
             source = bpmSource,
             onTap = onTapTempo,
-            modifier = Modifier.width(140.dp),
+            modifier = Modifier.width(120.dp),
         )
 
         // Right: stacked indicators

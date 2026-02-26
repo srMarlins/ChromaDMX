@@ -61,7 +61,6 @@ fun PixelSwitch(
             onClick = { onCheckedChange?.invoke(!checked) },
             role = Role.Switch
         )
-        .clip(PixelShape.Small)
         .let { mod ->
             if (checked && enabled) {
                 mod.pixelBorderGlowing(
@@ -76,6 +75,7 @@ fun PixelSwitch(
                 )
             }
         }
+        .clip(PixelShape.Small)
         .background(trackColor, PixelShape.Small)
 
     Box(
@@ -87,9 +87,9 @@ fun PixelSwitch(
             modifier = Modifier
                 .offset { IntOffset(thumbOffset.roundToPx(), 0) }
                 .size(thumbSize)
-                .clip(PixelShape(4.dp))
                 .pixelBorder(chamfer = 4.dp)
-                .background(Color.White, PixelShape(4.dp))
+                .clip(PixelShape(4.dp))
+                .background(PixelDesign.colors.onPrimary, PixelShape(4.dp))
         )
     }
 }

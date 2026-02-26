@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -154,11 +155,11 @@ private fun SetupTopBar(
                 val dotColor = when {
                     index < currentIndex -> NeonGreen
                     index == currentIndex -> PixelDesign.colors.primary
-                    else -> PixelDesign.colors.onSurfaceVariant.copy(alpha = 0.3f)
+                    else -> PixelDesign.colors.onSurfaceVariant.copy(alpha = 0.4f)
                 }
                 Box(
                     modifier = Modifier
-                        .size(6.dp)
+                        .size(8.dp)
                         .background(dotColor),
                 )
             }
@@ -180,9 +181,8 @@ private fun DiscoveryPhase(
     Column(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
     ) {
-        Spacer(modifier = Modifier.height(PixelDesign.spacing.large))
-
         if (state.isScanning) {
             // Scanning state
             ScanningContent()
@@ -247,7 +247,7 @@ private fun NodesFoundContent(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
@@ -261,7 +261,7 @@ private fun NodesFoundContent(
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f, fill = false),
+                .heightIn(max = 300.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             items(nodes, key = { it.nodeKey }) { node ->
@@ -291,7 +291,7 @@ private fun NoNodesContent(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
@@ -303,7 +303,7 @@ private fun NoNodesContent(
         Spacer(modifier = Modifier.height(PixelDesign.spacing.medium))
 
         PixelCard(
-            borderColor = NeonMagenta.copy(alpha = 0.5f),
+            borderColor = NeonMagenta.copy(alpha = 0.8f),
         ) {
             Text(
                 text = "No Art-Net nodes detected on the network. Try again or launch a virtual stage instead.",
@@ -372,9 +372,8 @@ private fun FixtureConfigPhase(
     Column(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
     ) {
-        Spacer(modifier = Modifier.height(PixelDesign.spacing.large))
-
         Text(
             text = "YOUR STAGE",
             style = MaterialTheme.typography.headlineSmall.copy(
@@ -398,18 +397,21 @@ private fun FixtureConfigPhase(
             color = PixelDesign.colors.onSurfaceVariant,
         )
 
-        Spacer(modifier = Modifier.height(PixelDesign.spacing.medium))
+        Spacer(modifier = Modifier.height(PixelDesign.spacing.large))
 
         // Stage preview canvas — simplified fixture dot visualization
-        FixturePreviewCanvas(
-            fixtureCount = fixtureCount,
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f, fill = false)
-                .height(220.dp),
-        )
+        PixelCard(
+            borderColor = NeonCyan.copy(alpha = 0.4f),
+        ) {
+            FixturePreviewCanvas(
+                fixtureCount = fixtureCount,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp),
+            )
+        }
 
-        Spacer(modifier = Modifier.height(PixelDesign.spacing.medium))
+        Spacer(modifier = Modifier.height(PixelDesign.spacing.large))
 
         // Rig preset selector (simulation mode only)
         if (state.isSimulationMode) {
@@ -431,8 +433,6 @@ private fun FixtureConfigPhase(
         ) {
             Text("START SHOW")
         }
-
-        Spacer(modifier = Modifier.height(PixelDesign.spacing.medium))
     }
 }
 
