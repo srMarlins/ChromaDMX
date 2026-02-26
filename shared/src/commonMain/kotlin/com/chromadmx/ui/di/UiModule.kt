@@ -1,6 +1,8 @@
 package com.chromadmx.ui.di
 
+import com.chromadmx.agent.controller.FixtureController
 import com.chromadmx.agent.pregen.PreGenerationService
+import com.chromadmx.core.persistence.FixtureRepository
 import com.chromadmx.networking.ble.BleProvisioningService
 import com.chromadmx.ui.components.network.NetworkHealthViewModel
 import com.chromadmx.ui.viewmodel.AgentViewModel
@@ -62,6 +64,8 @@ val uiModule = module {
             beatClock = get(),
             nodeDiscovery = get(),
             scope = vmScope,
+            fixtureRepository = getOrNull<FixtureRepository>(),
+            fixtureController = getOrNull<FixtureController>(),
         )
     }
 

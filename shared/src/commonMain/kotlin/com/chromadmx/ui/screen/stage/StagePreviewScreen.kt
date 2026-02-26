@@ -19,7 +19,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -62,6 +66,9 @@ import com.chromadmx.ui.viewmodel.StageViewModel
  *
  * When simulation mode is active, a pulsing "SIMULATION" badge appears
  * in the top-left corner. Tapping it shows an info tooltip.
+ *
+ * Edit mode (toggled via pencil icon) enables drag-to-reposition fixtures,
+ * Z-height editing, group assignment, and test-fire functionality.
  */
 @Composable
 fun StagePreviewScreen(
@@ -83,6 +90,8 @@ fun StagePreviewScreen(
     val nodes by viewModel.nodes.collectAsState()
     val currentTimeMs by viewModel.currentTimeMs.collectAsState()
     val isNodeListOpen by viewModel.isNodeListOpen.collectAsState()
+    val isEditMode by viewModel.isEditMode.collectAsState()
+    val groups by viewModel.groups.collectAsState()
 
     var showSimTooltip by remember { mutableStateOf(false) }
 
@@ -110,8 +119,12 @@ fun StagePreviewScreen(
                     fixtures = fixtures,
                     fixtureColors = fixtureColors,
                     selectedFixtureIndex = selectedFixtureIndex,
+                    isEditMode = isEditMode,
                     onFixtureTapped = { index -> viewModel.selectFixture(index) },
                     onBackgroundTapped = { viewModel.selectFixture(null) },
+                    onFixtureDragged = { index, newPos ->
+                        viewModel.updateFixturePosition(index, newPos)
+                    },
                     modifier = Modifier.fillMaxSize(),
                 )
                 1 -> AudienceView(
@@ -162,12 +175,25 @@ fun StagePreviewScreen(
                         modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
                     )
 
-                    // Right: Node health + Settings gear
+                    // Right: Node health + Edit toggle + Settings gear
                     NodeHealthCompact(
                         nodes = nodes,
                         currentTimeMs = currentTimeMs,
                         onClick = { viewModel.toggleNodeList() }
                     )
+
+                    // Edit mode toggle (pencil icon)
+                    IconButton(
+                        onClick = { viewModel.toggleEditMode() },
+                        modifier = Modifier.size(36.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Toggle Edit Mode",
+                            tint = if (isEditMode) NeonYellow else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
 
                     IconButton(
                         onClick = onSettingsClick,
@@ -219,6 +245,29 @@ fun StagePreviewScreen(
             }
         }
 
+        // --- Edit mode indicator (top-right, below top bar) ---
+        AnimatedVisibility(
+            visible = isEditMode,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(end = 16.dp, top = 56.dp),
+        ) {
+            Text(
+                text = "EDIT MODE",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontFamily = PixelFontFamily,
+                    fontSize = 8.sp,
+                ),
+                color = NeonYellow,
+                modifier = Modifier
+                    .pixelBorder(width = 1.dp, color = NeonYellow.copy(alpha = 0.4f), pixelSize = 1.dp)
+                    .background(Color(0x88000000))
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+            )
+        }
+
         // --- View mode indicator (two dots) ---
         Row(
             modifier = Modifier
@@ -228,6 +277,30 @@ fun StagePreviewScreen(
         ) {
             ViewModeIndicatorDot(isActive = pagerState.currentPage == 0, label = "TOP")
             ViewModeIndicatorDot(isActive = pagerState.currentPage == 1, label = "FRONT")
+        }
+
+        // --- Re-scan FAB (visible in edit mode) ---
+        AnimatedVisibility(
+            visible = isEditMode,
+            enter = fadeIn() + slideInVertically { it },
+            exit = fadeOut() + slideOutVertically { it },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = 88.dp),
+        ) {
+            FloatingActionButton(
+                onClick = { viewModel.rescanFixtures() },
+                containerColor = NeonCyan.copy(alpha = 0.8f),
+                contentColor = Color.Black,
+                elevation = FloatingActionButtonDefaults.elevation(0.dp),
+                modifier = Modifier.size(48.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = "Re-scan Fixtures",
+                    modifier = Modifier.size(24.dp),
+                )
+            }
         }
 
         // --- Bottom preset strip ---
@@ -241,7 +314,7 @@ fun StagePreviewScreen(
                 .align(Alignment.BottomCenter),
         )
 
-        // --- Fixture selection overlay ---
+        // --- Fixture selection overlay (edit or info mode) ---
         AnimatedVisibility(
             visible = selectedFixtureIndex != null,
             enter = fadeIn() + slideInVertically { it / 2 },
@@ -253,12 +326,27 @@ fun StagePreviewScreen(
             selectedFixtureIndex?.let { index ->
                 val fixture = fixtures.getOrNull(index)
                 if (fixture != null) {
-                    FixtureInfoOverlay(
-                        fixture = fixture,
-                        fixtureIndex = index,
-                        color = fixtureColors.getOrNull(index),
-                        onDismiss = { viewModel.selectFixture(null) },
-                    )
+                    if (isEditMode) {
+                        FixtureEditOverlay(
+                            fixture = fixture,
+                            fixtureIndex = index,
+                            groups = groups,
+                            onZHeightChanged = { z -> viewModel.updateZHeight(index, z) },
+                            onGroupAssigned = { groupId -> viewModel.assignGroup(index, groupId) },
+                            onCreateGroup = {
+                                viewModel.createGroup("New Group")
+                            },
+                            onTestFire = { viewModel.testFireFixture(index) },
+                            onDismiss = { viewModel.selectFixture(null) },
+                        )
+                    } else {
+                        FixtureInfoOverlay(
+                            fixture = fixture,
+                            fixtureIndex = index,
+                            color = fixtureColors.getOrNull(index),
+                            onDismiss = { viewModel.selectFixture(null) },
+                        )
+                    }
                 }
             }
         }
@@ -344,10 +432,10 @@ private fun ViewModeIndicatorDot(isActive: Boolean, label: String) {
 }
 
 /**
- * Overlay card showing fixture info when a fixture is selected.
+ * Overlay card showing fixture info when a fixture is selected (non-edit mode).
  */
 @Composable
-private fun FixtureInfoOverlay(
+internal fun FixtureInfoOverlay(
     fixture: com.chromadmx.core.model.Fixture3D,
     fixtureIndex: Int,
     color: com.chromadmx.core.model.Color?,
