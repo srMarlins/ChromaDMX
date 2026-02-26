@@ -139,7 +139,7 @@ fun TopDownEditor(
                                     }
                                 },
                                 onDrag = { change, _ ->
-                                    if (dragTargetIndex >= 0 && fixtures.isNotEmpty()) {
+                                    if (dragTargetIndex >= 0 && dragTargetIndex < fixtures.size) {
                                         // Convert screen position back to world coordinates
                                         val screenPos = change.position
                                         val pivotX = size.width / 2f
@@ -158,9 +158,9 @@ fun TopDownEditor(
                                         if (canvasW > 0f && canvasH > 0f) {
                                             // Compute bounds from fixtures
                                             var minX = Float.MAX_VALUE
-                                            var maxX = Float.MIN_VALUE
+                                            var maxX = -Float.MAX_VALUE
                                             var minY = Float.MAX_VALUE
-                                            var maxY = Float.MIN_VALUE
+                                            var maxY = -Float.MAX_VALUE
                                             for (f in fixtures) {
                                                 if (f.position.x < minX) minX = f.position.x
                                                 if (f.position.x > maxX) maxX = f.position.x
@@ -245,9 +245,9 @@ fun TopDownEditor(
 
         // Compute bounds of all fixture positions
         var minX = Float.MAX_VALUE
-        var maxX = Float.MIN_VALUE
+        var maxX = -Float.MAX_VALUE
         var minY = Float.MAX_VALUE
-        var maxY = Float.MIN_VALUE
+        var maxY = -Float.MAX_VALUE
         for (f in fixtures) {
             if (f.position.x < minX) minX = f.position.x
             if (f.position.x > maxX) maxX = f.position.x

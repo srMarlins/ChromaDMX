@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.pointerInput
@@ -150,6 +151,7 @@ fun IsometricRenderer(
 
         // Sort fixtures by depth (back to front)
         val sortedFixtures = IsoMath.sortFixturesByDepth(fixtures, isoAngle)
+        val reusablePath = Path()
 
         // Apply zoom and pan transform
         withTransform({
@@ -195,7 +197,7 @@ fun IsometricRenderer(
                         val floorCx = offsetX + (floorIso.x - minIsoX) * fitScale
                         val floorCy = offsetY + (floorIso.y - minIsoY) * fitScale
                         val floorPos = Offset(floorCx, floorCy)
-                        drawBeamCone(screenPos, floorPos, displayColor)
+                        drawBeamCone(screenPos, floorPos, displayColor, reusablePath)
                         drawFloorGlow(floorPos, displayColor)
                     }
                 }

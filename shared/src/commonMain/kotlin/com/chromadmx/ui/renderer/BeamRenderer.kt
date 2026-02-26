@@ -23,16 +23,16 @@ object BeamRenderer {
         fixturePos: Offset,
         floorPos: Offset,
         color: Color,
+        reusablePath: Path = Path(),
         alpha: Float = 0.15f,
         beamWidth: Float = 24f,
     ) {
-        val path = Path().apply {
-            moveTo(fixturePos.x, fixturePos.y)
-            lineTo(floorPos.x - beamWidth / 2f, floorPos.y)
-            lineTo(floorPos.x + beamWidth / 2f, floorPos.y)
-            close()
-        }
-        drawPath(path, color.copy(alpha = alpha))
+        reusablePath.reset()
+        reusablePath.moveTo(fixturePos.x, fixturePos.y)
+        reusablePath.lineTo(floorPos.x - beamWidth / 2f, floorPos.y)
+        reusablePath.lineTo(floorPos.x + beamWidth / 2f, floorPos.y)
+        reusablePath.close()
+        drawPath(reusablePath, color.copy(alpha = alpha))
         // Brighter center line
         drawLine(color.copy(alpha = alpha * 0.5f), fixturePos, floorPos, strokeWidth = 2f)
     }
