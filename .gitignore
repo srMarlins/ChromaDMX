@@ -63,5 +63,8 @@ coverage/
 # Playwright MCP
 .playwright-mcp/
 
+# Planning docs (local only)
+docs/plans/
+
 # Build logic output
 build-logic/convention/bin/
