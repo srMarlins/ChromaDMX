@@ -19,35 +19,52 @@ object ColorBlending {
         mode: BlendMode = BlendMode.NORMAL,
         opacity: Float = 1f
     ): Color {
-        val blended = when (mode) {
-            BlendMode.NORMAL   -> overlay
-            BlendMode.ADDITIVE -> additive(base, overlay)
-            BlendMode.MULTIPLY -> multiply(base, overlay)
-            BlendMode.OVERLAY  -> overlay(base, overlay)
+        // Optimization: Early exit if opacity is effectively zero
+        if (opacity <= 0f) return base
+
+        val op = opacity.coerceIn(0f, 1f)
+
+        // Optimization: For NORMAL mode at full opacity, return overlay directly (clamped)
+        if (mode == BlendMode.NORMAL && op >= 1f) {
+            return overlay.clamped()
         }
 
-        // Mix between base and blended result by opacity
-        val op = opacity.coerceIn(0f, 1f)
+        // Calculate blended components directly to avoid intermediate Color allocations
+        val r: Float
+        val g: Float
+        val b: Float
+
+        when (mode) {
+            BlendMode.NORMAL -> {
+                r = overlay.r
+                g = overlay.g
+                b = overlay.b
+            }
+            BlendMode.ADDITIVE -> {
+                r = base.r + overlay.r
+                g = base.g + overlay.g
+                b = base.b + overlay.b
+            }
+            BlendMode.MULTIPLY -> {
+                r = base.r * overlay.r
+                g = base.g * overlay.g
+                b = base.b * overlay.b
+            }
+            BlendMode.OVERLAY -> {
+                r = overlayChannel(base.r, overlay.r)
+                g = overlayChannel(base.g, overlay.g)
+                b = overlayChannel(base.b, overlay.b)
+            }
+        }
+
+        // Mix between base and blended result by opacity and clamp directly
+        // This avoids creating an intermediate Color object and calling .clamped()
         return Color(
-            base.r + (blended.r - base.r) * op,
-            base.g + (blended.g - base.g) * op,
-            base.b + (blended.b - base.b) * op
-        ).clamped()
+            (base.r + (r - base.r) * op).coerceIn(0f, 1f),
+            (base.g + (g - base.g) * op).coerceIn(0f, 1f),
+            (base.b + (b - base.b) * op).coerceIn(0f, 1f)
+        )
     }
-
-    /* -- individual blend math ---------------------------------------- */
-
-    private fun additive(base: Color, overlay: Color): Color =
-        Color(base.r + overlay.r, base.g + overlay.g, base.b + overlay.b)
-
-    private fun multiply(base: Color, overlay: Color): Color =
-        Color(base.r * overlay.r, base.g * overlay.g, base.b * overlay.b)
-
-    private fun overlay(base: Color, overlay: Color): Color = Color(
-        overlayChannel(base.r, overlay.r),
-        overlayChannel(base.g, overlay.g),
-        overlayChannel(base.b, overlay.b)
-    )
 
     /**
      * Per-channel overlay formula:
