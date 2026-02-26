@@ -170,22 +170,23 @@ class ServerCallbacks : public BLEServerCallbacks {
 
 class ConfigWriteCallback : public BLECharacteristicCallbacks {
     void onWrite(BLECharacteristic* characteristic) override {
-        String uuid = characteristic->getUUID().toString();
-        String value = characteristic->getValue();
+        BLEUUID uuid = characteristic->getUUID();
+        uint8_t* data = characteristic->getData();
+        size_t len = characteristic->getLength();
 
-        if (uuid == CHAR_NODE_NAME_UUID) {
-            nodeName = value;
-        } else if (uuid == CHAR_WIFI_SSID_UUID) {
-            wifiSsid = value;
-        } else if (uuid == CHAR_WIFI_PASSWORD_UUID) {
-            wifiPassword = value;
-        } else if (uuid == CHAR_UNIVERSE_UUID) {
-            if (value.length() >= 2) {
-                universe = (uint16_t)value[0] | ((uint16_t)value[1] << 8);
+        if (uuid.equals(BLEUUID(CHAR_NODE_NAME_UUID))) {
+            nodeName = String(data, len);
+        } else if (uuid.equals(BLEUUID(CHAR_WIFI_SSID_UUID))) {
+            wifiSsid = String(data, len);
+        } else if (uuid.equals(BLEUUID(CHAR_WIFI_PASSWORD_UUID))) {
+            wifiPassword = String(data, len);
+        } else if (uuid.equals(BLEUUID(CHAR_UNIVERSE_UUID))) {
+            if (len >= 2) {
+                universe = (uint16_t)data[0] | ((uint16_t)data[1] << 8);
             }
-        } else if (uuid == CHAR_DMX_START_ADDR_UUID) {
-            if (value.length() >= 2) {
-                dmxStartAddress = (uint16_t)value[0] | ((uint16_t)value[1] << 8);
+        } else if (uuid.equals(BLEUUID(CHAR_DMX_START_ADDR_UUID))) {
+            if (len >= 2) {
+                dmxStartAddress = (uint16_t)data[0] | ((uint16_t)data[1] << 8);
             }
         }
     }
@@ -193,10 +194,11 @@ class ConfigWriteCallback : public BLECharacteristicCallbacks {
 
 class CommandCallback : public BLECharacteristicCallbacks {
     void onWrite(BLECharacteristic* characteristic) override {
-        String value = characteristic->getValue();
-        if (value.length() < 1) return;
+        uint8_t* data = characteristic->getData();
+        size_t len = characteristic->getLength();
+        if (len < 1) return;
 
-        uint8_t cmd = value[0];
+        uint8_t cmd = data[0];
         switch (cmd) {
             case CMD_APPLY_CONFIG:
                 Serial.println("CMD: Apply config");
@@ -235,7 +237,6 @@ void updateProvisionedFlag(uint8_t status) {
 
 void applyConfig() {
     updateProvisionedFlag(STATUS_PROVISIONING);
-    saveConfig();
 
     // Connect to Wi-Fi
     updateProvisionedFlag(STATUS_WIFI_CONNECTING);

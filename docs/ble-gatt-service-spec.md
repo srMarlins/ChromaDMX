@@ -26,7 +26,7 @@ All characteristics belong to the ChromaDMX provisioning service listed above.
 | **Wi-Fi Password**    | `4368726f-6d61-444d-5800-000000000012`   | Write           | 64 bytes   | Wi-Fi network password (UTF-8, write-only for security) |
 | **Universe**          | `4368726f-6d61-444d-5800-000000000013`   | Read, Write     | 2 bytes    | Art-Net universe number (uint16 LE, 0-32767) |
 | **DMX Start Address** | `4368726f-6d61-444d-5800-000000000014`   | Read, Write     | 2 bytes    | DMX start address within universe (uint16 LE, 1-512) |
-| **Provisioned Flag**  | `4368726f-6d61-444d-5800-000000000015`   | Read, Notify    | 1 byte     | 0x00 = not provisioned, 0x01 = provisioned, 0x02 = provisioning in progress |
+| **Provisioned Flag**  | `4368726f-6d61-444d-5800-000000000015`   | Read, Notify    | 1 byte     | Flag indicating provisioning status (see table below) |
 | **Firmware Version**  | `4368726f-6d61-444d-5800-000000000016`   | Read            | 16 bytes   | Firmware version string (UTF-8, e.g. "1.0.0") |
 | **Command**           | `4368726f-6d61-444d-5800-000000000020`   | Write           | 1 byte     | Command byte (see below) |
 
@@ -66,6 +66,7 @@ All characteristics belong to the ChromaDMX provisioning service listed above.
 6. **Monitor**: App subscribes to Provisioned Flag notifications to track progress:
    `PROVISIONING` -> `WIFI_CONNECTING` -> `WIFI_CONNECTED` -> `PROVISIONED`
 7. **Verify**: App reads back configuration to confirm values were stored correctly.
+   Note: The write-only Wi-Fi Password characteristic is excluded from read-back verification.
 8. **Disconnect**: App disconnects BLE. The node is now operational on Wi-Fi/Art-Net.
 
 ## Data Encoding

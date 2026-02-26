@@ -1,7 +1,6 @@
 package com.chromadmx.ui.di
 
-import com.chromadmx.networking.ble.BleProvisioner
-import com.chromadmx.networking.ble.BleScanner
+import com.chromadmx.networking.ble.BleProvisioningService
 import com.chromadmx.ui.components.network.NetworkHealthViewModel
 import com.chromadmx.ui.viewmodel.AgentViewModel
 import com.chromadmx.ui.viewmodel.MascotViewModel
@@ -30,7 +29,7 @@ import org.koin.dsl.module
  * - AgentViewModel requires: LightingAgent, PreGenerationService
  * - MascotViewModel requires: BeatClock
  * - NetworkHealthViewModel requires: NodeDiscovery, MascotViewModel (optional)
- * - ProvisioningViewModel requires: BleScanner (optional), BleProvisioner (optional)
+ * - ProvisioningViewModel requires: BleProvisioningService (optional)
  */
 val uiModule = module {
     // CoroutineScope provided by chromaDiModule
@@ -91,12 +90,15 @@ val uiModule = module {
     }
 
     single {
+        BleProvisioningService(scanner = get(), provisioner = get())
+    }
+
+    single {
         val parentScope: CoroutineScope = get()
         val childJob = SupervisorJob(parentScope.coroutineContext[Job])
         val vmScope = CoroutineScope(Dispatchers.Default + childJob)
         ProvisioningViewModel(
-            scanner = getOrNull<BleScanner>(),
-            provisioner = getOrNull<BleProvisioner>(),
+            service = getOrNull<BleProvisioningService>(),
             scope = vmScope,
         )
     }

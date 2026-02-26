@@ -13,7 +13,7 @@ import kotlin.test.assertTrue
 /**
  * Tests for [ProvisioningViewModel].
  *
- * Tests both the BLE-unavailable path (null scanner/provisioner) and
+ * Tests both the BLE-unavailable path (null service) and
  * basic state management operations.
  */
 class ProvisioningViewModelTest {
@@ -26,14 +26,13 @@ class ProvisioningViewModelTest {
     )
 
     // ================================================================
-    // BLE Unavailable Path (null scanner/provisioner)
+    // BLE Unavailable Path (null service)
     // ================================================================
 
     @Test
     fun bleUnavailable_isBleAvailable_false() = runTest {
         val vm = ProvisioningViewModel(
-            scanner = null,
-            provisioner = null,
+            service = null,
             scope = backgroundScope
         )
         assertFalse(vm.isBleAvailable)
@@ -42,8 +41,7 @@ class ProvisioningViewModelTest {
     @Test
     fun bleUnavailable_discoveredNodes_empty() = runTest {
         val vm = ProvisioningViewModel(
-            scanner = null,
-            provisioner = null,
+            service = null,
             scope = backgroundScope
         )
         assertTrue(vm.discoveredNodes.value.isEmpty())
@@ -52,8 +50,7 @@ class ProvisioningViewModelTest {
     @Test
     fun bleUnavailable_isScanning_false() = runTest {
         val vm = ProvisioningViewModel(
-            scanner = null,
-            provisioner = null,
+            service = null,
             scope = backgroundScope
         )
         assertFalse(vm.isScanning.value)
@@ -62,8 +59,7 @@ class ProvisioningViewModelTest {
     @Test
     fun bleUnavailable_provisioningState_idle() = runTest {
         val vm = ProvisioningViewModel(
-            scanner = null,
-            provisioner = null,
+            service = null,
             scope = backgroundScope
         )
         assertEquals(ProvisioningState.IDLE, vm.provisioningState.value)
@@ -72,8 +68,7 @@ class ProvisioningViewModelTest {
     @Test
     fun bleUnavailable_startScan_noOp() = runTest {
         val vm = ProvisioningViewModel(
-            scanner = null,
-            provisioner = null,
+            service = null,
             scope = backgroundScope
         )
         vm.startScan()
@@ -84,8 +79,7 @@ class ProvisioningViewModelTest {
     @Test
     fun bleUnavailable_stopScan_noOp() = runTest {
         val vm = ProvisioningViewModel(
-            scanner = null,
-            provisioner = null,
+            service = null,
             scope = backgroundScope
         )
         vm.stopScan()
@@ -96,8 +90,7 @@ class ProvisioningViewModelTest {
     @Test
     fun bleUnavailable_provision_noOp() = runTest {
         val vm = ProvisioningViewModel(
-            scanner = null,
-            provisioner = null,
+            service = null,
             scope = backgroundScope
         )
         vm.selectNode(testNode())
@@ -112,8 +105,7 @@ class ProvisioningViewModelTest {
     @Test
     fun selectNode_setsSelectedNode() = runTest {
         val vm = ProvisioningViewModel(
-            scanner = null,
-            provisioner = null,
+            service = null,
             scope = backgroundScope
         )
         val node = testNode()
@@ -124,8 +116,7 @@ class ProvisioningViewModelTest {
     @Test
     fun selectNode_clearsError() = runTest {
         val vm = ProvisioningViewModel(
-            scanner = null,
-            provisioner = null,
+            service = null,
             scope = backgroundScope
         )
         vm.selectNode(testNode())
@@ -135,8 +126,7 @@ class ProvisioningViewModelTest {
     @Test
     fun selectNode_clearsCurrentConfig() = runTest {
         val vm = ProvisioningViewModel(
-            scanner = null,
-            provisioner = null,
+            service = null,
             scope = backgroundScope
         )
         vm.selectNode(testNode())
@@ -146,8 +136,7 @@ class ProvisioningViewModelTest {
     @Test
     fun clearSelection_removesSelectedNode() = runTest {
         val vm = ProvisioningViewModel(
-            scanner = null,
-            provisioner = null,
+            service = null,
             scope = backgroundScope
         )
         vm.selectNode(testNode())
@@ -158,8 +147,7 @@ class ProvisioningViewModelTest {
     @Test
     fun clearSelection_clearsError() = runTest {
         val vm = ProvisioningViewModel(
-            scanner = null,
-            provisioner = null,
+            service = null,
             scope = backgroundScope
         )
         vm.selectNode(testNode())
@@ -170,8 +158,7 @@ class ProvisioningViewModelTest {
     @Test
     fun clearSelection_clearsCurrentConfig() = runTest {
         val vm = ProvisioningViewModel(
-            scanner = null,
-            provisioner = null,
+            service = null,
             scope = backgroundScope
         )
         vm.selectNode(testNode())
@@ -186,22 +173,20 @@ class ProvisioningViewModelTest {
     @Test
     fun provision_invalidConfig_setsError() = runTest {
         val vm = ProvisioningViewModel(
-            scanner = null,
-            provisioner = null,
+            service = null,
             scope = backgroundScope
         )
         vm.selectNode(testNode())
         // Invalid: blank name
         vm.provision(NodeConfig("", "SSID", "pass", 0, 1))
         // BLE is unavailable, so provision is a no-op.
-        // The validation check is inside the isBleAvailable guard.
+        // The validation check is inside the service.
     }
 
     @Test
     fun provision_noSelectedNode_noOp() = runTest {
         val vm = ProvisioningViewModel(
-            scanner = null,
-            provisioner = null,
+            service = null,
             scope = backgroundScope
         )
         // No node selected
@@ -216,8 +201,7 @@ class ProvisioningViewModelTest {
     @Test
     fun resetState_clearsError() = runTest {
         val vm = ProvisioningViewModel(
-            scanner = null,
-            provisioner = null,
+            service = null,
             scope = backgroundScope
         )
         vm.resetState()
@@ -227,8 +211,7 @@ class ProvisioningViewModelTest {
     @Test
     fun resetState_clearsCurrentConfig() = runTest {
         val vm = ProvisioningViewModel(
-            scanner = null,
-            provisioner = null,
+            service = null,
             scope = backgroundScope
         )
         vm.resetState()
@@ -242,8 +225,7 @@ class ProvisioningViewModelTest {
     @Test
     fun onCleared_doesNotCrash() = runTest {
         val vm = ProvisioningViewModel(
-            scanner = null,
-            provisioner = null,
+            service = null,
             scope = backgroundScope
         )
         vm.onCleared()
@@ -253,8 +235,7 @@ class ProvisioningViewModelTest {
     @Test
     fun onCleared_afterNodeSelection() = runTest {
         val vm = ProvisioningViewModel(
-            scanner = null,
-            provisioner = null,
+            service = null,
             scope = backgroundScope
         )
         vm.selectNode(testNode())
@@ -269,8 +250,7 @@ class ProvisioningViewModelTest {
     @Test
     fun fullWorkflow_selectClearSelect() = runTest {
         val vm = ProvisioningViewModel(
-            scanner = null,
-            provisioner = null,
+            service = null,
             scope = backgroundScope
         )
         val node1 = testNode()
@@ -289,8 +269,7 @@ class ProvisioningViewModelTest {
     @Test
     fun fullWorkflow_scanStartStop_bleUnavailable() = runTest {
         val vm = ProvisioningViewModel(
-            scanner = null,
-            provisioner = null,
+            service = null,
             scope = backgroundScope
         )
         vm.startScan()

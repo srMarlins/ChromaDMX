@@ -1,8 +1,7 @@
 package com.chromadmx.ui.viewmodel
 
 import com.chromadmx.networking.ble.BleNode
-import com.chromadmx.networking.ble.BleProvisioner
-import com.chromadmx.networking.ble.BleScanner
+import com.chromadmx.networking.ble.BleProvisioningService
 import com.chromadmx.networking.ble.NodeConfig
 import com.chromadmx.networking.ble.ProvisioningState
 import kotlinx.coroutines.CoroutineScope
@@ -15,8 +14,8 @@ import kotlinx.coroutines.launch
 /**
  * ViewModel for the BLE provisioning workflow.
  *
- * Coordinates BLE scanning and provisioning through [BleScanner] and
- * [BleProvisioner], exposing reactive state for the UI layer.
+ * Thin layer between the UI and [BleProvisioningService], exposing reactive
+ * state for Compose and delegating all provisioning tasks to the service.
  *
  * The provisioning flow:
  * 1. Start scan -> discover nodes
@@ -27,16 +26,14 @@ import kotlinx.coroutines.launch
  * 6. Node reboots and appears on Art-Net
  *
  * When [isBleAvailable] is false (e.g., platform does not support BLE or
- * the scanner/provisioner threw [UnsupportedOperationException]), the UI
- * should display a graceful "BLE not available" message.
+ * the service is null), the UI should display a graceful "BLE not available"
+ * message.
  *
- * @param scanner     BLE scanner instance (may be null if BLE is unavailable)
- * @param provisioner BLE provisioner instance (may be null if BLE is unavailable)
- * @param scope       Coroutine scope for async operations
+ * @param service BLE provisioning service (may be null if BLE is unavailable)
+ * @param scope   Coroutine scope for async operations
  */
 class ProvisioningViewModel(
-    private val scanner: BleScanner?,
-    private val provisioner: BleProvisioner?,
+    private val service: BleProvisioningService?,
     private val scope: CoroutineScope,
 ) {
     /**
@@ -44,23 +41,31 @@ class ProvisioningViewModel(
      * When false, all scan/provision operations are no-ops and the UI
      * should show a "BLE not available" message.
      */
-    val isBleAvailable: Boolean = scanner != null && provisioner != null
+    val isBleAvailable: Boolean = service != null
 
-    // --- Scan state ---
+    // --- Scan state (delegated from service) ---
 
     /** Discovered BLE nodes from the scanner. */
     val discoveredNodes: StateFlow<List<BleNode>> =
-        scanner?.discoveredNodes ?: MutableStateFlow(emptyList())
+        service?.discoveredNodes ?: MutableStateFlow(emptyList())
 
     /** Whether a BLE scan is currently active. */
     val isScanning: StateFlow<Boolean> =
-        scanner?.isScanning ?: MutableStateFlow(false)
+        service?.isScanning ?: MutableStateFlow(false)
 
-    // --- Provisioning state ---
+    // --- Provisioning state (delegated from service) ---
 
     /** Current state of the provisioning workflow. */
     val provisioningState: StateFlow<ProvisioningState> =
-        provisioner?.state ?: MutableStateFlow(ProvisioningState.IDLE)
+        service?.state ?: MutableStateFlow(ProvisioningState.IDLE)
+
+    /** Human-readable error message from the most recent failed operation. */
+    val errorMessage: StateFlow<String?> =
+        service?.errorMessage ?: MutableStateFlow(null)
+
+    /** Configuration that was last successfully written and verified. */
+    val currentConfig: StateFlow<NodeConfig?> =
+        service?.lastProvisionedConfig ?: MutableStateFlow(null)
 
     // --- Selection ---
 
@@ -68,20 +73,6 @@ class ProvisioningViewModel(
 
     /** The node currently selected for provisioning. */
     val selectedNode: StateFlow<BleNode?> = _selectedNode.asStateFlow()
-
-    // --- Current config read from node ---
-
-    private val _currentConfig = MutableStateFlow<NodeConfig?>(null)
-
-    /** Configuration currently stored on the selected node (read after connect). */
-    val currentConfig: StateFlow<NodeConfig?> = _currentConfig.asStateFlow()
-
-    // --- Error message ---
-
-    private val _errorMessage = MutableStateFlow<String?>(null)
-
-    /** Human-readable error message from the most recent failed operation. */
-    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
     private var provisionJob: Job? = null
 
@@ -93,12 +84,7 @@ class ProvisioningViewModel(
      */
     fun startScan() {
         if (!isBleAvailable) return
-        _errorMessage.value = null
-        try {
-            scanner?.startScan()
-        } catch (e: UnsupportedOperationException) {
-            _errorMessage.value = "BLE scanning not supported on this device"
-        }
+        service?.startScanning()
     }
 
     /**
@@ -107,11 +93,7 @@ class ProvisioningViewModel(
      */
     fun stopScan() {
         if (!isBleAvailable) return
-        try {
-            scanner?.stopScan()
-        } catch (_: UnsupportedOperationException) {
-            // Silently ignore -- scan was never started
-        }
+        service?.stopScanning()
     }
 
     // --- Node selection ---
@@ -123,8 +105,7 @@ class ProvisioningViewModel(
      */
     fun selectNode(node: BleNode) {
         _selectedNode.value = node
-        _currentConfig.value = null
-        _errorMessage.value = null
+        service?.reset()
     }
 
     /**
@@ -132,8 +113,7 @@ class ProvisioningViewModel(
      */
     fun clearSelection() {
         _selectedNode.value = null
-        _currentConfig.value = null
-        _errorMessage.value = null
+        service?.reset()
     }
 
     // --- Provisioning ---
@@ -141,9 +121,9 @@ class ProvisioningViewModel(
     /**
      * Run the full provisioning workflow for the selected node.
      *
-     * Connects to the node, writes the given config, verifies it by
-     * reading it back, then disconnects. State transitions are reflected
-     * in [provisioningState].
+     * Delegates the entire provisioning workflow to [BleProvisioningService].
+     * State transitions are reflected in [provisioningState] and errors in
+     * [errorMessage], both delegated from the service.
      *
      * @param config The configuration to write to the node
      */
@@ -151,54 +131,9 @@ class ProvisioningViewModel(
         val node = _selectedNode.value ?: return
         if (!isBleAvailable) return
 
-        // Validate before attempting
-        val errors = config.validate()
-        if (errors.isNotEmpty()) {
-            _errorMessage.value = errors.first()
-            return
-        }
-
         provisionJob?.cancel()
         provisionJob = scope.launch {
-            _errorMessage.value = null
-            try {
-                // Step 1: Connect
-                val connected = provisioner!!.connect(node.deviceId)
-                if (!connected) {
-                    _errorMessage.value = "Failed to connect to ${node.displayName}"
-                    return@launch
-                }
-
-                // Step 2: Write config
-                val written = provisioner.writeConfig(config)
-                if (!written) {
-                    _errorMessage.value = "Failed to write configuration"
-                    provisioner.disconnect()
-                    return@launch
-                }
-
-                // Step 3: Verify by reading back
-                val readBack = provisioner.readConfig()
-                if (readBack == null) {
-                    _errorMessage.value = "Failed to verify configuration"
-                    provisioner.disconnect()
-                    return@launch
-                }
-
-                // Step 4: Disconnect (node will reboot)
-                provisioner.disconnect()
-
-                _currentConfig.value = readBack
-            } catch (e: UnsupportedOperationException) {
-                _errorMessage.value = "BLE provisioning not yet implemented on this platform"
-            } catch (e: Exception) {
-                _errorMessage.value = e.message ?: "Unknown provisioning error"
-                try {
-                    provisioner?.disconnect()
-                } catch (_: Exception) {
-                    // Ignore disconnect errors during error cleanup
-                }
-            }
+            service?.provision(node, config)
         }
     }
 
@@ -208,10 +143,7 @@ class ProvisioningViewModel(
      */
     fun resetState() {
         provisionJob?.cancel()
-        _errorMessage.value = null
-        _currentConfig.value = null
-        // Note: actual state reset happens through the provisioner's StateFlow
-        // For the stub, the state remains at whatever value it was
+        service?.reset()
     }
 
     /**
@@ -219,10 +151,6 @@ class ProvisioningViewModel(
      */
     fun onCleared() {
         provisionJob?.cancel()
-        try {
-            scanner?.stopScan()
-        } catch (_: Exception) {
-            // Ignore
-        }
+        service?.stopScanning()
     }
 }

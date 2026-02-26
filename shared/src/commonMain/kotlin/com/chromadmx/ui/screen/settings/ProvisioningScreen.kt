@@ -394,6 +394,25 @@ private fun ConfigFormContent(
     var universe by remember { mutableStateOf("0") }
     var dmxStartAddress by remember { mutableStateOf("1") }
 
+    // Input validation
+    val universeInt = universe.toIntOrNull()
+    val universeError = when {
+        universe.isBlank() -> null // allow empty while typing
+        universeInt == null -> "Must be a number"
+        universeInt !in 0..32767 -> "Must be 0-32767"
+        else -> null
+    }
+
+    val dmxAddrInt = dmxStartAddress.toIntOrNull()
+    val dmxAddrError = when {
+        dmxStartAddress.isBlank() -> null
+        dmxAddrInt == null -> "Must be a number"
+        dmxAddrInt !in 1..512 -> "Must be 1-512"
+        else -> null
+    }
+
+    val hasValidationErrors = universeError != null || dmxAddrError != null
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -452,20 +471,32 @@ private fun ConfigFormContent(
                     )
 
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(
-                            value = universe,
-                            onValueChange = { universe = it },
-                            label = { Text("Universe") },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
-                        OutlinedTextField(
-                            value = dmxStartAddress,
-                            onValueChange = { dmxStartAddress = it },
-                            label = { Text("Start Addr") },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            OutlinedTextField(
+                                value = universe,
+                                onValueChange = { universe = it },
+                                label = { Text("Universe") },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                                isError = universeError != null,
+                                supportingText = universeError?.let {
+                                    { Text(it, color = MaterialTheme.colorScheme.error) }
+                                }
+                            )
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            OutlinedTextField(
+                                value = dmxStartAddress,
+                                onValueChange = { dmxStartAddress = it },
+                                label = { Text("Start Addr") },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                                isError = dmxAddrError != null,
+                                supportingText = dmxAddrError?.let {
+                                    { Text(it, color = MaterialTheme.colorScheme.error) }
+                                }
+                            )
+                        }
                     }
 
                     if (errorMessage != null) {
@@ -482,13 +513,14 @@ private fun ConfigFormContent(
                                 name = nodeName,
                                 wifiSsid = wifiSsid,
                                 wifiPassword = wifiPassword,
-                                universe = universe.toIntOrNull() ?: 0,
-                                dmxStartAddress = dmxStartAddress.toIntOrNull() ?: 1
+                                universe = universeInt ?: 0,
+                                dmxStartAddress = dmxAddrInt ?: 1
                             )
                             onProvision(config)
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.small
+                        shape = MaterialTheme.shapes.small,
+                        enabled = !hasValidationErrors
                     ) {
                         Text("PROVISION NODE")
                     }
