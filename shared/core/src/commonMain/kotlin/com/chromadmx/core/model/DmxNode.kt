@@ -1,4 +1,4 @@
-package com.chromadmx.networking.model
+package com.chromadmx.core.model
 
 import kotlinx.serialization.Serializable
 

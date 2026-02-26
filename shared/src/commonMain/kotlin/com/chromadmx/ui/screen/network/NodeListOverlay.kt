@@ -23,7 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.chromadmx.networking.model.DmxNode
+import com.chromadmx.core.model.DmxNode
 import com.chromadmx.ui.components.PixelDivider
 
 /**

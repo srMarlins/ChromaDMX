@@ -2,7 +2,7 @@ package com.chromadmx.ui.state
 
 import androidx.compose.runtime.Immutable
 import com.chromadmx.core.model.Genre
-import com.chromadmx.networking.model.DmxNode
+import com.chromadmx.core.model.DmxNode
 import com.chromadmx.simulation.fixtures.RigPreset
 
 /**

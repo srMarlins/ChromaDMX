@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.chromadmx.networking.model.DmxNode
+import com.chromadmx.core.model.DmxNode
 import com.chromadmx.ui.theme.NodeOffline
 import com.chromadmx.ui.theme.NodeOnline
 import com.chromadmx.ui.theme.NodeWarning

@@ -10,7 +10,7 @@ import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.core.model.Vec3
 import com.chromadmx.core.persistence.FixtureGroup
 import com.chromadmx.engine.effect.EffectLayer
-import com.chromadmx.networking.model.DmxNode
+import com.chromadmx.core.model.DmxNode
 
 /**
  * Performance-related UI state (tempo, master, layers).

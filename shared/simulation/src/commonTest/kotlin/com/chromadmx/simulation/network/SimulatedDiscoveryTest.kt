@@ -1,6 +1,6 @@
 package com.chromadmx.simulation.network
 
-import com.chromadmx.networking.model.DmxNode
+import com.chromadmx.core.model.DmxNode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy

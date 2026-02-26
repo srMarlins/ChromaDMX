@@ -1,7 +1,7 @@
 package com.chromadmx.simulation.network
 
 import com.chromadmx.networking.FixtureDiscovery
-import com.chromadmx.networking.model.DmxNode
+import com.chromadmx.core.model.DmxNode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

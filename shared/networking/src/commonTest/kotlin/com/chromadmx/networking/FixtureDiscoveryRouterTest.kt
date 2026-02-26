@@ -1,6 +1,6 @@
 package com.chromadmx.networking
 
-import com.chromadmx.networking.model.DmxNode
+import com.chromadmx.core.model.DmxNode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

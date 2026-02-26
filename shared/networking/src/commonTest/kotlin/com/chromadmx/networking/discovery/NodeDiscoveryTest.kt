@@ -1,6 +1,6 @@
 package com.chromadmx.networking.discovery
 
-import com.chromadmx.networking.model.DmxNode
+import com.chromadmx.core.model.DmxNode
 import com.chromadmx.networking.model.UdpPacket
 import com.chromadmx.networking.protocol.ArtNetCodec
 import com.chromadmx.networking.protocol.ArtNetConstants

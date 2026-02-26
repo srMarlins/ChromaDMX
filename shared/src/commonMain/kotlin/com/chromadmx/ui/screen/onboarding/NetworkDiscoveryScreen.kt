@@ -29,7 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.chromadmx.networking.model.DmxNode
+import com.chromadmx.core.model.DmxNode
 import com.chromadmx.ui.components.PixelButton
 import com.chromadmx.ui.components.PixelCard
 import com.chromadmx.ui.components.PixelProgressBar

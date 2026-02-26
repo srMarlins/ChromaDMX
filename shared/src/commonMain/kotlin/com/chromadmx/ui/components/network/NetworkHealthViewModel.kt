@@ -1,7 +1,7 @@
 package com.chromadmx.ui.components.network
 
 import com.chromadmx.networking.discovery.NodeDiscovery
-import com.chromadmx.networking.model.DmxNode
+import com.chromadmx.core.model.DmxNode
 import com.chromadmx.ui.viewmodel.MascotViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
