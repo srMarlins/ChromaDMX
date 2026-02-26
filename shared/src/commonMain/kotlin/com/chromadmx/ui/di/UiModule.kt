@@ -1,117 +1,113 @@
 package com.chromadmx.ui.di
 
+import com.chromadmx.agent.LightingAgent
 import com.chromadmx.agent.controller.FixtureController
-import com.chromadmx.agent.pregen.PreGenerationService
 import com.chromadmx.core.persistence.FixtureRepository
+import com.chromadmx.core.persistence.NetworkStateRepository
 import com.chromadmx.networking.ble.BleProvisioningService
-import com.chromadmx.ui.components.network.NetworkHealthViewModel
-import com.chromadmx.ui.viewmodel.AgentViewModel
-import com.chromadmx.ui.viewmodel.MascotViewModel
-import com.chromadmx.ui.viewmodel.OnboardingViewModel
+import com.chromadmx.ui.navigation.AppStateManager
+import com.chromadmx.ui.viewmodel.MascotViewModelV2
 import com.chromadmx.ui.viewmodel.ProvisioningViewModel
-import com.chromadmx.ui.viewmodel.SettingsViewModel
-import com.chromadmx.ui.viewmodel.StageViewModel
+import com.chromadmx.ui.viewmodel.SettingsViewModelV2
+import com.chromadmx.ui.viewmodel.SetupViewModel
+import com.chromadmx.ui.viewmodel.StageViewModelV2
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.flowOf
 import org.koin.dsl.module
 
 /**
- * Koin module for UI ViewModels.
+ * Koin module for UI ViewModels and navigation.
  *
- * [StageViewModel], [SettingsViewModel], [AgentViewModel], and [OnboardingViewModel]
- * are scoped as singletons so they survive navigation round-trips and panel
- * open/close cycles. [MascotViewModel] is a factory -- each composition gets
- * its own instance.
+ * All ViewModels follow the UDF pattern with a single [state] flow
+ * and a single [onEvent] entry point. [AppStateManager] controls the
+ * 4-screen navigation (Setup -> Stage <-> Settings <-> Provisioning).
  *
- * A child [SupervisorJob] is created per ViewModel so its coroutines can be
- * cancelled independently via [onCleared].
+ * A child [SupervisorJob] is created per ViewModel so its coroutines
+ * can be cancelled independently via [onCleared].
  *
  * Dependencies:
- * - OnboardingViewModel requires: NodeDiscovery, FileStorage
- * - StageViewModel requires: EffectEngine, EffectRegistry, PresetLibrary, BeatClock
- * - SettingsViewModel requires: NodeDiscovery
- * - AgentViewModel requires: LightingAgent, PreGenerationService
- * - MascotViewModel requires: BeatClock
- * - NetworkHealthViewModel requires: NodeDiscovery, MascotViewModel (optional)
+ * - AppStateManager requires: SettingsRepository, FixtureRepository
+ * - SetupViewModel requires: FixtureDiscovery, FixtureStore, SettingsStore
+ * - StageViewModelV2 requires: EffectEngine, EffectRegistry, PresetLibrary,
+ *     BeatClock, FixtureDiscovery, NodeDiscovery (optional)
+ * - SettingsViewModelV2 requires: SettingsStore, DmxTransportRouter, FixtureDiscovery
+ * - MascotViewModelV2 requires: BeatClock, knownNodesFlow, LightingAgent (optional)
  * - ProvisioningViewModel requires: BleProvisioningService (optional)
  */
 val uiModule = module {
     // CoroutineScope provided by chromaDiModule
 
+    // --- Navigation ---
     single {
-        val parentScope: CoroutineScope = get()
-        val childJob = SupervisorJob(parentScope.coroutineContext[Job])
-        val vmScope = CoroutineScope(Dispatchers.Default + childJob)
-        OnboardingViewModel(
-            scope = vmScope,
-            nodeDiscovery = get(),
-            fileStorage = get(),
-            presetLibrary = get(),
-            preGenService = getOrNull<PreGenerationService>(),
+        AppStateManager(
+            settingsRepository = get(),
+            fixtureRepository = get(),
+            scope = get(),
         )
     }
 
+    // --- Setup ---
     single {
         val parentScope: CoroutineScope = get()
         val childJob = SupervisorJob(parentScope.coroutineContext[Job])
         val vmScope = CoroutineScope(Dispatchers.Default + childJob)
-        StageViewModel(
+        SetupViewModel(
+            fixtureDiscovery = get(),
+            fixtureStore = get(),
+            settingsStore = get(),
+            scope = vmScope,
+        )
+    }
+
+    // --- Stage ---
+    single {
+        val parentScope: CoroutineScope = get()
+        val childJob = SupervisorJob(parentScope.coroutineContext[Job])
+        val vmScope = CoroutineScope(Dispatchers.Default + childJob)
+        StageViewModelV2(
             engine = get(),
             effectRegistry = get(),
             presetLibrary = get(),
             beatClock = get(),
-            nodeDiscovery = get(),
+            fixtureDiscovery = get(),
+            nodeDiscovery = getOrNull(),
             scope = vmScope,
             fixtureRepository = getOrNull<FixtureRepository>(),
             fixtureController = getOrNull<FixtureController>(),
         )
     }
 
+    // --- Settings ---
     single {
         val parentScope: CoroutineScope = get()
         val childJob = SupervisorJob(parentScope.coroutineContext[Job])
         val vmScope = CoroutineScope(Dispatchers.Default + childJob)
-        SettingsViewModel(
-            nodeDiscovery = get(),
+        SettingsViewModelV2(
+            settingsRepository = get(),
+            transportRouter = get(),
+            fixtureDiscovery = get(),
             scope = vmScope,
         )
     }
 
+    // --- Mascot ---
     single {
         val parentScope: CoroutineScope = get()
         val childJob = SupervisorJob(parentScope.coroutineContext[Job])
         val vmScope = CoroutineScope(Dispatchers.Default + childJob)
-        AgentViewModel(
-            agent = get(),
-            preGenService = get(),
-            scope = vmScope,
-        )
-    }
-
-    factory {
-        val parentScope: CoroutineScope = get()
-        val childJob = SupervisorJob(parentScope.coroutineContext[Job])
-        val vmScope = CoroutineScope(Dispatchers.Default + childJob)
-        MascotViewModel(
-            scope = vmScope,
+        val networkStateRepo = getOrNull<NetworkStateRepository>()
+        MascotViewModelV2(
             beatClock = get(),
-            nodeDiscovery = get(),
-        )
-    }
-
-    factory {
-        val parentScope: CoroutineScope = get()
-        val childJob = SupervisorJob(parentScope.coroutineContext[Job])
-        val vmScope = CoroutineScope(Dispatchers.Default + childJob)
-        NetworkHealthViewModel(
-            nodeDiscovery = get(),
-            mascotViewModel = getOrNull(),
+            knownNodesFlow = networkStateRepo?.knownNodes() ?: flowOf(emptyList()),
+            lightingAgent = getOrNull<LightingAgent>(),
             scope = vmScope,
         )
     }
 
+    // --- BLE Provisioning ---
     single {
         BleProvisioningService(scanner = get(), provisioner = get())
     }
