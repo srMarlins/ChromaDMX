@@ -19,7 +19,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -520,5 +523,71 @@ class SetupViewModelTest {
         vm.onEvent(SetupEvent.PerformRepeatLaunchCheck)
 
         assertTrue(vm.state.value.repeatLaunchCheckComplete)
+    }
+
+    // -- Scan timeout --
+
+    @Test
+    fun scanStopsAfterTimeoutWhenNoNodesFound() = runTest {
+        val discovery = FakeFixtureDiscovery()
+        val scope = CoroutineScope(StandardTestDispatcher(testScheduler) + SupervisorJob())
+        val vm = createVm(discovery = discovery, scope = scope)
+        testScheduler.runCurrent() // run init coroutines without advancing time
+
+        // Scan should be running
+        assertTrue(vm.state.value.isScanning)
+
+        // Advance past the scan timeout
+        testScheduler.advanceTimeBy(SetupViewModel.SCAN_DURATION_MS + 1)
+        testScheduler.runCurrent()
+
+        // Scan should have stopped since no nodes were found
+        assertFalse(vm.state.value.isScanning)
+        assertTrue(discovery.stopScanCount > 0)
+    }
+
+    @Test
+    fun scanDoesNotStopAfterTimeoutWhenNodesFound() = runTest {
+        val discovery = FakeFixtureDiscovery()
+        val nodes = listOf(DmxNode(ipAddress = "10.0.0.1", shortName = "Node1"))
+        discovery.nodesToEmit = nodes
+
+        val scope = CoroutineScope(StandardTestDispatcher(testScheduler) + SupervisorJob())
+        val vm = createVm(discovery = discovery, scope = scope)
+        testScheduler.runCurrent()
+
+        // Nodes found, scan running
+        assertTrue(vm.state.value.isScanning)
+        assertEquals(1, vm.state.value.discoveredNodes.size)
+
+        // Advance past the scan timeout
+        testScheduler.advanceTimeBy(SetupViewModel.SCAN_DURATION_MS + 1)
+        testScheduler.runCurrent()
+
+        // Scan should still be running since nodes were found
+        assertTrue(vm.state.value.isScanning)
+    }
+
+    @Test
+    fun retryScanRestartsTimeoutCycle() = runTest {
+        val discovery = FakeFixtureDiscovery()
+        val scope = CoroutineScope(StandardTestDispatcher(testScheduler) + SupervisorJob())
+        val vm = createVm(discovery = discovery, scope = scope)
+        testScheduler.runCurrent()
+
+        // First timeout stops scan
+        testScheduler.advanceTimeBy(SetupViewModel.SCAN_DURATION_MS + 1)
+        testScheduler.runCurrent()
+        assertFalse(vm.state.value.isScanning)
+
+        // Retry restarts scan
+        vm.onEvent(SetupEvent.RetryNetworkScan)
+        testScheduler.runCurrent()
+        assertTrue(vm.state.value.isScanning)
+
+        // Second timeout stops scan again
+        testScheduler.advanceTimeBy(SetupViewModel.SCAN_DURATION_MS + 1)
+        testScheduler.runCurrent()
+        assertFalse(vm.state.value.isScanning)
     }
 }
