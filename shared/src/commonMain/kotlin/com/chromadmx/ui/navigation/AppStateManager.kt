@@ -2,8 +2,6 @@ package com.chromadmx.ui.navigation
 
 import com.chromadmx.core.model.Fixture3D
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -99,7 +97,6 @@ class AppStateManager(
      * Uses an empty fixture flow and a no-op settings callback.
      */
     @Suppress("unused")
-    @OptIn(DelicateCoroutinesApi::class)
     constructor(isFirstLaunch: Boolean) : this(
         allFixtures = {
             kotlinx.coroutines.flow.flowOf(
@@ -118,7 +115,7 @@ class AppStateManager(
             )
         },
         setSetupCompleted = {},
-        scope = GlobalScope,
+        scope = CoroutineScope(kotlinx.coroutines.SupervisorJob()),
     )
 
     /**

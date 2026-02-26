@@ -157,17 +157,13 @@ class MascotViewModelV2(
         if (lostNodeKeys.isNotEmpty()) {
             val lostNode = lastKnownNodes.firstOrNull { it.nodeKey in lostNodeKeys }
             val nodeName = lostNode?.shortName ?: "Node"
-            triggerAlert("$nodeName disconnected — diagnose?")
-            // Update bubble to have an action
-            _state.update { state ->
-                state.copy(
-                    currentBubble = state.currentBubble?.copy(
-                        actionLabel = "DIAGNOSE",
-                        actionId = "diagnose_connection",
-                        type = BubbleType.ACTION
-                    )
-                )
-            }
+            setAnimState(MascotAnimState.ALERT)
+            showBubble(SpeechBubble(
+                text = "$nodeName disconnected — diagnose?",
+                type = BubbleType.ACTION,
+                actionLabel = "DIAGNOSE",
+                actionId = "diagnose_connection",
+            ))
             return
         }
     }
