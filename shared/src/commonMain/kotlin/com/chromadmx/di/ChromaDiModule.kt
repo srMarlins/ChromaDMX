@@ -27,8 +27,6 @@ import com.chromadmx.networking.output.DmxOutputService
 import com.chromadmx.networking.transport.PlatformUdpTransport
 import com.chromadmx.tempo.clock.BeatClock
 import com.chromadmx.tempo.tap.TapTempoClock
-import com.russhwolf.settings.ObservableSettings
-import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -104,7 +102,6 @@ val chromaDiModule = module {
     single { FixtureRepository(get()) }
     single { NetworkStateRepository(get()) }
     single { PresetRepository(get()) }
-    single<ObservableSettings> { Settings() as ObservableSettings }
     single { SettingsRepository(get()) }
 
     // --- Presets ---

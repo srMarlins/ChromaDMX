@@ -1,55 +1,55 @@
 package com.chromadmx.core.persistence
 
-import com.russhwolf.settings.ExperimentalSettingsApi
-import com.russhwolf.settings.ObservableSettings
-import com.russhwolf.settings.coroutines.toFlowSettings
-import com.russhwolf.settings.get
-import com.russhwolf.settings.set
+import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToOne
+import com.chromadmx.core.db.ChromaDmxDatabase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 /**
- * Repository for application-wide settings and preferences.
- * Uses multiplatform-settings for cross-platform key-value storage.
+ * Key-value settings repository using SQLDelight.
+ * Provides reactive flows for all app settings.
  */
-@OptIn(ExperimentalSettingsApi::class)
-class SettingsRepository(private val observableSettings: ObservableSettings) {
-    private val flowSettings = observableSettings.toFlowSettings()
+class SettingsRepository(private val db: ChromaDmxDatabase) {
+    private val queries = db.settingsQueries
 
-    val masterDimmer: Flow<Float> = flowSettings.getFloatFlow(KEY_MASTER_DIMMER, 1.0f)
-    val isSimulation: Flow<Boolean> = flowSettings.getBooleanFlow(KEY_IS_SIMULATION, false)
-    val activePresetId: Flow<String?> = flowSettings.getStringOrNullFlow(KEY_ACTIVE_PRESET_ID)
-    val themePreference: Flow<String> = flowSettings.getStringFlow(KEY_THEME_PREFERENCE, "Dark")
-    val transportMode: Flow<String> = flowSettings.getStringFlow(KEY_TRANSPORT_MODE, "Real")
+    init {
+        queries.ensureDefaults()
+    }
+
+    private val settingsFlow = queries.selectSettings()
+        .asFlow()
+        .mapToOne(Dispatchers.Default)
+
+    val masterDimmer: Flow<Float> = settingsFlow.map { it.master_dimmer.toFloat() }
+    val isSimulation: Flow<Boolean> = settingsFlow.map { it.is_simulation != 0L }
+    val activePresetId: Flow<String?> = settingsFlow.map { it.active_preset_id }
+    val themePreference: Flow<String> = settingsFlow.map { it.theme_preference }
+    val transportMode: Flow<String> = settingsFlow.map { it.transport_mode }
+    val setupCompleted: Flow<Boolean> = settingsFlow.map { it.setup_completed != 0L }
 
     fun setMasterDimmer(value: Float) {
-        observableSettings[KEY_MASTER_DIMMER] = value
+        queries.updateMasterDimmer(value.toDouble())
     }
 
     fun setSimulation(enabled: Boolean) {
-        observableSettings[KEY_IS_SIMULATION] = enabled
+        queries.updateIsSimulation(if (enabled) 1L else 0L)
     }
 
     fun setActivePresetId(id: String?) {
-        if (id == null) {
-            observableSettings.remove(KEY_ACTIVE_PRESET_ID)
-        } else {
-            observableSettings[KEY_ACTIVE_PRESET_ID] = id
-        }
+        queries.updateActivePresetId(id)
     }
 
     fun setThemePreference(theme: String) {
-        observableSettings[KEY_THEME_PREFERENCE] = theme
+        queries.updateThemePreference(theme)
     }
 
     fun setTransportMode(mode: String) {
-        observableSettings[KEY_TRANSPORT_MODE] = mode
+        queries.updateTransportMode(mode)
     }
 
-    companion object {
-        private const val KEY_MASTER_DIMMER = "master_dimmer"
-        private const val KEY_IS_SIMULATION = "is_simulation"
-        private const val KEY_ACTIVE_PRESET_ID = "active_preset_id"
-        private const val KEY_THEME_PREFERENCE = "theme_preference"
-        private const val KEY_TRANSPORT_MODE = "transport_mode"
+    fun setSetupCompleted(completed: Boolean) {
+        queries.updateSetupCompleted(if (completed) 1L else 0L)
     }
 }

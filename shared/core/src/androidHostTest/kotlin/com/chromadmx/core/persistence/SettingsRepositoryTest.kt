@@ -1,9 +1,11 @@
 package com.chromadmx.core.persistence
 
-import com.russhwolf.settings.MapSettings
+import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
+import com.chromadmx.core.db.ChromaDmxDatabase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -13,8 +15,16 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsRepositoryTest {
 
-    private val settings = MapSettings()
-    private val repository = SettingsRepository(settings)
+    private lateinit var db: ChromaDmxDatabase
+    private lateinit var repository: SettingsRepository
+
+    @BeforeTest
+    fun setup() {
+        val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
+        ChromaDmxDatabase.Schema.create(driver)
+        db = ChromaDmxDatabase(driver)
+        repository = SettingsRepository(db)
+    }
 
     @Test
     fun testMasterDimmer() = runTest {
@@ -51,5 +61,12 @@ class SettingsRepositoryTest {
         assertEquals("Real", repository.transportMode.first())
         repository.setTransportMode("Simulated")
         assertEquals("Simulated", repository.transportMode.first())
+    }
+
+    @Test
+    fun testSetupCompleted() = runTest {
+        assertFalse(repository.setupCompleted.first())
+        repository.setSetupCompleted(true)
+        assertTrue(repository.setupCompleted.first())
     }
 }

@@ -1,0 +1,35 @@
+CREATE TABLE app_settings (
+    id INTEGER PRIMARY KEY CHECK (id = 0), -- Ensure only one row
+    master_dimmer REAL NOT NULL DEFAULT 1.0,
+    is_simulation INTEGER NOT NULL DEFAULT 0, -- 0 for false, 1 for true
+    active_preset_id TEXT DEFAULT NULL,
+    theme_preference TEXT NOT NULL DEFAULT 'Dark',
+    transport_mode TEXT NOT NULL DEFAULT 'Real',
+    setup_completed INTEGER NOT NULL DEFAULT 0 -- 0 for false, 1 for true
+);
+
+-- Initialize the single row if it doesn't exist
+ensureDefaults:
+INSERT OR IGNORE INTO app_settings (id, master_dimmer, is_simulation, active_preset_id, theme_preference, transport_mode, setup_completed)
+VALUES (0, 1.0, 0, NULL, 'Dark', 'Real', 0);
+
+selectSettings:
+SELECT * FROM app_settings WHERE id = 0;
+
+updateMasterDimmer:
+UPDATE app_settings SET master_dimmer = ? WHERE id = 0;
+
+updateIsSimulation:
+UPDATE app_settings SET is_simulation = ? WHERE id = 0;
+
+updateActivePresetId:
+UPDATE app_settings SET active_preset_id = ? WHERE id = 0;
+
+updateThemePreference:
+UPDATE app_settings SET theme_preference = ? WHERE id = 0;
+
+updateTransportMode:
+UPDATE app_settings SET transport_mode = ? WHERE id = 0;
+
+updateSetupCompleted:
+UPDATE app_settings SET setup_completed = ? WHERE id = 0;
