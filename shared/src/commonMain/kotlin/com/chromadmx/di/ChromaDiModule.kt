@@ -62,7 +62,8 @@ val chromaDiModule = module {
     // --- Networking: Real ---
     single { PlatformUdpTransport() }
     single { NodeDiscovery(transport = get()) }
-    single(named("real")) { DmxOutputService(transport = get()) } bind DmxTransport::class
+    single { DmxOutputService(transport = get()) }
+    single(named("real")) { get<DmxOutputService>() } bind DmxTransport::class
 
     // --- Networking: Simulated ---
     single(named("simulated")) { SimulatedTransport() } bind DmxTransport::class

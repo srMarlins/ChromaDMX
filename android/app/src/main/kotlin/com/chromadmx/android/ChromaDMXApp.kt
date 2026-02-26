@@ -7,6 +7,8 @@ import com.chromadmx.core.db.DriverFactory
 import com.chromadmx.core.persistence.AndroidFileStorage
 import com.chromadmx.core.persistence.FileStorage
 import com.chromadmx.di.chromaDiModule
+import com.chromadmx.networking.ble.BleProvisioner
+import com.chromadmx.networking.ble.BleScanner
 import com.chromadmx.ui.di.uiModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -26,6 +28,8 @@ class ChromaDMXApp : Application() {
         val androidPlatformModule = module {
             single<FileStorage> { AndroidFileStorage(get()) }
             single { DriverFactory(get()) }
+            single { BleScanner() }
+            single { BleProvisioner() }
             single {
                 val googleKey = BuildConfig.GOOGLE_API_KEY
                 val anthropicKey = BuildConfig.ANTHROPIC_API_KEY
