@@ -78,7 +78,9 @@ class StageViewModel(
     private var masterDimmerBeforePreview: Float? = null
 
     // --- Fixtures ---
-    private val _fixtures = MutableStateFlow(engine.fixtures)
+    private val _fixtures = MutableStateFlow(
+        if (fixtureRepository != null) emptyList() else engine.fixtures
+    )
     val fixtures: StateFlow<List<Fixture3D>> = _fixtures.asStateFlow()
 
     private val _selectedFixtureIndex = MutableStateFlow<Int?>(null)
@@ -146,13 +148,11 @@ class StageViewModel(
         }
     }
 
-    /** Collect fixtures from repository flow if available. */
+    /** Collect fixtures from repository flow if available (single source of truth). */
     private val repoSyncJob: Job? = fixtureRepository?.let { repo ->
         scope.launch {
             repo.allFixtures().collect { dbFixtures ->
-                if (dbFixtures.isNotEmpty()) {
-                    _fixtures.value = dbFixtures
-                }
+                _fixtures.value = dbFixtures
             }
         }
     }
@@ -319,15 +319,25 @@ class StageViewModel(
     }
 
     /**
-     * Update a fixture's position in the UI model and persist to database.
+     * Update fixture position locally (visual feedback during drag).
+     * Does NOT persist to database — call [persistFixturePosition] on drag end.
      */
     fun updateFixturePosition(index: Int, newPosition: Vec3) {
         val current = _fixtures.value.toMutableList()
         if (index in current.indices) {
-            val updated = current[index].copy(position = newPosition)
-            current[index] = updated
+            current[index] = current[index].copy(position = newPosition)
             _fixtures.value = current
-            fixtureRepository?.updatePosition(updated.fixture.fixtureId, newPosition)
+        }
+    }
+
+    /**
+     * Persist a fixture's current position to the database.
+     * Call this on drag end, not during drag.
+     */
+    fun persistFixturePosition(index: Int) {
+        val fixture = _fixtures.value.getOrNull(index) ?: return
+        scope.launch {
+            fixtureRepository?.updatePosition(fixture.fixture.fixtureId, fixture.position)
         }
     }
 
@@ -370,11 +380,15 @@ class StageViewModel(
 
     /** Update the Z-height of a fixture by index. */
     fun updateZHeight(index: Int, z: Float) {
-        val current = _fixtures.value
+        val current = _fixtures.value.toMutableList()
         if (index in current.indices) {
-            val fixture = current[index]
-            val newPosition = fixture.position.copy(z = z)
-            updateFixturePosition(index, newPosition)
+            val f = current[index]
+            val newPos = f.position.copy(z = z)
+            current[index] = f.copy(position = newPos)
+            _fixtures.value = current
+            scope.launch {
+                fixtureRepository?.updatePosition(f.fixture.fixtureId, newPos)
+            }
         }
     }
 
@@ -393,7 +407,7 @@ class StageViewModel(
 
     /** Create a new fixture group. Returns the new group ID. */
     fun createGroup(name: String, color: Long = 0xFF00FBFF): String {
-        val groupId = "grp-${name.lowercase().replace(" ", "-")}-${currentTimeMillis()}-${kotlin.random.Random.nextInt()}"
+        val groupId = "grp-${name.lowercase().replace(" ", "-")}-${currentTimeMillis()}-${kotlin.random.Random.nextInt(0, Int.MAX_VALUE)}"
         val group = FixtureGroup(groupId = groupId, name = name, color = color)
         val currentGroups = _groups.value.toMutableList()
         currentGroups.add(group)

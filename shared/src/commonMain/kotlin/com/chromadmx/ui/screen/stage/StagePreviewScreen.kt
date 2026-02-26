@@ -130,6 +130,7 @@ fun StagePreviewScreen(
                     onFixtureDragged = { index, newPos ->
                         viewModel.updateFixturePosition(index, newPos)
                     },
+                    onDragEnd = { index -> viewModel.persistFixturePosition(index) },
                     modifier = Modifier.fillMaxSize(),
                 )
                 1 -> AudienceView(

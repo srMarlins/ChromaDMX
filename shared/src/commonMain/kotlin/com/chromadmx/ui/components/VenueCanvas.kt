@@ -72,6 +72,7 @@ fun VenueCanvas(
     onFixtureTapped: ((Int) -> Unit)? = null,
     onBackgroundTapped: (() -> Unit)? = null,
     onFixtureDragged: ((Int, Vec3) -> Unit)? = null,
+    onDragEnd: ((Int) -> Unit)? = null,
 ) {
     // Zoom and pan state
     var zoom by remember { mutableFloatStateOf(1f) }
@@ -165,7 +166,10 @@ fun VenueCanvas(
                                     }
                                 }
                             },
-                            onDragEnd = { dragTargetIndex = -1 },
+                            onDragEnd = {
+                                if (dragTargetIndex >= 0) onDragEnd?.invoke(dragTargetIndex)
+                                dragTargetIndex = -1
+                            },
                             onDragCancel = { dragTargetIndex = -1 },
                         )
                     }
