@@ -15,6 +15,8 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(libs.sqldelight.coroutines)
+            implementation(libs.multiplatform.settings)
+            implementation(libs.multiplatform.settings.coroutines)
         }
         androidMain.dependencies {
             implementation(libs.sqldelight.android.driver)
@@ -25,6 +27,7 @@ kotlin {
         val androidHostTest by getting
         androidHostTest.dependencies {
             implementation(libs.sqldelight.sqlite.driver)
+            implementation(libs.multiplatform.settings.test)
         }
     }
 }
