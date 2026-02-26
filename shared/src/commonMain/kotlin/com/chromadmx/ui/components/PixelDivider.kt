@@ -11,18 +11,27 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.chromadmx.ui.theme.LocalPixelTheme
+import com.chromadmx.ui.theme.PixelDesign
 
 /**
  * A stepped pixel-art divider line.
+ *
+ * @param stepped When true, draws an alternating stepped pattern. When false, draws a flat line.
+ * @param enchanted When true, renders the [PixelEnchantedDivider] shimmer variant instead.
  */
 @Composable
 fun PixelDivider(
     modifier: Modifier = Modifier,
     color: Color = MaterialTheme.colorScheme.outlineVariant,
-    pixelSize: Dp = LocalPixelTheme.current.pixelSize,
-    stepped: Boolean = true
+    pixelSize: Dp = PixelDesign.spacing.pixelSize,
+    stepped: Boolean = true,
+    enchanted: Boolean = false,
 ) {
+    if (enchanted) {
+        PixelEnchantedDivider(modifier = modifier)
+        return
+    }
+
     Canvas(
         modifier = modifier
             .fillMaxWidth()

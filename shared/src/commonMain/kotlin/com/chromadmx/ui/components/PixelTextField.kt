@@ -1,14 +1,10 @@
 package com.chromadmx.ui.components
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -20,12 +16,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.chromadmx.ui.theme.PixelDesign
+import com.chromadmx.ui.theme.PixelShape
 
 @Composable
 fun PixelTextField(
@@ -41,21 +37,21 @@ fun PixelTextField(
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     singleLine: Boolean = true,
     maxLines: Int = 1,
-    pixelSize: Dp = PixelDesign.spacing.pixelSize
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
 
-    val borderColor by animateColorAsState(
-        targetValue = if (isFocused) PixelDesign.colors.primary else PixelDesign.colors.outline
-    )
-
-    val backgroundColor = if (enabled) PixelDesign.colors.surfaceVariant else PixelDesign.colors.surfaceVariant.copy(alpha = 0.5f)
+    val backgroundColor = if (enabled) {
+        PixelDesign.colors.surfaceVariant
+    } else {
+        PixelDesign.colors.surfaceVariant.copy(alpha = 0.5f)
+    }
 
     Box(modifier = modifier) {
+        // Label with decorative prefix
         if (label != null) {
             Text(
-                text = label,
+                text = "\u2726 ${label.uppercase()}",
                 style = MaterialTheme.typography.labelSmall,
                 color = PixelDesign.colors.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 4.dp)
@@ -66,9 +62,16 @@ fun PixelTextField(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier
-                .padding(top = if (label != null) 20.dp else 0.dp) // Space for label
-                .background(backgroundColor)
-                .pixelBorder(color = borderColor, pixelSize = pixelSize)
+                .padding(top = if (label != null) 20.dp else 0.dp)
+                .clip(PixelShape.Small)
+                .background(backgroundColor, PixelShape.Small)
+                .let { mod ->
+                    if (isFocused) {
+                        mod.pixelBorderActive(chamfer = 6.dp)
+                    } else {
+                        mod.pixelBorder(chamfer = 6.dp)
+                    }
+                }
                 .padding(horizontal = 12.dp, vertical = 12.dp),
             enabled = enabled,
             readOnly = readOnly,
@@ -84,7 +87,9 @@ fun PixelTextField(
                     if (value.isEmpty() && placeholder != null) {
                         Text(
                             text = placeholder,
-                            style = textStyle.copy(color = PixelDesign.colors.onSurfaceVariant.copy(alpha = 0.5f))
+                            style = textStyle.copy(
+                                color = PixelDesign.colors.onSurfaceVariant.copy(alpha = 0.4f)
+                            )
                         )
                     }
                     innerTextField()
