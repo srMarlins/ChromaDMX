@@ -31,7 +31,6 @@ class DmxTransportRouter(
      * stops transports no longer needed (unless switching to Mixed which needs both).
      */
     fun switchTo(mode: TransportMode) {
-        val previous = _mode.value
         _mode.value = mode
 
         // If any transport was running, adjust lifecycle for the new mode
@@ -39,13 +38,11 @@ class DmxTransportRouter(
             when (mode) {
                 TransportMode.Real -> {
                     if (!real.isRunning) real.start()
-                    if (previous != TransportMode.Mixed) simulated.stop()
-                    else simulated.stop()
+                    simulated.stop()
                 }
                 TransportMode.Simulated -> {
                     if (!simulated.isRunning) simulated.start()
-                    if (previous != TransportMode.Mixed) real.stop()
-                    else real.stop()
+                    real.stop()
                 }
                 TransportMode.Mixed -> {
                     if (!real.isRunning) real.start()
@@ -100,7 +97,6 @@ class DmxTransportRouter(
                     // are never masked by a healthy simulator
                     when {
                         realState == ConnectionState.Error || simState == ConnectionState.Error -> ConnectionState.Error
-                        realState == ConnectionState.Connected && simState == ConnectionState.Connected -> ConnectionState.Connected
                         realState == ConnectionState.Connecting || simState == ConnectionState.Connecting -> ConnectionState.Connecting
                         realState == ConnectionState.Connected || simState == ConnectionState.Connected -> ConnectionState.Connected
                         else -> ConnectionState.Disconnected

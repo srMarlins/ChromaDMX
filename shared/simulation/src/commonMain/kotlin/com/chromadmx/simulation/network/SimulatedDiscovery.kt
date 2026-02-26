@@ -47,7 +47,7 @@ class SimulatedDiscovery(
             delay(baseDelayMs)
             val discovered = mutableListOf<DmxNode>()
             for ((index, node) in nodes.withIndex()) {
-                delay(perNodeDelayMs * (index + 1))
+                delay(perNodeDelayMs)
                 scanCounter++
                 // Use incrementing counter for timestamps since kotlinx-datetime
                 // is not available — the values are relative, not absolute.

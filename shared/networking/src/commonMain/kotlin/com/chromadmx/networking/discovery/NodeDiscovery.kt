@@ -69,14 +69,13 @@ class NodeDiscovery(
     private val _isScanning = MutableStateFlow(false)
     override val isScanning: StateFlow<Boolean> = _isScanning.asStateFlow()
 
+    private val _discoveredNodesState = MutableStateFlow<List<DmxNode>>(emptyList())
+
     /**
      * Derived list of discovered nodes for the [FixtureDiscovery] interface.
      * Maps the internal keyed map to a flat list.
      */
-    override val discoveredNodes: StateFlow<List<DmxNode>>
-        get() = _discoveredNodesState
-
-    private val _discoveredNodesState: MutableStateFlow<List<DmxNode>> = MutableStateFlow(emptyList())
+    override val discoveredNodes: StateFlow<List<DmxNode>> = _discoveredNodesState.asStateFlow()
 
     override fun startScan() {
         start()
