@@ -1,5 +1,6 @@
 package com.chromadmx.ui.di
 
+import com.chromadmx.agent.pregen.PreGenerationService
 import com.chromadmx.networking.ble.BleProvisioningService
 import com.chromadmx.ui.components.network.NetworkHealthViewModel
 import com.chromadmx.ui.viewmodel.AgentViewModel
@@ -46,6 +47,7 @@ val uiModule = module {
             nodeDiscovery = get(),
             fileStorage = get(),
             presetLibrary = get(),
+            preGenService = getOrNull<PreGenerationService>(),
         )
     }
 

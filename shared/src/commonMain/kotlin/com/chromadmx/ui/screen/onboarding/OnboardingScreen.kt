@@ -77,6 +77,9 @@ fun OnboardingFlow(
 
             is OnboardingStep.VibeCheck -> {
                 val selectedGenre by viewModel.selectedGenre.collectAsState()
+                val isGenerating by viewModel.isGenerating.collectAsState()
+                val generationProgress by viewModel.generationProgress.collectAsState()
+                val generationError by viewModel.generationError.collectAsState()
 
                 VibeCheckScreen(
                     genres = viewModel.genres,
@@ -84,6 +87,9 @@ fun OnboardingFlow(
                     onSelectGenre = { viewModel.selectGenre(it) },
                     onConfirm = { viewModel.confirmGenre() },
                     onSkip = { viewModel.skipToComplete() },
+                    isGenerating = isGenerating,
+                    generationProgress = generationProgress,
+                    generationError = generationError,
                 )
             }
 

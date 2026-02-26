@@ -1,5 +1,6 @@
 package com.chromadmx.ui.viewmodel
 
+import com.chromadmx.agent.pregen.PreGenerationService
 import com.chromadmx.core.model.Genre
 import com.chromadmx.core.persistence.FileStorage
 import com.chromadmx.engine.preset.PresetLibrary
@@ -8,6 +9,7 @@ import com.chromadmx.networking.model.DmxNode
 import com.chromadmx.simulation.fixtures.RigPreset
 import com.chromadmx.simulation.fixtures.SimulatedFixtureRig
 import com.chromadmx.ui.onboarding.OnboardingStep
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -46,12 +48,14 @@ data class GenreOption(
  * @param nodeDiscovery Art-Net node discovery service.
  * @param fileStorage Persistent key-value storage.
  * @param presetLibrary Preset library for listing/loading genre presets.
+ * @param preGenService Optional pre-generation service for batch scene creation.
  */
 class OnboardingViewModel(
     private val scope: CoroutineScope,
     private val nodeDiscovery: NodeDiscovery,
     private val fileStorage: FileStorage,
     private val presetLibrary: PresetLibrary? = null,
+    private val preGenService: PreGenerationService? = null,
 ) {
     // -- Current step --
 
@@ -113,6 +117,17 @@ class OnboardingViewModel(
     private val _matchingPresetCount = MutableStateFlow(0)
     val matchingPresetCount: StateFlow<Int> = _matchingPresetCount.asStateFlow()
 
+    // -- Generation state --
+
+    private val _isGenerating = MutableStateFlow(false)
+    val isGenerating: StateFlow<Boolean> = _isGenerating.asStateFlow()
+
+    private val _generationProgress = MutableStateFlow(0f)
+    val generationProgress: StateFlow<Float> = _generationProgress.asStateFlow()
+
+    private val _generationError = MutableStateFlow<String?>(null)
+    val generationError: StateFlow<String?> = _generationError.asStateFlow()
+
     // -- Internal jobs --
 
     private var splashJob: Job? = null
@@ -121,6 +136,7 @@ class OnboardingViewModel(
     private var fixtureLoadJob: Job? = null
     private var stagePreviewJob: Job? = null
     private var repeatLaunchJob: Job? = null
+    private var generationJob: Job? = null
 
     // -- Persistent storage --
 
@@ -358,10 +374,50 @@ class OnboardingViewModel(
     }
 
     /**
-     * Confirm genre selection and advance to StagePreview.
+     * Confirm genre selection and trigger scene generation before advancing.
      */
     fun confirmGenre() {
-        advance()
+        startGeneration()
+    }
+
+    /**
+     * Trigger batch scene generation for the selected genre.
+     *
+     * If no [PreGenerationService] is available, sets an error message
+     * and advances immediately (falling back to universal presets).
+     * On success or failure, advances to the next step.
+     */
+    fun startGeneration() {
+        val genre = _selectedGenre.value ?: return
+        val service = preGenService ?: run {
+            _generationError.value = "Agent unavailable \u2014 using universal presets"
+            advance()
+            return
+        }
+        _isGenerating.value = true
+        _generationError.value = null
+        generationJob?.cancel()
+        generationJob = scope.launch {
+            try {
+                val progressJob = launch {
+                    service.progress.collect { p ->
+                        if (p.total > 0) {
+                            _generationProgress.value = p.current.toFloat() / p.total
+                        }
+                    }
+                }
+                service.generate(genre.id, DEFAULT_SCENE_COUNT)
+                progressJob.cancel()
+                _generationProgress.value = 1f
+            } catch (e: Exception) {
+                if (e !is CancellationException) {
+                    _generationError.value = "Generation failed \u2014 using universal presets"
+                }
+            } finally {
+                _isGenerating.value = false
+            }
+            advance()
+        }
     }
 
     // -- Stage Preview --
@@ -428,6 +484,7 @@ class OnboardingViewModel(
         fixtureLoadJob?.cancel()
         stagePreviewJob?.cancel()
         repeatLaunchJob?.cancel()
+        generationJob?.cancel()
         nodeDiscovery.stop()
     }
 
@@ -475,5 +532,8 @@ class OnboardingViewModel(
 
         /** File path for selected rig preset. */
         const val RIG_PRESET_PATH = "prefs/rig_preset.txt"
+
+        /** Default number of scenes to generate per genre. */
+        const val DEFAULT_SCENE_COUNT = 10
     }
 }

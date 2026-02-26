@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -48,6 +49,9 @@ import com.chromadmx.ui.viewmodel.GenreOption
  * @param onSelectGenre Called when a genre tile is tapped.
  * @param onConfirm Called when the user confirms their selection.
  * @param onSkip Called when the user taps "Skip".
+ * @param isGenerating Whether scene generation is in progress.
+ * @param generationProgress Progress of scene generation (0f..1f).
+ * @param generationError Error message from generation, if any.
  */
 @Composable
 fun VibeCheckScreen(
@@ -57,6 +61,9 @@ fun VibeCheckScreen(
     onConfirm: () -> Unit,
     onSkip: () -> Unit,
     modifier: Modifier = Modifier,
+    isGenerating: Boolean = false,
+    generationProgress: Float = 0f,
+    generationError: String? = null,
 ) {
     Column(
         modifier = modifier
@@ -97,8 +104,36 @@ fun VibeCheckScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Confirm button (visible when a genre is selected)
-        if (selectedGenre != null) {
+        // Generation progress indicator
+        if (isGenerating) {
+            Text(
+                text = "GENERATING SCENES...",
+                style = MaterialTheme.typography.bodySmall.copy(fontFamily = PixelFontFamily),
+                color = NeonCyan,
+                letterSpacing = 1.sp,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            LinearProgressIndicator(
+                progress = { generationProgress },
+                modifier = Modifier.fillMaxWidth(),
+                color = NeonCyan,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        // Error message
+        if (generationError != null) {
+            Text(
+                text = generationError,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        // Confirm button (visible when a genre is selected and not generating)
+        if (selectedGenre != null && !isGenerating) {
             PixelButton(
                 onClick = onConfirm,
                 modifier = Modifier.fillMaxWidth(),
