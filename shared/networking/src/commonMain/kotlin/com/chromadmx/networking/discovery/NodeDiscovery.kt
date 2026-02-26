@@ -5,6 +5,7 @@ import com.chromadmx.networking.model.UdpPacket
 import com.chromadmx.networking.protocol.ArtNetCodec
 import com.chromadmx.networking.protocol.ArtNetConstants
 import com.chromadmx.networking.transport.PlatformUdpTransport
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -45,6 +46,9 @@ class NodeDiscovery(
 ) {
 
     private val _nodes = MutableStateFlow<Map<String, DmxNode>>(emptyMap())
+
+    /** Timestamp of the last ArtPoll broadcast for latency calculation. */
+    private val lastPollSentMs = atomic(0L)
 
     /** Live registry of discovered nodes, keyed by [DmxNode.nodeKey]. */
     val nodes: StateFlow<Map<String, DmxNode>> = _nodes.asStateFlow()
@@ -96,6 +100,7 @@ class NodeDiscovery(
      * Send a single ArtPoll broadcast immediately.
      */
     suspend fun sendPoll() {
+        lastPollSentMs.value = currentTimeMillis()
         val pollPacket = ArtNetCodec.encodeArtPoll(
             flags = 0x02  // Request ArtPollReply from targeted nodes and diagnostics
         )
@@ -124,6 +129,14 @@ class NodeDiscovery(
             }
         }
 
+        // Build the node outside the update lambda to avoid side effects.
+        // Read the current map snapshot for firstSeenMs lookup.
+        val nodeKey = reply.macString.ifEmpty { reply.ipString }
+        val existing = _nodes.value[nodeKey]
+        val firstSeen = existing?.firstSeenMs ?: currentTimeMs
+        val pollSent = lastPollSentMs.value
+        val latency = if (pollSent > 0) (currentTimeMs - pollSent) else 0L
+
         val node = DmxNode(
             ipAddress = reply.ipString,
             macAddress = reply.macString,
@@ -133,7 +146,9 @@ class NodeDiscovery(
             numPorts = reply.numPorts,
             universes = universes,
             style = reply.style.toInt() and 0xFF,
-            lastSeenMs = currentTimeMs
+            lastSeenMs = currentTimeMs,
+            firstSeenMs = firstSeen,
+            latencyMs = latency
         )
 
         _nodes.update { currentNodes ->
@@ -217,4 +232,4 @@ class NodeDiscovery(
  * Uses `kotlinx.datetime` epoch milliseconds if available,
  * falls back to a reasonable default.
  */
-internal expect fun currentTimeMillis(): Long
+expect fun currentTimeMillis(): Long

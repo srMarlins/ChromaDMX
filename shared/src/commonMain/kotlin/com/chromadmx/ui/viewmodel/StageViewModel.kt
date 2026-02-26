@@ -11,6 +11,9 @@ import com.chromadmx.engine.effect.EffectRegistry
 import com.chromadmx.engine.effect.EffectStack
 import com.chromadmx.engine.pipeline.EffectEngine
 import com.chromadmx.engine.preset.PresetLibrary
+import com.chromadmx.networking.discovery.NodeDiscovery
+import com.chromadmx.networking.discovery.currentTimeMillis
+import com.chromadmx.networking.model.DmxNode
 import com.chromadmx.tempo.clock.BeatClock
 import com.chromadmx.tempo.tap.TapTempoClock
 import com.chromadmx.core.model.Color as DmxColor
@@ -18,8 +21,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
@@ -38,6 +44,7 @@ class StageViewModel(
     val effectRegistry: EffectRegistry,
     private val presetLibrary: PresetLibrary,
     private val beatClock: BeatClock,
+    private val nodeDiscovery: NodeDiscovery,
     private val scope: CoroutineScope,
 ) {
     private val effectStack: EffectStack get() = engine.effectStack
@@ -91,10 +98,26 @@ class StageViewModel(
     private val _isTopDownView = MutableStateFlow(true)
     val isTopDownView: StateFlow<Boolean> = _isTopDownView.asStateFlow()
 
+    // --- Network state ---
+    val nodes: StateFlow<List<DmxNode>> = nodeDiscovery.nodes
+        .map { it.values.toList() }
+        .stateIn(
+            scope = scope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    private val _currentTimeMs = MutableStateFlow(0L)
+    val currentTimeMs: StateFlow<Long> = _currentTimeMs.asStateFlow()
+
+    private val _isNodeListOpen = MutableStateFlow(false)
+    val isNodeListOpen: StateFlow<Boolean> = _isNodeListOpen.asStateFlow()
+
     /** Syncs engine state (layers, scenes, dimmer) at a moderate rate. */
     private val syncJob: Job = scope.launch {
         while (isActive) {
             syncFromEngine()
+            _currentTimeMs.value = currentTimeMillis()
             delay(500L)
         }
     }
@@ -319,5 +342,18 @@ class StageViewModel(
         _isSimulationMode.value = false
         _simulationPresetName.value = null
         _simulationFixtureCount.value = 0
+    }
+
+    // --- Network actions ---
+    fun toggleNodeList() {
+        _isNodeListOpen.value = !_isNodeListOpen.value
+    }
+
+    fun diagnoseNode(node: DmxNode) {
+        // In a real app, this would send a message to AgentViewModel
+        // or trigger the DiagnoseConnectionTool directly.
+        // For now, we'll close the overlay and let the Mascot handle it if needed.
+        _isNodeListOpen.value = false
+        // TODO: Wire to agent
     }
 }
