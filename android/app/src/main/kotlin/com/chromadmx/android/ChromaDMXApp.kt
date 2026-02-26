@@ -3,6 +3,7 @@ package com.chromadmx.android
 import android.app.Application
 import com.chromadmx.agent.config.AgentConfig
 import com.chromadmx.agent.di.agentModule
+import com.chromadmx.core.db.DriverFactory
 import com.chromadmx.core.persistence.AndroidFileStorage
 import com.chromadmx.core.persistence.FileStorage
 import com.chromadmx.di.chromaDiModule
@@ -24,6 +25,7 @@ class ChromaDMXApp : Application() {
 
         val androidPlatformModule = module {
             single<FileStorage> { AndroidFileStorage(get()) }
+            single { DriverFactory(get()) }
             single {
                 val googleKey = BuildConfig.GOOGLE_API_KEY
                 val anthropicKey = BuildConfig.ANTHROPIC_API_KEY

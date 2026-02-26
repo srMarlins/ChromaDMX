@@ -1,11 +1,14 @@
 package com.chromadmx.ui.viewmodel
 
+import com.chromadmx.agent.controller.FixtureController
 import com.chromadmx.agent.scene.Scene
 import com.chromadmx.core.EffectParams
 import com.chromadmx.core.model.BeatState
 import com.chromadmx.core.model.BlendMode
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.core.model.Vec3
+import com.chromadmx.core.persistence.FixtureGroup
+import com.chromadmx.core.persistence.FixtureRepository
 import com.chromadmx.engine.effect.EffectLayer
 import com.chromadmx.engine.effect.EffectRegistry
 import com.chromadmx.engine.effect.EffectStack
@@ -38,6 +41,9 @@ import kotlinx.coroutines.launch
  *
  * Also exposes [isSimulationMode] so the UI can render a simulation badge
  * and adjust visual treatment when running with virtual fixtures.
+ *
+ * With SQLDelight persistence (via [fixtureRepository]), fixture positions,
+ * group assignments, and group metadata are persisted across app restarts.
  */
 class StageViewModel(
     private val engine: EffectEngine,
@@ -46,6 +52,8 @@ class StageViewModel(
     private val beatClock: BeatClock,
     private val nodeDiscovery: NodeDiscovery,
     private val scope: CoroutineScope,
+    private val fixtureRepository: FixtureRepository? = null,
+    private val fixtureController: FixtureController? = null,
 ) {
     private val effectStack: EffectStack get() = engine.effectStack
 
@@ -70,7 +78,9 @@ class StageViewModel(
     private var masterDimmerBeforePreview: Float? = null
 
     // --- Fixtures ---
-    private val _fixtures = MutableStateFlow(engine.fixtures)
+    private val _fixtures = MutableStateFlow(
+        if (fixtureRepository != null) emptyList() else engine.fixtures
+    )
     val fixtures: StateFlow<List<Fixture3D>> = _fixtures.asStateFlow()
 
     private val _selectedFixtureIndex = MutableStateFlow<Int?>(null)
@@ -97,6 +107,14 @@ class StageViewModel(
     // --- Stage view mode ---
     private val _isTopDownView = MutableStateFlow(true)
     val isTopDownView: StateFlow<Boolean> = _isTopDownView.asStateFlow()
+
+    // --- Edit mode ---
+    private val _isEditMode = MutableStateFlow(false)
+    val isEditMode: StateFlow<Boolean> = _isEditMode.asStateFlow()
+
+    // --- Groups ---
+    private val _groups = MutableStateFlow<List<FixtureGroup>>(emptyList())
+    val groups: StateFlow<List<FixtureGroup>> = _groups.asStateFlow()
 
     // --- Network state ---
     val nodes: StateFlow<List<DmxNode>> = nodeDiscovery.nodes
@@ -130,9 +148,29 @@ class StageViewModel(
         }
     }
 
+    /** Collect fixtures from repository flow if available (single source of truth). */
+    private val repoSyncJob: Job? = fixtureRepository?.let { repo ->
+        scope.launch {
+            repo.allFixtures().collect { dbFixtures ->
+                _fixtures.value = dbFixtures
+            }
+        }
+    }
+
+    /** Collect groups from repository flow if available. */
+    private val groupSyncJob: Job? = fixtureRepository?.let { repo ->
+        scope.launch {
+            repo.allGroups().collect { dbGroups ->
+                _groups.value = dbGroups
+            }
+        }
+    }
+
     fun onCleared() {
         syncJob.cancel()
         colorSyncJob.cancel()
+        repoSyncJob?.cancel()
+        groupSyncJob?.cancel()
         scope.coroutineContext[Job]?.cancel()
     }
 
@@ -281,9 +319,8 @@ class StageViewModel(
     }
 
     /**
-     * Update a fixture's position in the UI model.
-     * Note: Does not propagate to EffectEngine -- engine integration
-     * requires support for mutable fixture lists (future work).
+     * Update fixture position locally (visual feedback during drag).
+     * Does NOT persist to database — call [persistFixturePosition] on drag end.
      */
     fun updateFixturePosition(index: Int, newPosition: Vec3) {
         val current = _fixtures.value.toMutableList()
@@ -294,33 +331,118 @@ class StageViewModel(
     }
 
     /**
-     * Add a fixture to the UI model.
-     * Note: Does not propagate to EffectEngine -- engine integration
-     * requires support for mutable fixture lists (future work).
+     * Persist a fixture's current position to the database.
+     * Call this on drag end, not during drag.
      */
-    fun addFixture(fixture: Fixture3D) {
-        _fixtures.value = _fixtures.value + fixture
+    fun persistFixturePosition(index: Int) {
+        val fixture = _fixtures.value.getOrNull(index) ?: return
+        scope.launch {
+            fixtureRepository?.updatePosition(fixture.fixture.fixtureId, fixture.position)
+        }
     }
 
     /**
-     * Remove a fixture from the UI model by index.
-     * Note: Does not propagate to EffectEngine -- engine integration
-     * requires support for mutable fixture lists (future work).
+     * Add a fixture to the UI model and persist to database.
+     */
+    fun addFixture(fixture: Fixture3D) {
+        _fixtures.value = _fixtures.value + fixture
+        fixtureRepository?.saveFixture(fixture)
+    }
+
+    /**
+     * Remove a fixture from the UI model by index and delete from database.
      */
     fun removeFixture(index: Int) {
         val current = _fixtures.value.toMutableList()
         if (index in current.indices) {
-            current.removeAt(index)
+            val removed = current.removeAt(index)
             _fixtures.value = current
             if (_selectedFixtureIndex.value == index) {
                 _selectedFixtureIndex.value = null
             }
+            fixtureRepository?.deleteFixture(removed.fixture.fixtureId)
         }
     }
 
     // --- View toggle ---
     fun toggleViewMode() {
         _isTopDownView.value = !_isTopDownView.value
+    }
+
+    // --- Edit mode ---
+
+    /** Toggle edit mode for fixture spatial editing. */
+    fun toggleEditMode() {
+        _isEditMode.value = !_isEditMode.value
+    }
+
+    // --- Z-Height ---
+
+    /** Update the Z-height of a fixture by index. */
+    fun updateZHeight(index: Int, z: Float) {
+        val current = _fixtures.value.toMutableList()
+        if (index in current.indices) {
+            val f = current[index]
+            val newPos = f.position.copy(z = z)
+            current[index] = f.copy(position = newPos)
+            _fixtures.value = current
+            scope.launch {
+                fixtureRepository?.updatePosition(f.fixture.fixtureId, newPos)
+            }
+        }
+    }
+
+    // --- Group management ---
+
+    /** Assign a fixture (by index) to a group (or null to unassign). */
+    fun assignGroup(index: Int, groupId: String?) {
+        val current = _fixtures.value.toMutableList()
+        if (index in current.indices) {
+            val updated = current[index].copy(groupId = groupId)
+            current[index] = updated
+            _fixtures.value = current
+            fixtureRepository?.updateGroup(updated.fixture.fixtureId, groupId)
+        }
+    }
+
+    /** Create a new fixture group. Returns the new group ID. */
+    fun createGroup(name: String, color: Long = 0xFF00FBFF): String {
+        val groupId = "grp-${name.lowercase().replace(" ", "-")}-${currentTimeMillis()}-${kotlin.random.Random.nextInt(0, Int.MAX_VALUE)}"
+        val group = FixtureGroup(groupId = groupId, name = name, color = color)
+        val currentGroups = _groups.value.toMutableList()
+        currentGroups.add(group)
+        _groups.value = currentGroups
+        fixtureRepository?.saveGroup(group)
+        return groupId
+    }
+
+    /** Delete a fixture group by ID. */
+    fun deleteGroup(groupId: String) {
+        val currentGroups = _groups.value.toMutableList()
+        currentGroups.removeAll { it.groupId == groupId }
+        _groups.value = currentGroups
+        fixtureRepository?.deleteGroup(groupId)
+    }
+
+    // --- Test fire ---
+
+    /** Flash a fixture white for ~1 second via the FixtureController. */
+    fun testFireFixture(index: Int) {
+        val fixture = _fixtures.value.getOrNull(index) ?: return
+        scope.launch {
+            fixtureController?.fireFixture(fixture.fixture.fixtureId, "#FFFFFF")
+            delay(1000L)
+            fixtureController?.fireFixture(fixture.fixture.fixtureId, "#000000")
+        }
+    }
+
+    // --- Re-scan ---
+
+    /** Trigger a network re-scan via NodeDiscovery. */
+    fun rescanFixtures() {
+        scope.launch {
+            nodeDiscovery.sendPoll()
+        }
     }
 
     // --- Simulation mode controls ---

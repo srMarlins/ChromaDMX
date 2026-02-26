@@ -1,6 +1,9 @@
 package com.chromadmx.di
 
+import com.chromadmx.core.db.ChromaDmxDatabase
+import com.chromadmx.core.db.DriverFactory
 import com.chromadmx.core.model.Fixture3D
+import com.chromadmx.core.persistence.FixtureRepository
 import com.chromadmx.engine.bridge.DmxBridge
 import com.chromadmx.engine.bridge.DmxOutputBridge
 import com.chromadmx.engine.effect.EffectRegistry
@@ -89,6 +92,11 @@ val chromaDiModule = module {
             scope = get()
         ).apply { start() }
     }
+
+    // --- Database ---
+    single { get<DriverFactory>().createDriver() }
+    single { ChromaDmxDatabase(get()) }
+    single { FixtureRepository(get()) }
 
     // --- Presets ---
     single { PresetLibrary(get(), get(), get()) }

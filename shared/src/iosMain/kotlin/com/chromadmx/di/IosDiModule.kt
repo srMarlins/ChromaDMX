@@ -1,5 +1,6 @@
 package com.chromadmx.di
 
+import com.chromadmx.core.db.DriverFactory
 import com.chromadmx.core.persistence.FileStorage
 import com.chromadmx.core.persistence.IosFileStorage
 import org.koin.core.module.Module
@@ -28,6 +29,7 @@ import org.koin.dsl.module
  */
 val iosPlatformModule: Module = module {
     single<FileStorage> { IosFileStorage() }
+    single { DriverFactory() }
 
     // TODO: Register iOS platform implementations as modules are created
     //

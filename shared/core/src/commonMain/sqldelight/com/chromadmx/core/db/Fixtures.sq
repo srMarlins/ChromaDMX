@@ -1,0 +1,52 @@
+CREATE TABLE fixture (
+    fixture_id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    channel_start INTEGER NOT NULL,
+    channel_count INTEGER NOT NULL,
+    universe_id INTEGER NOT NULL,
+    profile_id TEXT NOT NULL DEFAULT 'generic-rgb-par',
+    pos_x REAL NOT NULL DEFAULT 0.0,
+    pos_y REAL NOT NULL DEFAULT 0.0,
+    pos_z REAL NOT NULL DEFAULT 0.0,
+    group_id TEXT
+);
+
+CREATE TABLE fixture_group (
+    group_id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    color INTEGER NOT NULL DEFAULT 0
+);
+
+selectAllFixtures:
+SELECT * FROM fixture ORDER BY name;
+
+selectFixtureById:
+SELECT * FROM fixture WHERE fixture_id = ?;
+
+insertOrReplaceFixture:
+INSERT OR REPLACE INTO fixture (fixture_id, name, channel_start, channel_count, universe_id, profile_id, pos_x, pos_y, pos_z, group_id)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateFixturePosition:
+UPDATE fixture SET pos_x = ?, pos_y = ?, pos_z = ? WHERE fixture_id = ?;
+
+updateFixtureGroup:
+UPDATE fixture SET group_id = ? WHERE fixture_id = ?;
+
+deleteFixture:
+DELETE FROM fixture WHERE fixture_id = ?;
+
+deleteAllFixtures:
+DELETE FROM fixture;
+
+selectAllGroups:
+SELECT * FROM fixture_group ORDER BY name;
+
+insertOrReplaceGroup:
+INSERT OR REPLACE INTO fixture_group (group_id, name, color) VALUES (?, ?, ?);
+
+deleteGroup:
+DELETE FROM fixture_group WHERE group_id = ?;
+
+selectFixturesByGroup:
+SELECT * FROM fixture WHERE group_id = ?;

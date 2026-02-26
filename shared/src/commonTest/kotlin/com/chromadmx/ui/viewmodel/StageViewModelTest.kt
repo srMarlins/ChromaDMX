@@ -7,6 +7,7 @@ import com.chromadmx.core.model.Fixture
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.core.model.Vec3
 import com.chromadmx.core.persistence.FileStorage
+import com.chromadmx.core.persistence.FixtureGroup
 import com.chromadmx.engine.effect.EffectRegistry
 import com.chromadmx.engine.effects.SolidColorEffect
 import com.chromadmx.engine.pipeline.EffectEngine
@@ -19,6 +20,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class StageViewModelTest {
@@ -95,5 +98,112 @@ class StageViewModelTest {
         assertEquals(1, vm.fixtures.value.size)
         vm.removeFixture(0)
         assertEquals(0, vm.fixtures.value.size)
+    }
+
+    // --- Edit mode tests ---
+
+    @Test
+    fun editModeToggle() = runTest {
+        val engine = EffectEngine(backgroundScope, emptyList())
+        val vm = StageViewModel(engine, registry, makePresetLibrary(engine), stubBeatClock, stubNodeDiscovery(), backgroundScope)
+        assertFalse(vm.isEditMode.value)
+        vm.toggleEditMode()
+        assertTrue(vm.isEditMode.value)
+        vm.toggleEditMode()
+        assertFalse(vm.isEditMode.value)
+    }
+
+    @Test
+    fun updateZHeight() = runTest {
+        val fixtures = makeFixtures(3)
+        val engine = EffectEngine(backgroundScope, fixtures)
+        val vm = StageViewModel(engine, registry, makePresetLibrary(engine), stubBeatClock, stubNodeDiscovery(), backgroundScope)
+
+        assertEquals(0f, vm.fixtures.value[1].position.z)
+        vm.updateZHeight(1, 3.5f)
+        assertEquals(3.5f, vm.fixtures.value[1].position.z)
+        // x,y should remain unchanged
+        assertEquals(1f, vm.fixtures.value[1].position.x)
+        assertEquals(0f, vm.fixtures.value[1].position.y)
+    }
+
+    @Test
+    fun updateFixturePositionPersistsInMemory() = runTest {
+        val fixtures = makeFixtures(2)
+        val engine = EffectEngine(backgroundScope, fixtures)
+        val vm = StageViewModel(engine, registry, makePresetLibrary(engine), stubBeatClock, stubNodeDiscovery(), backgroundScope)
+
+        val newPos = Vec3(5f, 10f, 3f)
+        vm.updateFixturePosition(0, newPos)
+        assertEquals(newPos, vm.fixtures.value[0].position)
+    }
+
+    // --- Group management tests ---
+
+    @Test
+    fun createGroup() = runTest {
+        val engine = EffectEngine(backgroundScope, emptyList())
+        val vm = StageViewModel(engine, registry, makePresetLibrary(engine), stubBeatClock, stubNodeDiscovery(), backgroundScope)
+
+        assertTrue(vm.groups.value.isEmpty())
+        val groupId = vm.createGroup("Truss Left", 0xFF00FF00)
+        assertEquals(1, vm.groups.value.size)
+        assertEquals("Truss Left", vm.groups.value[0].name)
+        assertEquals(0xFF00FF00, vm.groups.value[0].color)
+        assertTrue(groupId.startsWith("grp-"))
+    }
+
+    @Test
+    fun deleteGroup() = runTest {
+        val engine = EffectEngine(backgroundScope, emptyList())
+        val vm = StageViewModel(engine, registry, makePresetLibrary(engine), stubBeatClock, stubNodeDiscovery(), backgroundScope)
+
+        val groupId = vm.createGroup("Test Group")
+        assertEquals(1, vm.groups.value.size)
+        vm.deleteGroup(groupId)
+        assertTrue(vm.groups.value.isEmpty())
+    }
+
+    @Test
+    fun assignGroupToFixture() = runTest {
+        val fixtures = makeFixtures(2)
+        val engine = EffectEngine(backgroundScope, fixtures)
+        val vm = StageViewModel(engine, registry, makePresetLibrary(engine), stubBeatClock, stubNodeDiscovery(), backgroundScope)
+
+        assertNull(vm.fixtures.value[0].groupId)
+        vm.assignGroup(0, "grp-truss")
+        assertEquals("grp-truss", vm.fixtures.value[0].groupId)
+        // Other fixture unchanged
+        assertNull(vm.fixtures.value[1].groupId)
+    }
+
+    @Test
+    fun unassignGroup() = runTest {
+        val fixtures = makeFixtures(1)
+        val engine = EffectEngine(backgroundScope, fixtures)
+        val vm = StageViewModel(engine, registry, makePresetLibrary(engine), stubBeatClock, stubNodeDiscovery(), backgroundScope)
+
+        vm.assignGroup(0, "grp-truss")
+        assertEquals("grp-truss", vm.fixtures.value[0].groupId)
+        vm.assignGroup(0, null)
+        assertNull(vm.fixtures.value[0].groupId)
+    }
+
+    @Test
+    fun updateZHeightOutOfBoundsNoOp() = runTest {
+        val engine = EffectEngine(backgroundScope, emptyList())
+        val vm = StageViewModel(engine, registry, makePresetLibrary(engine), stubBeatClock, stubNodeDiscovery(), backgroundScope)
+        // Should not crash
+        vm.updateZHeight(99, 3f)
+        assertTrue(vm.fixtures.value.isEmpty())
+    }
+
+    @Test
+    fun assignGroupOutOfBoundsNoOp() = runTest {
+        val engine = EffectEngine(backgroundScope, emptyList())
+        val vm = StageViewModel(engine, registry, makePresetLibrary(engine), stubBeatClock, stubNodeDiscovery(), backgroundScope)
+        // Should not crash
+        vm.assignGroup(99, "grp-test")
+        assertTrue(vm.fixtures.value.isEmpty())
     }
 }
