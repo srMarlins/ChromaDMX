@@ -1,8 +1,7 @@
 package com.chromadmx.core.persistence
 
-import com.russhwolf.settings.ExperimentalSettingsApi
-import com.russhwolf.settings.MapSettings
-import com.russhwolf.settings.coroutines.toFlowSettings
+import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
+import com.chromadmx.core.db.ChromaDmxDatabase
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
@@ -12,20 +11,22 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-@OptIn(ExperimentalSettingsApi::class)
 class SettingsRepositoryTest {
 
+    private lateinit var db: ChromaDmxDatabase
     private lateinit var repo: SettingsRepository
 
     @BeforeTest
     fun setup() {
-        val settings = MapSettings().toFlowSettings()
-        repo = SettingsRepository(settings)
+        val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
+        ChromaDmxDatabase.Schema.create(driver)
+        db = ChromaDmxDatabase(driver)
+        repo = SettingsRepository(db)
     }
 
     @Test
     fun defaultMasterDimmer() = runTest {
-        assertEquals(1f, repo.masterDimmer.first())
+        assertEquals(1.0f, repo.masterDimmer.first())
     }
 
     @Test
@@ -35,18 +36,7 @@ class SettingsRepositoryTest {
     }
 
     @Test
-    fun defaultTheme() = runTest {
-        assertEquals("MatchaDark", repo.themePreference.first())
-    }
-
-    @Test
-    fun setAndGetTheme() = runTest {
-        repo.setThemePreference("CyberNeon")
-        assertEquals("CyberNeon", repo.themePreference.first())
-    }
-
-    @Test
-    fun defaultSimulationFalse() = runTest {
+    fun defaultIsSimulation() = runTest {
         assertFalse(repo.isSimulation.first())
     }
 
@@ -54,6 +44,31 @@ class SettingsRepositoryTest {
     fun toggleSimulation() = runTest {
         repo.setIsSimulation(true)
         assertTrue(repo.isSimulation.first())
+    }
+
+    @Test
+    fun defaultActivePresetId() = runTest {
+        assertNull(repo.activePresetId.first())
+    }
+
+    @Test
+    fun setAndClearActivePresetId() = runTest {
+        repo.setActivePresetId("preset-1")
+        assertEquals("preset-1", repo.activePresetId.first())
+
+        repo.setActivePresetId(null)
+        assertNull(repo.activePresetId.first())
+    }
+
+    @Test
+    fun defaultThemePreference() = runTest {
+        assertEquals("MatchaDark", repo.themePreference.first())
+    }
+
+    @Test
+    fun setAndGetThemePreference() = runTest {
+        repo.setThemePreference("CyberNeon")
+        assertEquals("CyberNeon", repo.themePreference.first())
     }
 
     @Test
@@ -65,20 +80,6 @@ class SettingsRepositoryTest {
     fun setTransportMode() = runTest {
         repo.setTransportMode("Simulated")
         assertEquals("Simulated", repo.transportMode.first())
-    }
-
-    @Test
-    fun activePresetIdNullByDefault() = runTest {
-        assertNull(repo.activePresetId.first())
-    }
-
-    @Test
-    fun setAndClearActivePresetId() = runTest {
-        repo.setActivePresetId("preset-1")
-        assertEquals("preset-1", repo.activePresetId.first())
-
-        repo.setActivePresetId(null)
-        assertNull(repo.activePresetId.first())
     }
 
     @Test
