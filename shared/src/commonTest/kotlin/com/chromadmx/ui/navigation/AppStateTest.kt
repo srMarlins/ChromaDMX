@@ -1,14 +1,14 @@
 package com.chromadmx.ui.navigation
 
+import com.chromadmx.ui.onboarding.OnboardingStep
 import kotlin.test.Test
 import kotlin.test.assertIs
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class AppStateTest {
     @Test
     fun onboardingIsInitialStateForFirstLaunch() {
-        val state: AppState = AppState.Onboarding(OnboardingStep.SPLASH)
+        val state: AppState = AppState.Onboarding
         assertIs<AppState.Onboarding>(state)
     }
 
@@ -26,9 +26,10 @@ class AppStateTest {
 
     @Test
     fun onboardingStepsAreOrdered() {
-        val steps = OnboardingStep.entries
-        assertTrue(steps.indexOf(OnboardingStep.SPLASH) < steps.indexOf(OnboardingStep.NETWORK_DISCOVERY))
-        assertTrue(steps.indexOf(OnboardingStep.NETWORK_DISCOVERY) < steps.indexOf(OnboardingStep.FIXTURE_SCAN))
-        assertTrue(steps.indexOf(OnboardingStep.FIXTURE_SCAN) < steps.indexOf(OnboardingStep.VIBE_CHECK))
+        val steps = OnboardingStep.steps
+        assertTrue(steps.indexOf(OnboardingStep.Splash) < steps.indexOf(OnboardingStep.NetworkDiscovery))
+        assertTrue(steps.indexOf(OnboardingStep.NetworkDiscovery) < steps.indexOf(OnboardingStep.FixtureScan))
+        assertTrue(steps.indexOf(OnboardingStep.FixtureScan) < steps.indexOf(OnboardingStep.VibeCheck))
+        assertTrue(steps.indexOf(OnboardingStep.VibeCheck) < steps.indexOf(OnboardingStep.Complete))
     }
 }

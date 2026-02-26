@@ -12,7 +12,6 @@ class AppStateManagerTest {
         val manager = AppStateManager(isFirstLaunch = true)
         val state = manager.currentState.first()
         assertIs<AppState.Onboarding>(state)
-        assertEquals(OnboardingStep.SPLASH, state.step)
     }
 
     @Test
@@ -38,22 +37,9 @@ class AppStateManagerTest {
     }
 
     @Test
-    fun advanceOnboardingStep() = runTest {
-        val manager = AppStateManager(isFirstLaunch = true)
-        manager.advanceOnboarding()
-        val state = manager.currentState.first()
-        assertIs<AppState.Onboarding>(state)
-        assertEquals(OnboardingStep.NETWORK_DISCOVERY, state.step)
-    }
-
-    @Test
     fun completeOnboardingGoesToStagePreview() = runTest {
         val manager = AppStateManager(isFirstLaunch = true)
-        // Advance through all steps
-        manager.advanceOnboarding() // SPLASH -> NETWORK_DISCOVERY
-        manager.advanceOnboarding() // -> FIXTURE_SCAN
-        manager.advanceOnboarding() // -> VIBE_CHECK
-        manager.advanceOnboarding() // -> StagePreview
+        manager.completeOnboarding()
         assertIs<AppState.StagePreview>(manager.currentState.first())
     }
 }

@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import com.chromadmx.simulation.fixtures.RigPreset
 import com.chromadmx.simulation.fixtures.SimulatedFixtureRig
@@ -21,7 +22,7 @@ import com.chromadmx.ui.util.presetDisplayName
 import com.chromadmx.ui.navigation.AppState
 import com.chromadmx.ui.navigation.AppStateManager
 import com.chromadmx.ui.screen.chat.ChatPanel
-import com.chromadmx.ui.screen.onboarding.OnboardingScreen
+import com.chromadmx.ui.screen.onboarding.OnboardingFlow
 import com.chromadmx.ui.screen.settings.ProvisioningScreen
 import com.chromadmx.ui.screen.settings.SettingsScreen
 import com.chromadmx.ui.screen.simulation.RigPresetSelector
@@ -29,6 +30,7 @@ import com.chromadmx.ui.screen.stage.StagePreviewScreen
 import com.chromadmx.ui.theme.ChromaDmxTheme
 import com.chromadmx.ui.viewmodel.AgentViewModel
 import com.chromadmx.ui.viewmodel.MascotViewModel
+import com.chromadmx.ui.viewmodel.OnboardingViewModel
 import com.chromadmx.ui.viewmodel.ProvisioningViewModel
 import com.chromadmx.ui.viewmodel.SettingsViewModel
 import com.chromadmx.ui.viewmodel.StageViewModel
@@ -40,6 +42,11 @@ import org.koin.compose.getKoin
  * Uses [AppStateManager] for navigation: Onboarding -> StagePreview <-> Settings.
  * No tab bar. Single main screen with contextual overlays.
  *
+ * On first launch the [OnboardingViewModel] drives a 6-step flow
+ * (Splash -> NetworkDiscovery -> FixtureScan -> VibeCheck -> StagePreview -> Complete).
+ * On repeat launches the app starts directly at StagePreview, performs a quick
+ * network health check, and the mascot alerts if the network topology changed.
+ *
  * Simulation mode is coordinated between [SettingsViewModel] (toggle/preset) and
  * [StageViewModel] (badge visibility, fixture count). The rig selector is accessible
  * from both the onboarding flow and the settings screen.
@@ -47,12 +54,30 @@ import org.koin.compose.getKoin
 @Composable
 fun ChromaDmxApp() {
     ChromaDmxTheme {
-        // TODO: Read isFirstLaunch from persistent storage
-        val appStateManager = remember { AppStateManager(isFirstLaunch = false) }
+        val onboardingVm = resolveOrNull<OnboardingViewModel>()
+        val isFirstLaunch = remember { onboardingVm?.isFirstLaunch() ?: false }
+        val appStateManager = remember { AppStateManager(isFirstLaunch = isFirstLaunch) }
         val currentState by appStateManager.currentState.collectAsState()
 
         val settingsVm = resolveOrNull<SettingsViewModel>()
         val stageVm = resolveOrNull<StageViewModel>()
+        val mascotVm = resolveOrNull<MascotViewModel>()
+
+        // Repeat launch: quick network health check + mascot alert
+        if (!isFirstLaunch && onboardingVm != null) {
+            LaunchedEffect(Unit) {
+                onboardingVm.performRepeatLaunchCheck()
+            }
+
+            val networkChanged by onboardingVm.networkChanged.collectAsState()
+            val repeatCheckDone by onboardingVm.repeatLaunchComplete.collectAsState()
+
+            if (repeatCheckDone && networkChanged && mascotVm != null) {
+                LaunchedEffect(Unit) {
+                    mascotVm.triggerAlert("Network has changed since last session!")
+                }
+            }
+        }
 
         // Read simulation state from SettingsViewModel
         val simulationEnabled = settingsVm?.simulationEnabled?.collectAsState()?.value ?: false
@@ -65,24 +90,38 @@ fun ChromaDmxApp() {
             Box(modifier = Modifier.fillMaxSize()) {
                 when (val state = currentState) {
                     is AppState.Onboarding -> {
-                        val simFixtureCount = remember(simulationEnabled, selectedRigPreset) {
-                            if (simulationEnabled) {
-                                SimulatedFixtureRig(selectedRigPreset).fixtureCount
-                            } else {
-                                0
+                        if (onboardingVm != null) {
+                            // Start the onboarding flow
+                            DisposableEffect(onboardingVm) {
+                                onboardingVm.start()
+                                onDispose { onboardingVm.onCleared() }
                             }
-                        }
 
-                        OnboardingScreen(
-                            step = state.step,
-                            onAdvance = { appStateManager.advanceOnboarding() },
-                            onVirtualStage = {
-                                // Navigate to rig selector, returning to onboarding afterward
-                                appStateManager.navigateTo(AppState.RigSelection(returnToOnboarding = true))
-                            },
-                            isSimulationMode = simulationEnabled,
-                            simulationFixtureCount = simFixtureCount,
-                        )
+                            OnboardingFlow(
+                                viewModel = onboardingVm,
+                                onComplete = {
+                                    // Sync simulation state from onboarding to settings/stage
+                                    val isSimMode = onboardingVm.isSimulationMode.value
+                                    if (isSimMode) {
+                                        val preset = onboardingVm.selectedRigPreset.value
+                                        settingsVm?.toggleSimulation(true)
+                                        settingsVm?.setRigPreset(preset)
+                                        val rig = SimulatedFixtureRig(preset)
+                                        stageVm?.enableSimulation(
+                                            presetName = preset.presetDisplayName(),
+                                            fixtureCount = rig.fixtureCount,
+                                        )
+                                    }
+                                    appStateManager.completeOnboarding()
+                                },
+                            )
+                        } else {
+                            // Fallback if OnboardingViewModel is not in DI
+                            ScreenPlaceholder(
+                                "Onboarding",
+                                "OnboardingViewModel not registered in DI.",
+                            )
+                        }
                     }
                     is AppState.StagePreview -> {
                         if (stageVm != null) {
@@ -138,11 +177,8 @@ fun ChromaDmxApp() {
                                 )
 
                                 if (state.returnToOnboarding) {
-                                    // Return to onboarding at FIXTURE_SCAN step
                                     appStateManager.navigateTo(
-                                        AppState.Onboarding(
-                                            com.chromadmx.ui.navigation.OnboardingStep.FIXTURE_SCAN
-                                        )
+                                        AppState.Onboarding
                                     )
                                 } else {
                                     appStateManager.navigateBack()
@@ -153,7 +189,6 @@ fun ChromaDmxApp() {
                 }
 
                 // Pixel mascot overlay -- always visible on top of all screens
-                val mascotVm = resolveOrNull<MascotViewModel>()
                 if (mascotVm != null) {
                     DisposableEffect(mascotVm) {
                         onDispose { mascotVm.onCleared() }
@@ -164,7 +199,7 @@ fun ChromaDmxApp() {
                     )
                 }
 
-                // Chat panel overlay — slides up when mascot is tapped
+                // Chat panel overlay -- slides up when mascot is tapped
                 val agentVm = resolveOrNull<AgentViewModel>()
                 if (mascotVm != null && agentVm != null) {
                     val isChatOpen by mascotVm.isChatOpen.collectAsState()
