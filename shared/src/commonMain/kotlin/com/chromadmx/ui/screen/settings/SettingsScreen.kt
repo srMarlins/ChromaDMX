@@ -299,23 +299,23 @@ private fun AgentSection(
         Column(
             verticalArrangement = Arrangement.spacedBy(PixelDesign.spacing.medium),
         ) {
-            // API Key (masked display)
-            val maskedKey = if (state.agentConfig.apiKey.isEmpty()) {
-                ""
+            // API Key (masked display — auto-unmask on edit)
+            var showKey by remember { mutableStateOf(false) }
+            val displayValue = if (showKey || state.agentConfig.apiKey.isEmpty()) {
+                state.agentConfig.apiKey
             } else {
                 "\u2022".repeat(state.agentConfig.apiKey.length.coerceAtMost(20))
             }
-            var showKey by remember { mutableStateOf(false) }
             PixelTextField(
-                value = if (showKey) state.agentConfig.apiKey else maskedKey,
+                value = displayValue,
                 onValueChange = { newValue ->
-                    // When masked, clear and start fresh; when visible, update normally
-                    val actualValue = if (!showKey && newValue.contains("\u2022")) {
-                        newValue.replace("\u2022", "")
+                    if (!showKey) {
+                        // First keystroke while masked: unmask and start fresh
+                        showKey = true
+                        onEvent(SettingsEvent.UpdateAgentConfig(state.agentConfig.copy(apiKey = newValue.filter { it != '\u2022' })))
                     } else {
-                        newValue
+                        onEvent(SettingsEvent.UpdateAgentConfig(state.agentConfig.copy(apiKey = newValue)))
                     }
-                    onEvent(SettingsEvent.UpdateAgentConfig(state.agentConfig.copy(apiKey = actualValue)))
                 },
                 label = "API Key",
                 placeholder = "Enter API key...",

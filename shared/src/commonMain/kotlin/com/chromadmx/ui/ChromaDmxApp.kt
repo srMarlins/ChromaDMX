@@ -45,8 +45,9 @@ import org.koin.compose.getKoin
 fun ChromaDmxApp() {
     ChromaDmxTheme {
         val appStateManager = resolveOrNull<AppStateManager>()
-        val currentScreen by appStateManager?.currentScreen?.collectAsState()
-            ?: remember { MutableStateFlow(AppScreen.Setup) }.collectAsState()
+        val fallbackScreen = remember { MutableStateFlow(AppScreen.Setup) }
+        val currentScreenFlow = appStateManager?.currentScreen ?: fallbackScreen
+        val currentScreen by currentScreenFlow.collectAsState()
 
         val setupVm = resolveOrNull<SetupViewModel>()
         val stageVm = resolveOrNull<StageViewModelV2>()
