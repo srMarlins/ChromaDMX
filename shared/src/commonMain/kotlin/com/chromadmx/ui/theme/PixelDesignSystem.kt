@@ -45,6 +45,7 @@ data class PixelColors(
     val info: Color = Color(0xFF81D4FA), // Soft Sky Blue
     val outline: Color = MatchaPrimary.copy(alpha = 0.6f),
     val outlineVariant: Color = MatchaPrimary.copy(alpha = 0.3f),
+    val glow: Color = MatchaPrimary,
 )
 
 // --- Spacing ---
