@@ -187,15 +187,23 @@ class NodeDiscovery(
             val mutableNodes = currentNodes.toMutableMap()
 
             // If this is a new node and we've reached the capacity limit,
-            // evict the node that hasn't been seen for the longest time.
+            // evict the node that hasn't been seen for the longest time,
+            // BUT ONLY IF it is stale (seen more than DEGRADED_TIMEOUT_MS ago).
             if (!mutableNodes.containsKey(node.nodeKey) && mutableNodes.size >= maxNodes) {
-                val oldestKey = mutableNodes.values.minByOrNull { it.lastSeenMs }?.nodeKey
-                if (oldestKey != null) {
-                    mutableNodes.remove(oldestKey)
+                val oldestNode = mutableNodes.values.minByOrNull { it.lastSeenMs }
+                if (oldestNode != null) {
+                    val timeSinceSeen = currentTimeMs - oldestNode.lastSeenMs
+                    if (timeSinceSeen > DmxNode.DEGRADED_TIMEOUT_MS) {
+                        mutableNodes.remove(oldestNode.nodeKey)
+                        mutableNodes[node.nodeKey] = node
+                    } else {
+                        // The registry is full of healthy nodes. Reject the new node
+                        // to prevent cache thrashing/DoS.
+                    }
                 }
+            } else {
+                mutableNodes[node.nodeKey] = node
             }
-
-            mutableNodes[node.nodeKey] = node
             mutableNodes
         }
 
