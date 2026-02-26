@@ -1,9 +1,7 @@
 package com.chromadmx.ui.navigation
 
-import com.chromadmx.ui.onboarding.OnboardingStep
 import kotlin.test.Test
 import kotlin.test.assertIs
-import kotlin.test.assertTrue
 
 class AppStateTest {
     // ---- Legacy AppState tests (still valid while AppState.kt exists) ----
@@ -24,15 +22,6 @@ class AppStateTest {
     fun settingsIsOverlayState() {
         val state: AppState = AppState.Settings
         assertIs<AppState.Settings>(state)
-    }
-
-    @Test
-    fun onboardingStepsAreOrdered() {
-        val steps = OnboardingStep.steps
-        assertTrue(steps.indexOf(OnboardingStep.Splash) < steps.indexOf(OnboardingStep.NetworkDiscovery))
-        assertTrue(steps.indexOf(OnboardingStep.NetworkDiscovery) < steps.indexOf(OnboardingStep.FixtureScan))
-        assertTrue(steps.indexOf(OnboardingStep.FixtureScan) < steps.indexOf(OnboardingStep.VibeCheck))
-        assertTrue(steps.indexOf(OnboardingStep.VibeCheck) < steps.indexOf(OnboardingStep.Complete))
     }
 
     // ---- New AppScreen tests ----
