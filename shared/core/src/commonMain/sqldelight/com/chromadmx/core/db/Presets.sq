@@ -28,4 +28,4 @@ INSERT OR REPLACE INTO preset (
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 
 deletePreset:
-DELETE FROM preset WHERE preset_id = ?;
+DELETE FROM preset WHERE preset_id = ? AND is_builtin = 0;

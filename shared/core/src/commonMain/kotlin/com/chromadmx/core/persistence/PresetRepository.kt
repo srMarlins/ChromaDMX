@@ -27,20 +27,7 @@ class PresetRepository(private val db: ChromaDmxDatabase) {
         return queries.selectAllPresets()
             .asFlow()
             .mapToList(Dispatchers.Default)
-            .map { rows ->
-                rows.map { row ->
-                    Preset(
-                        id = row.preset_id,
-                        name = row.name,
-                        genre = row.genre?.let { Genre.valueOf(it) },
-                        layers = json.decodeFromString(row.layers_json),
-                        masterDimmer = row.master_dimmer.toFloat(),
-                        isBuiltIn = row.is_builtin == 1L,
-                        createdAt = row.created_at,
-                        thumbnailColors = json.decodeFromString(row.thumbnail_colors_json)
-                    )
-                }
-            }
+            .map { rows -> rows.mapNotNull(::toModel) }
     }
 
     /** Observe only built-in presets, ordered by name. */
@@ -48,20 +35,22 @@ class PresetRepository(private val db: ChromaDmxDatabase) {
         return queries.selectBuiltinPresets()
             .asFlow()
             .mapToList(Dispatchers.Default)
-            .map { rows ->
-                rows.map { row ->
-                    Preset(
-                        id = row.preset_id,
-                        name = row.name,
-                        genre = row.genre?.let { Genre.valueOf(it) },
-                        layers = json.decodeFromString(row.layers_json),
-                        masterDimmer = row.master_dimmer.toFloat(),
-                        isBuiltIn = row.is_builtin == 1L,
-                        createdAt = row.created_at,
-                        thumbnailColors = json.decodeFromString(row.thumbnail_colors_json)
-                    )
-                }
-            }
+            .map { rows -> rows.mapNotNull(::toModel) }
+    }
+
+    private fun toModel(row: com.chromadmx.core.db.Preset): Preset? {
+        return runCatching {
+            Preset(
+                id = row.preset_id,
+                name = row.name,
+                genre = row.genre?.let { name -> Genre.entries.find { it.name == name } },
+                layers = json.decodeFromString(row.layers_json),
+                masterDimmer = row.master_dimmer.toFloat(),
+                isBuiltIn = row.is_builtin == 1L,
+                createdAt = row.created_at,
+                thumbnailColors = json.decodeFromString(row.thumbnail_colors_json)
+            )
+        }.getOrNull()
     }
 
     /** Insert or replace a preset. */
