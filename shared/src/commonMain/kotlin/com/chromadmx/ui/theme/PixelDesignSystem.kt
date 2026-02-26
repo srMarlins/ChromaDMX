@@ -69,6 +69,17 @@ data class PixelSystem(
 
 val LocalPixelSystem = staticCompositionLocalOf { PixelSystem() }
 
+/**
+ * CompositionLocal for the reduced-motion accessibility preference.
+ *
+ * Defaults to `false` (full motion). Platform-specific theme wrappers
+ * should provide the actual system value via `CompositionLocalProvider`.
+ *
+ * On Android this maps to `Settings.Global.ANIMATOR_DURATION_SCALE == 0f`.
+ * On iOS this maps to `UIAccessibility.isReduceMotionEnabled`.
+ */
+val LocalReduceMotion = staticCompositionLocalOf { false }
+
 object PixelDesign {
     val colors: PixelColors
         @Composable
@@ -79,4 +90,19 @@ object PixelDesign {
         @Composable
         @ReadOnlyComposable
         get() = LocalPixelSystem.current.spacing
+
+    /**
+     * Whether the system requests reduced motion (accessibility preference).
+     *
+     * When `true`, animations should:
+     * - Use instant springs (no bounce, very high stiffness)
+     * - Skip continuous/looping animations (glow, sparkle, scanline)
+     * - Keep only functional state transitions
+     *
+     * Use [ChromaAnimations.resolve] for motion-aware animation specs.
+     */
+    val reduceMotion: Boolean
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalReduceMotion.current
 }
