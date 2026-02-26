@@ -22,9 +22,6 @@ import com.chromadmx.ui.theme.NodeOffline
 import com.chromadmx.ui.theme.NodeOnline
 import com.chromadmx.ui.theme.NodeWarning
 
-/**
- * Detailed status card for a single DMX node.
- */
 @Composable
 fun NodeStatusCard(
     node: DmxNode,
@@ -45,7 +42,7 @@ fun NodeStatusCard(
     PixelCard(
         modifier = modifier.fillMaxWidth(),
         borderColor = color,
-        glowColor = color.copy(alpha = 0.2f),
+        // glowColor removed
         title = {
             Text(
                 text = node.shortName.ifEmpty { "Unknown Node" },

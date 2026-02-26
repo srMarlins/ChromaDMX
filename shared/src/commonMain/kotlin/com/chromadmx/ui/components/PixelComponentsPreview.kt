@@ -64,7 +64,7 @@ fun PixelComponentsPreview() {
                 Text("PixelCard", style = MaterialTheme.typography.titleLarge, color = NeonMagenta)
                 PixelCard(
                     modifier = Modifier.fillMaxWidth(),
-                    glowColor = NeonCyan
+                    // glowColor removed
                 ) {
                     Column {
                         Text("Card with Glow", style = MaterialTheme.typography.titleMedium)

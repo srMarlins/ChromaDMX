@@ -55,18 +55,6 @@ import com.chromadmx.ui.theme.NeonCyan
 import com.chromadmx.ui.theme.NeonGreen
 import com.chromadmx.ui.viewmodel.ProvisioningViewModel
 
-/**
- * BLE Provisioning screen for configuring ESP32 DMX nodes.
- *
- * Provides a complete workflow: scan for nodes, select one, configure it
- * with Wi-Fi and Art-Net settings, and provision it over BLE.
- *
- * When BLE is unavailable (platform stub), displays a graceful fallback message.
- *
- * @param viewModel The provisioning ViewModel
- * @param onClose Callback to navigate back
- * @param modifier Optional modifier
- */
 @Composable
 fun ProvisioningScreen(
     viewModel: ProvisioningViewModel,
@@ -84,7 +72,6 @@ fun ProvisioningScreen(
         color = MaterialTheme.colorScheme.background
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Header
             ProvisioningHeader(
                 onClose = onClose,
                 selectedNode = selectedNode,
@@ -172,8 +159,6 @@ private fun ProvisioningHeader(
     }
 }
 
-// -- BLE Unavailable --
-
 @Composable
 private fun BleUnavailableMessage() {
     Column(
@@ -207,8 +192,6 @@ private fun BleUnavailableMessage() {
     }
 }
 
-// -- Scan Content --
-
 @Composable
 private fun ScanContent(
     nodes: List<BleNode>,
@@ -223,9 +206,8 @@ private fun ScanContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Scan control
         item {
-            PixelCard(title = { SectionTitle("SCAN FOR NODES") }) {
+            PixelCard(title = { ProvisioningSectionTitle("SCAN FOR NODES") }) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
                         text = "Scan for ESP32 DMX nodes advertising the ChromaDMX BLE service.",
@@ -296,10 +278,9 @@ private fun ScanContent(
             }
         }
 
-        // Discovered nodes
         if (nodes.isNotEmpty()) {
             item {
-                SectionTitle("DISCOVERED NODES (${nodes.size})")
+                ProvisioningSectionTitle("DISCOVERED NODES (${nodes.size})")
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
@@ -328,7 +309,7 @@ private fun BleNodeCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        glowColor = if (node.isProvisioned) NeonGreen else null
+        // glowColor removed
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -376,11 +357,9 @@ private fun BleNodeCard(
 private fun signalColor(quality: SignalQuality): Color = when (quality) {
     SignalQuality.EXCELLENT -> NeonGreen
     SignalQuality.GOOD -> NeonCyan
-    SignalQuality.FAIR -> Color(0xFFFFC107) // Amber
+    SignalQuality.FAIR -> Color(0xFFFFC107)
     SignalQuality.WEAK -> MaterialTheme.colorScheme.error
 }
-
-// -- Config Form --
 
 @Composable
 private fun ConfigFormContent(
@@ -394,10 +373,9 @@ private fun ConfigFormContent(
     var universe by remember { mutableStateOf("0") }
     var dmxStartAddress by remember { mutableStateOf("1") }
 
-    // Input validation
     val universeInt = universe.toIntOrNull()
     val universeError = when {
-        universe.isBlank() -> null // allow empty while typing
+        universe.isBlank() -> null
         universeInt == null -> "Must be a number"
         universeInt !in 0..32767 -> "Must be 0-32767"
         else -> null
@@ -418,9 +396,8 @@ private fun ConfigFormContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Node info
         item {
-            PixelCard(title = { SectionTitle("SELECTED NODE") }) {
+            PixelCard(title = { ProvisioningSectionTitle("SELECTED NODE") }) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
                         text = node.displayName,
@@ -441,9 +418,8 @@ private fun ConfigFormContent(
             }
         }
 
-        // Config form
         item {
-            PixelCard(title = { SectionTitle("NODE CONFIGURATION") }) {
+            PixelCard(title = { ProvisioningSectionTitle("NODE CONFIGURATION") }) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedTextField(
                         value = nodeName,
@@ -530,8 +506,6 @@ private fun ConfigFormContent(
     }
 }
 
-// -- Progress --
-
 @Composable
 private fun ProvisioningProgressContent(state: ProvisioningState) {
     val progress = when (state) {
@@ -592,8 +566,6 @@ private fun ProvisioningProgressContent(state: ProvisioningState) {
     }
 }
 
-// -- Success --
-
 @Composable
 private fun ProvisioningSuccessContent(onDone: () -> Unit) {
     Column(
@@ -603,7 +575,6 @@ private fun ProvisioningSuccessContent(onDone: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Success icon
         Box(
             modifier = Modifier
                 .size(64.dp)
@@ -648,8 +619,6 @@ private fun ProvisioningSuccessContent(onDone: () -> Unit) {
     }
 }
 
-// -- Error --
-
 @Composable
 private fun ProvisioningErrorContent(
     errorMessage: String?,
@@ -663,7 +632,6 @@ private fun ProvisioningErrorContent(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Error icon
         Box(
             modifier = Modifier
                 .size(64.dp)
@@ -717,4 +685,14 @@ private fun ProvisioningErrorContent(
             }
         }
     }
+}
+
+@Composable
+private fun ProvisioningSectionTitle(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 2.sp),
+        color = NeonCyan,
+        fontWeight = FontWeight.Bold
+    )
 }
