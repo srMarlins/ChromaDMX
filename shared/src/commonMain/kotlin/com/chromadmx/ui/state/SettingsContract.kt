@@ -7,6 +7,14 @@ import com.chromadmx.networking.discovery.NodeDiscovery
 import com.chromadmx.simulation.fixtures.RigPreset
 
 /**
+ * DMX protocol type.
+ */
+enum class ProtocolType {
+    ART_NET,
+    SACN
+}
+
+/**
  * Connection test status for the AI agent.
  */
 sealed interface AgentStatus {
@@ -23,7 +31,7 @@ sealed interface AgentStatus {
 data class SettingsUiState(
     // Network Settings
     val pollInterval: Long = NodeDiscovery.DEFAULT_POLL_INTERVAL_MS,
-    val protocol: String = "Art-Net",
+    val protocol: ProtocolType = ProtocolType.ART_NET,
     val manualIp: String = "192.168.1.100",
     val manualUniverse: String = "0",
     val manualStartAddress: String = "1",
@@ -45,7 +53,7 @@ data class SettingsUiState(
  */
 sealed interface SettingsEvent {
     data class SetPollInterval(val interval: Long) : SettingsEvent
-    data class SetProtocol(val protocol: String) : SettingsEvent
+    data class SetProtocol(val protocol: ProtocolType) : SettingsEvent
     data class SetManualIp(val ip: String) : SettingsEvent
     data class SetManualUniverse(val universe: String) : SettingsEvent
     data class SetManualStartAddress(val address: String) : SettingsEvent
