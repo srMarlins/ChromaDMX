@@ -59,5 +59,19 @@ data class DmxNode(
 
         /** Time since last seen (ms) before marking health as "lost". */
         const val LOST_TIMEOUT_MS: Long = 8_000L
+
+        /**
+         * Calculate health status based on latency and last-seen time.
+         *
+         * @return 0 = Lost, 1 = Degraded, 2 = Healthy
+         */
+        fun getHealthStatus(node: DmxNode, currentTimeMs: Long): Int {
+            val timeSinceLastSeen = currentTimeMs - node.lastSeenMs
+            return when {
+                timeSinceLastSeen >= LOST_TIMEOUT_MS -> 0
+                node.latencyMs >= LATENCY_THRESHOLD_MS || timeSinceLastSeen >= DEGRADED_TIMEOUT_MS -> 1
+                else -> 2
+            }
+        }
     }
 }

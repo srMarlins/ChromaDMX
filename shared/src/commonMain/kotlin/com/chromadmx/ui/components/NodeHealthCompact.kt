@@ -42,7 +42,12 @@ fun NodeHealthCompact(
         val overflow = if (nodes.size > 3) nodes.size - 3 else 0
 
         displayNodes.forEach { node ->
-            val level = getNodeHealthLevel(node, currentTimeMs)
+            val status = DmxNode.getHealthStatus(node, currentTimeMs)
+            val level = when (status) {
+                0 -> HealthLevel.EMPTY
+                1 -> HealthLevel.HALF
+                else -> HealthLevel.FULL
+            }
             NodeHealthIndicator(level = level)
         }
 
@@ -62,14 +67,5 @@ fun NodeHealthCompact(
                 color = MaterialTheme.colorScheme.error
             )
         }
-    }
-}
-
-private fun getNodeHealthLevel(node: DmxNode, currentTimeMs: Long): HealthLevel {
-    val timeSinceLastSeen = currentTimeMs - node.lastSeenMs
-    return when {
-        timeSinceLastSeen >= DmxNode.LOST_TIMEOUT_MS -> HealthLevel.EMPTY
-        node.latencyMs >= DmxNode.LATENCY_THRESHOLD_MS || timeSinceLastSeen >= DmxNode.DEGRADED_TIMEOUT_MS -> HealthLevel.HALF
-        else -> HealthLevel.FULL
     }
 }

@@ -46,24 +46,6 @@ fun NodeHealthIndicator(
         // . . X X X . .
         // . . . X . . .
 
-        val drawPixel = { x: Int, y: Int, isHalf: Boolean ->
-            val fill = if (level == HealthLevel.EMPTY) {
-                false // only outline
-            } else if (level == HealthLevel.HALF) {
-                x < 3 // only fill left half
-            } else {
-                true // fill all
-            }
-
-            if (fill || (x == 0 && y == 1) || (x == 0 && y == 2) || (x == 1 && y == 0) ||
-                (x == 2 && y == 0) || (x == 3 && y == 1) || (x == 4 && y == 0) ||
-                (x == 5 && y == 0) || (x == 6 && y == 1) || (x == 6 && y == 2) ||
-                (x == 5 && y == 3) || (x == 4 && y == 4) || (x == 3 && y == 5) ||
-                (x == 2 && y == 4) || (x == 1 && y == 3)) {
-                // This is a bit complex to do manually here, let's use a simpler approach
-            }
-        }
-
         // Let's use Path for better control of "pixel" look
         val path = Path()
 

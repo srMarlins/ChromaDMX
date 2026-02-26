@@ -295,17 +295,3 @@ class StageViewModel(
         // TODO: Wire to agent
     }
 }
-
-/**
- * Extension to convert Flow to StateFlow with a scope.
- */
-private fun <T> kotlinx.coroutines.flow.Flow<T>.collectAsStateFlow(
-    initialValue: T,
-    scope: CoroutineScope = CoroutineScope(Dispatchers.Default)
-): StateFlow<T> {
-    val state = MutableStateFlow(initialValue)
-    scope.launch {
-        collect { state.value = it }
-    }
-    return state.asStateFlow()
-}

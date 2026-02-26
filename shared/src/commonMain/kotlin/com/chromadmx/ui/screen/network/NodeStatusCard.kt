@@ -32,11 +32,11 @@ fun NodeStatusCard(
     onDiagnose: (DmxNode) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val level = getNodeHealthLevel(node, currentTimeMs)
-    val color = when (level) {
-        HealthLevel.FULL -> NodeOnline
-        HealthLevel.HALF -> NodeWarning
-        HealthLevel.EMPTY -> NodeOffline
+    val status = DmxNode.getHealthStatus(node, currentTimeMs)
+    val color = when (status) {
+        0 -> NodeOffline
+        1 -> NodeWarning
+        else -> NodeOnline
     }
 
     val uptimeSec = (currentTimeMs - node.firstSeenMs) / 1000
@@ -82,14 +82,5 @@ fun NodeStatusCard(
                 Text("DIAGNOSE", style = MaterialTheme.typography.labelSmall)
             }
         }
-    }
-}
-
-private fun getNodeHealthLevel(node: DmxNode, currentTimeMs: Long): HealthLevel {
-    val timeSinceLastSeen = currentTimeMs - node.lastSeenMs
-    return when {
-        timeSinceLastSeen >= DmxNode.LOST_TIMEOUT_MS -> HealthLevel.EMPTY
-        node.latencyMs >= DmxNode.LATENCY_THRESHOLD_MS || timeSinceLastSeen >= DmxNode.DEGRADED_TIMEOUT_MS -> HealthLevel.HALF
-        else -> HealthLevel.FULL
     }
 }
