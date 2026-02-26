@@ -25,6 +25,8 @@ data class EffectLayerConfig(
 /**
  * A full scene preset that can be saved to and loaded from disk.
  */
+typealias Preset = ScenePreset
+
 @Serializable
 data class ScenePreset(
     val id: String,
@@ -33,6 +35,7 @@ data class ScenePreset(
     val layers: List<EffectLayerConfig>,
     val masterDimmer: Float,
     val isBuiltIn: Boolean = false,
+    val sortOrder: Int = 0,
     val createdAt: Long,
     val thumbnailColors: List<Color>
 )
