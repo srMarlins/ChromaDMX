@@ -1,8 +1,6 @@
 package com.chromadmx.ui.screen.settings
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -11,24 +9,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Slider
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -38,531 +22,455 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.chromadmx.agent.config.AgentConfig
-import com.chromadmx.core.model.FixtureProfile
 import com.chromadmx.simulation.fixtures.RigPreset
-import com.chromadmx.simulation.fixtures.SimulatedFixtureRig
+import com.chromadmx.ui.components.PixelBadge
+import com.chromadmx.ui.components.PixelBadgeVariant
+import com.chromadmx.ui.components.PixelButton
+import com.chromadmx.ui.components.PixelButtonVariant
 import com.chromadmx.ui.components.PixelCard
-import com.chromadmx.ui.components.VirtualNodeBadge
-import com.chromadmx.ui.theme.NeonCyan
-import com.chromadmx.ui.theme.NeonGreen
+import com.chromadmx.ui.components.PixelDropdown
+import com.chromadmx.ui.components.PixelDialog
+import com.chromadmx.ui.components.PixelIconButton
+import com.chromadmx.ui.components.PixelScaffold
+import com.chromadmx.ui.components.PixelSectionTitle
+import com.chromadmx.ui.components.PixelSlider
+import com.chromadmx.ui.components.PixelSwitch
+import com.chromadmx.ui.components.PixelTextField
+import com.chromadmx.ui.state.AgentStatus
+import com.chromadmx.ui.state.ProtocolType
+import com.chromadmx.ui.state.SettingsEvent
+import com.chromadmx.ui.state.SettingsUiState
+import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.util.presetDisplayName
-import com.chromadmx.ui.viewmodel.AgentStatus
-import com.chromadmx.ui.viewmodel.SettingsViewModel
+import com.chromadmx.ui.viewmodel.SettingsViewModelV2
 
 @Composable
 fun SettingsScreen(
-    viewModel: SettingsViewModel,
-    onClose: () -> Unit,
+    viewModel: SettingsViewModelV2,
+    onBack: () -> Unit,
+    onProvisioning: () -> Unit,
     modifier: Modifier = Modifier,
-    onOpenProvisioning: () -> Unit = {},
 ) {
-    val pollInterval by viewModel.pollInterval.collectAsState()
-    val protocol by viewModel.protocol.collectAsState()
-    val manualIp by viewModel.manualIp.collectAsState()
-    val manualUniverse by viewModel.manualUniverse.collectAsState()
-    val manualStartAddress by viewModel.manualStartAddress.collectAsState()
-    val fixtureProfiles by viewModel.fixtureProfiles.collectAsState()
-    val simulationEnabled by viewModel.simulationEnabled.collectAsState()
-    val selectedRigPreset by viewModel.selectedRigPreset.collectAsState()
-    val agentConfig by viewModel.agentConfig.collectAsState()
-    val agentStatus by viewModel.agentStatus.collectAsState()
+    val state by viewModel.state.collectAsState()
+    var showResetDialog by remember { mutableStateOf(false) }
 
-    Surface(
-        modifier = modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            // Header
+    PixelScaffold(
+        modifier = modifier,
+        topBar = {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
+                PixelIconButton(onClick = onBack) {
+                    Text(
+                        text = "\u25C0",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = PixelDesign.colors.onSurface,
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
                 Text(
-                    text = "SETTINGS",
+                    text = "Settings",
                     style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 2.sp
+                    color = PixelDesign.colors.onBackground,
                 )
-                IconButton(onClick = onClose) {
-                    Icon(Icons.Default.Close, contentDescription = "Close Settings")
-                }
             }
+        },
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(PixelDesign.spacing.large),
+        ) {
+            // Network section
+            item { NetworkSection(state, viewModel::onEvent) }
+            // Simulation section
+            item { SimulationSection(state, viewModel::onEvent) }
+            // Agent section
+            item { AgentSection(state, viewModel::onEvent) }
+            // Hardware section
+            item { HardwareSection(onProvisioning) }
+            // App section (destructive)
+            item { AppSection(viewModel::onEvent, onShowResetDialog = { showResetDialog = true }) }
+            // Version footer
+            item { VersionFooter() }
+        }
+    }
 
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
-            ) {
-                // Network Section
-                item {
-                    NetworkSettingsSection(
-                        pollInterval = pollInterval,
-                        protocol = protocol,
-                        manualIp = manualIp,
-                        manualUniverse = manualUniverse,
-                        manualStartAddress = manualStartAddress,
-                        onPollIntervalChange = { viewModel.setPollInterval(it) },
-                        onProtocolChange = { viewModel.setProtocol(it) },
-                        onManualIpChange = { viewModel.setManualIp(it) },
-                        onManualUniverseChange = { viewModel.setManualUniverse(it) },
-                        onManualStartAddressChange = { viewModel.setManualStartAddress(it) },
-                        onForceRescan = { viewModel.forceRescan() }
-                    )
+    // Reset confirmation dialog
+    if (showResetDialog) {
+        PixelDialog(
+            onDismissRequest = { showResetDialog = false },
+            title = "Reset Onboarding?",
+            confirmButton = {
+                PixelButton(
+                    onClick = {
+                        viewModel.onEvent(SettingsEvent.ResetOnboarding)
+                        showResetDialog = false
+                    },
+                    variant = PixelButtonVariant.Danger,
+                ) {
+                    Text("Reset")
                 }
-
-                // Fixture Profiles Section
-                item {
-                    FixtureProfilesSection(
-                        profiles = fixtureProfiles,
-                        onDeleteProfile = { viewModel.deleteFixtureProfile(it) },
-                        onAddProfile = { /* Open editor */ }
-                    )
+            },
+            dismissButton = {
+                PixelButton(
+                    onClick = { showResetDialog = false },
+                    variant = PixelButtonVariant.Secondary,
+                ) {
+                    Text("Cancel")
                 }
-
-                // Simulation Section
-                item {
-                    SimulationSettingsSection(
-                        enabled = simulationEnabled,
-                        selectedPreset = selectedRigPreset,
-                        onToggleEnabled = { viewModel.toggleSimulation(it) },
-                        onSelectPreset = { viewModel.setRigPreset(it) },
-                        onReset = { viewModel.resetSimulation() }
-                    )
-                }
-
-                // Agent Section
-                item {
-                    AgentSettingsSection(
-                        config = agentConfig,
-                        status = agentStatus,
-                        onConfigChange = { viewModel.updateAgentConfig(it) },
-                        onTestConnection = { viewModel.testAgentConnection() }
-                    )
-                }
-
-                // BLE Provisioning Section
-                item {
-                    BleProvisioningSection(
-                        onOpenProvisioning = onOpenProvisioning
-                    )
-                }
-
-                // App Section
-                item {
-                    AppSettingsSection(
-                        onResetOnboarding = { viewModel.resetOnboarding() },
-                        onExportData = { viewModel.exportAppData() },
-                        onImportData = { viewModel.importAppData() }
-                    )
-                }
-
-                item {
-                    Spacer(modifier = Modifier.height(32.dp))
-                    Text(
-                        text = "Version 1.0.0",
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-            }
+            },
+        ) {
+            Text(
+                text = "This will restart the setup wizard.",
+                color = PixelDesign.colors.onSurface,
+            )
         }
     }
 }
 
+// ── Network Section ────────────────────────────────────────────────────
+
 @Composable
-fun NetworkSettingsSection(
-    pollInterval: Long,
-    protocol: String,
-    manualIp: String,
-    manualUniverse: String,
-    manualStartAddress: String,
-    onPollIntervalChange: (Long) -> Unit,
-    onProtocolChange: (String) -> Unit,
-    onManualIpChange: (String) -> Unit,
-    onManualUniverseChange: (String) -> Unit,
-    onManualStartAddressChange: (String) -> Unit,
-    onForceRescan: () -> Unit
+private fun NetworkSection(
+    state: SettingsUiState,
+    onEvent: (SettingsEvent) -> Unit,
 ) {
-    PixelCard(title = { SectionTitle("NETWORK (ADVANCED)") }) {
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            // Protocol selection
-            Column {
-                Text("Protocol", style = MaterialTheme.typography.labelLarge)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(
-                        selected = protocol == "Art-Net",
-                        onClick = { onProtocolChange("Art-Net") },
-                        label = { Text("Art-Net") }
-                    )
-                    FilterChip(
-                        selected = protocol == "sACN",
-                        onClick = { onProtocolChange("sACN") },
-                        label = { Text("sACN") }
-                    )
-                }
-            }
+    val protocolItems = ProtocolType.entries.map { it.name }
+    val selectedProtocolIndex = ProtocolType.entries.indexOf(state.protocol)
 
-            // Manual Configuration
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Manual Node Configuration", style = MaterialTheme.typography.labelLarge)
-                OutlinedTextField(
-                    value = manualIp,
-                    onValueChange = onManualIpChange,
-                    label = { Text("Node IP Address") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = manualUniverse,
-                        onValueChange = onManualUniverseChange,
-                        label = { Text("Universe") },
-                        modifier = Modifier.weight(1f)
-                    )
-                    OutlinedTextField(
-                        value = manualStartAddress,
-                        onValueChange = onManualStartAddressChange,
-                        label = { Text("Start Addr") },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-
-            // Discovery interval
-            Column {
-                Text("Discovery Interval: ${pollInterval}ms", style = MaterialTheme.typography.labelLarge)
-                Slider(
-                    value = pollInterval.toFloat(),
-                    onValueChange = { onPollIntervalChange(it.toLong()) },
-                    valueRange = 500f..10000f,
-                    steps = 19
-                )
-            }
-
-            Button(
-                onClick = onForceRescan,
+    PixelCard(
+        title = { PixelSectionTitle(title = "Network") },
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(PixelDesign.spacing.medium),
+        ) {
+            // Protocol selector
+            Text(
+                text = "Protocol",
+                style = MaterialTheme.typography.labelLarge,
+                color = PixelDesign.colors.onSurfaceVariant,
+            )
+            PixelDropdown(
+                items = protocolItems,
+                selectedIndex = selectedProtocolIndex,
+                onItemSelected = { index ->
+                    onEvent(SettingsEvent.SetProtocol(ProtocolType.entries[index]))
+                },
                 modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.small
+            )
+
+            // Poll interval slider
+            Text(
+                text = "Poll Interval: ${state.pollInterval}ms",
+                style = MaterialTheme.typography.labelLarge,
+                color = PixelDesign.colors.onSurfaceVariant,
+            )
+            PixelSlider(
+                value = state.pollInterval.toFloat(),
+                onValueChange = { onEvent(SettingsEvent.SetPollInterval(it.toLong())) },
+                valueRange = 1000f..10000f,
+                modifier = Modifier.fillMaxWidth(),
+                showValueLabel = true,
+                valueLabelFormatter = { "${it.toLong()}ms" },
+            )
+
+            // Manual IP
+            PixelTextField(
+                value = state.manualIp,
+                onValueChange = { onEvent(SettingsEvent.SetManualIp(it)) },
+                label = "Node IP Address",
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            // Manual universe and start address in a row
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(PixelDesign.spacing.small),
             ) {
-                Text("FORCE RE-SCAN")
-            }
-        }
-    }
-}
-
-@Composable
-fun FixtureProfilesSection(
-    profiles: List<FixtureProfile>,
-    onDeleteProfile: (String) -> Unit,
-    onAddProfile: () -> Unit
-) {
-    PixelCard(title = { SectionTitle("FIXTURE PROFILES") }) {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (profiles.isEmpty()) {
-                Text(
-                    "No custom profiles loaded.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                PixelTextField(
+                    value = state.manualUniverse,
+                    onValueChange = { onEvent(SettingsEvent.SetManualUniverse(it)) },
+                    label = "Universe",
+                    modifier = Modifier.weight(1f),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 )
-            } else {
-                profiles.forEach { profile ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(profile.name, style = MaterialTheme.typography.bodyLarge)
-                        IconButton(onClick = { onDeleteProfile(profile.profileId) }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
-                        }
-                    }
-                }
+                PixelTextField(
+                    value = state.manualStartAddress,
+                    onValueChange = { onEvent(SettingsEvent.SetManualStartAddress(it)) },
+                    label = "Start Address",
+                    modifier = Modifier.weight(1f),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                )
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(
-                    onClick = onAddProfile,
-                    modifier = Modifier.weight(1f),
-                    shape = MaterialTheme.shapes.small
-                ) {
-                    Text("ADD CUSTOM")
-                }
-                OutlinedButton(
-                    onClick = { /* Import */ },
-                    modifier = Modifier.weight(1f),
-                    shape = MaterialTheme.shapes.small
-                ) {
-                    Text("IMPORT JSON")
-                }
+            // Force Rescan button
+            PixelButton(
+                onClick = { onEvent(SettingsEvent.ForceRescan) },
+                variant = PixelButtonVariant.Secondary,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Force Rescan")
             }
         }
     }
 }
 
+// ── Simulation Section ─────────────────────────────────────────────────
+
 @Composable
-fun SimulationSettingsSection(
-    enabled: Boolean,
-    selectedPreset: RigPreset,
-    onToggleEnabled: (Boolean) -> Unit,
-    onSelectPreset: (RigPreset) -> Unit,
-    onReset: () -> Unit
+private fun SimulationSection(
+    state: SettingsUiState,
+    onEvent: (SettingsEvent) -> Unit,
 ) {
-    PixelCard(title = { SectionTitle("SIMULATION") }) {
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            // Enable/disable toggle
+    val rigPresetItems = RigPreset.entries.map { it.presetDisplayName() }
+    val selectedPresetIndex = RigPreset.entries.indexOf(state.selectedRigPreset)
+
+    PixelCard(
+        title = { PixelSectionTitle(title = "Simulation") },
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(PixelDesign.spacing.medium),
+        ) {
+            // Simulation toggle
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("Simulation Mode", style = MaterialTheme.typography.bodyLarge)
-                Switch(checked = enabled, onCheckedChange = onToggleEnabled)
-            }
-
-            // Current status summary
-            if (enabled) {
-                val rig = remember(selectedPreset) {
-                    SimulatedFixtureRig(selectedPreset)
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column {
-                        Text(
-                            text = "Active",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = NeonGreen,
-                        )
-                        Text(
-                            text = "${selectedPreset.presetDisplayName()} -- ${rig.fixtureCount} fixtures",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
-                    VirtualNodeBadge()
-                }
-            }
-
-            // Inline rig preset selector (cards, not just radio buttons)
-            Column {
-                Text("Rig Preset", style = MaterialTheme.typography.labelLarge)
-                Spacer(Modifier.height(8.dp))
-                RigPreset.entries.forEach { preset ->
-                    val isSelected = selectedPreset == preset
-                    val rig = remember(preset) {
-                        SimulatedFixtureRig(preset)
-                    }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(
-                                if (isSelected) NeonCyan.copy(alpha = 0.08f)
-                                else Color.Transparent
-                            )
-                            .padding(vertical = 4.dp)
-                    ) {
-                        RadioButton(
-                            selected = isSelected,
-                            onClick = { onSelectPreset(preset) }
-                        )
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                preset.presetDisplayName(),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            )
-                            Text(
-                                "${rig.fixtureCount} fixtures, ${rig.universeCount} universe${if (rig.universeCount != 1) "s" else ""}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                }
-            }
-
-            // Reset button
-            Button(
-                onClick = onReset,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
-                shape = MaterialTheme.shapes.small
-            ) {
-                Text("RESET SIMULATION")
-            }
-        }
-    }
-}
-
-@Composable
-fun AgentSettingsSection(
-    config: AgentConfig,
-    status: AgentStatus,
-    onConfigChange: (AgentConfig) -> Unit,
-    onTestConnection: () -> Unit
-) {
-    PixelCard(title = { SectionTitle("AGENT / AI") }) {
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            OutlinedTextField(
-                value = config.apiKey,
-                onValueChange = { onConfigChange(config.copy(apiKey = it)) },
-                label = { Text("API Key") },
-                modifier = Modifier.fillMaxWidth(),
-                visualTransformation = PasswordVisualTransformation()
-            )
-
-            var expanded by remember { mutableStateOf(false) }
-            Box {
-                OutlinedButton(
-                    onClick = { expanded = true },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.small
-                ) {
-                    Text("Model: ${config.modelId}")
-                }
-                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                    SettingsViewModel.AVAILABLE_MODELS.forEach { model ->
-                        DropdownMenuItem(
-                            text = { Text(model) },
-                            onClick = {
-                                onConfigChange(config.copy(modelId = model))
-                                expanded = false
-                            }
-                        )
-                    }
-                }
-            }
-
-            Column {
-                Text("Max Iterations: ${config.maxIterations}", style = MaterialTheme.typography.labelLarge)
-                Slider(
-                    value = config.maxIterations.toFloat(),
-                    onValueChange = { onConfigChange(config.copy(maxIterations = it.toInt())) },
-                    valueRange = 1f..100f
+                Text(
+                    text = "Simulation Mode",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = PixelDesign.colors.onSurface,
+                )
+                PixelSwitch(
+                    checked = state.simulationEnabled,
+                    onCheckedChange = { onEvent(SettingsEvent.ToggleSimulation(it)) },
                 )
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Button(
-                    onClick = onTestConnection,
-                    modifier = Modifier.weight(1f),
-                    shape = MaterialTheme.shapes.small
+            // Rig preset dropdown (only when simulation enabled)
+            if (state.simulationEnabled) {
+                Text(
+                    text = "Rig Preset",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = PixelDesign.colors.onSurfaceVariant,
+                )
+                PixelDropdown(
+                    items = rigPresetItems,
+                    selectedIndex = selectedPresetIndex,
+                    onItemSelected = { index ->
+                        onEvent(SettingsEvent.SetRigPreset(RigPreset.entries[index]))
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                // Reset Simulation button
+                PixelButton(
+                    onClick = { onEvent(SettingsEvent.ResetSimulation) },
+                    variant = PixelButtonVariant.Danger,
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("TEST CONNECTION")
-                }
-
-                val statusText = when (status) {
-                    is AgentStatus.Idle -> null
-                    is AgentStatus.Testing -> "Testing..."
-                    is AgentStatus.Success -> "Connection Successful!"
-                    is AgentStatus.Error -> "Failed: ${status.message}"
-                }
-                val statusColor = when (status) {
-                    is AgentStatus.Success -> MaterialTheme.colorScheme.primary
-                    is AgentStatus.Error -> MaterialTheme.colorScheme.error
-                    else -> MaterialTheme.colorScheme.onSurfaceVariant
-                }
-
-                if (statusText != null) {
-                    Text(
-                        text = statusText,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = statusColor,
-                        modifier = Modifier.weight(1f)
-                    )
+                    Text("Reset Simulation")
                 }
             }
         }
     }
 }
 
-@Composable
-fun AppSettingsSection(
-    onResetOnboarding: () -> Unit,
-    onExportData: () -> Unit,
-    onImportData: () -> Unit
-) {
-    PixelCard(title = { SectionTitle("APP") }) {
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedButton(
-                onClick = onResetOnboarding,
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.small
-            ) {
-                Text("RESET ONBOARDING")
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(
-                    onClick = onExportData,
-                    modifier = Modifier.weight(1f),
-                    shape = MaterialTheme.shapes.small
-                ) {
-                    Text("EXPORT DATA")
-                }
-                Button(
-                    onClick = onImportData,
-                    modifier = Modifier.weight(1f),
-                    shape = MaterialTheme.shapes.small
-                ) {
-                    Text("IMPORT DATA")
-                }
-            }
-        }
-    }
-}
+// ── Agent Section ──────────────────────────────────────────────────────
 
 @Composable
-fun BleProvisioningSection(
-    onOpenProvisioning: () -> Unit
+private fun AgentSection(
+    state: SettingsUiState,
+    onEvent: (SettingsEvent) -> Unit,
 ) {
-    PixelCard(title = { SectionTitle("BLE PROVISIONING") }) {
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(
-                "Configure ESP32 DMX nodes over Bluetooth Low Energy. " +
-                    "Set Wi-Fi credentials and Art-Net addressing for each node.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+    val modelItems = SettingsViewModelV2.AVAILABLE_MODELS
+    val selectedModelIndex = modelItems.indexOf(state.agentConfig.modelId)
+
+    PixelCard(
+        title = { PixelSectionTitle(title = "AI Agent") },
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(PixelDesign.spacing.medium),
+        ) {
+            // API Key (masked display)
+            val maskedKey = if (state.agentConfig.apiKey.isEmpty()) {
+                ""
+            } else {
+                "\u2022".repeat(state.agentConfig.apiKey.length.coerceAtMost(20))
+            }
+            var showKey by remember { mutableStateOf(false) }
+            PixelTextField(
+                value = if (showKey) state.agentConfig.apiKey else maskedKey,
+                onValueChange = { newValue ->
+                    // When masked, clear and start fresh; when visible, update normally
+                    val actualValue = if (!showKey && newValue.contains("\u2022")) {
+                        newValue.replace("\u2022", "")
+                    } else {
+                        newValue
+                    }
+                    onEvent(SettingsEvent.UpdateAgentConfig(state.agentConfig.copy(apiKey = actualValue)))
+                },
+                label = "API Key",
+                placeholder = "Enter API key...",
+                modifier = Modifier.fillMaxWidth(),
             )
 
-            Button(
-                onClick = onOpenProvisioning,
+            // Model selector
+            Text(
+                text = "Model",
+                style = MaterialTheme.typography.labelLarge,
+                color = PixelDesign.colors.onSurfaceVariant,
+            )
+            PixelDropdown(
+                items = modelItems,
+                selectedIndex = selectedModelIndex.coerceAtLeast(0),
+                onItemSelected = { index ->
+                    onEvent(
+                        SettingsEvent.UpdateAgentConfig(
+                            state.agentConfig.copy(modelId = modelItems[index])
+                        )
+                    )
+                },
                 modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.small
+            )
+
+            // Max iterations
+            PixelTextField(
+                value = state.agentConfig.maxIterations.toString(),
+                onValueChange = { value ->
+                    val iterations = value.toIntOrNull() ?: return@PixelTextField
+                    onEvent(
+                        SettingsEvent.UpdateAgentConfig(
+                            state.agentConfig.copy(maxIterations = iterations)
+                        )
+                    )
+                },
+                label = "Max Iterations",
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            )
+
+            // Test Connection button + status
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(PixelDesign.spacing.small),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("OPEN BLE PROVISIONING")
+                PixelButton(
+                    onClick = { onEvent(SettingsEvent.TestAgentConnection) },
+                    variant = PixelButtonVariant.Primary,
+                ) {
+                    Text("Test Connection")
+                }
+
+                AgentStatusBadge(state.agentStatus)
             }
         }
     }
 }
 
 @Composable
-fun SectionTitle(title: String) {
+private fun AgentStatusBadge(status: AgentStatus) {
+    when (status) {
+        is AgentStatus.Idle -> { /* No badge shown */ }
+        is AgentStatus.Testing -> {
+            PixelBadge(text = "Testing...", variant = PixelBadgeVariant.Info)
+        }
+        is AgentStatus.Success -> {
+            PixelBadge(text = "Connected", variant = PixelBadgeVariant.Primary)
+        }
+        is AgentStatus.Error -> {
+            PixelBadge(text = status.message, variant = PixelBadgeVariant.Error)
+        }
+    }
+}
+
+// ── Hardware Section ───────────────────────────────────────────────────
+
+@Composable
+private fun HardwareSection(onProvisioning: () -> Unit) {
+    PixelCard(
+        title = { PixelSectionTitle(title = "Hardware") },
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(PixelDesign.spacing.medium),
+        ) {
+            PixelButton(
+                onClick = onProvisioning,
+                variant = PixelButtonVariant.Primary,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("BLE Provisioning")
+            }
+        }
+    }
+}
+
+// ── App Section ────────────────────────────────────────────────────────
+
+@Composable
+private fun AppSection(
+    onEvent: (SettingsEvent) -> Unit,
+    onShowResetDialog: () -> Unit,
+) {
+    PixelCard(
+        title = { PixelSectionTitle(title = "App") },
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(PixelDesign.spacing.medium),
+        ) {
+            // Reset Onboarding (destructive — shows confirmation)
+            PixelButton(
+                onClick = onShowResetDialog,
+                variant = PixelButtonVariant.Danger,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Reset Onboarding")
+            }
+
+            // Export / Import (disabled TODO)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(PixelDesign.spacing.small),
+            ) {
+                PixelButton(
+                    onClick = { onEvent(SettingsEvent.ExportAppData) },
+                    variant = PixelButtonVariant.Secondary,
+                    enabled = false,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text("Export Data")
+                }
+                PixelButton(
+                    onClick = { onEvent(SettingsEvent.ImportAppData) },
+                    variant = PixelButtonVariant.Secondary,
+                    enabled = false,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text("Import Data")
+                }
+            }
+        }
+    }
+}
+
+// ── Version Footer ─────────────────────────────────────────────────────
+
+@Composable
+private fun VersionFooter() {
+    Spacer(modifier = Modifier.height(PixelDesign.spacing.medium))
     Text(
-        text = title,
-        style = MaterialTheme.typography.labelLarge,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.primary
+        text = "Version 1.0.0",
+        style = MaterialTheme.typography.bodySmall,
+        modifier = Modifier.fillMaxWidth(),
+        textAlign = TextAlign.Center,
+        color = PixelDesign.colors.onSurfaceVariant,
     )
+    Spacer(modifier = Modifier.height(PixelDesign.spacing.medium))
 }

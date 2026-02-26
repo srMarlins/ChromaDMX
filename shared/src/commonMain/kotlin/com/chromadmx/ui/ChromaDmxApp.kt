@@ -30,9 +30,11 @@ import com.chromadmx.ui.screen.stage.StagePreviewScreen
 import com.chromadmx.ui.theme.ChromaDmxTheme
 import com.chromadmx.ui.viewmodel.AgentViewModel
 import com.chromadmx.ui.viewmodel.MascotViewModel
+import com.chromadmx.ui.viewmodel.MascotViewModelV2
 import com.chromadmx.ui.viewmodel.OnboardingViewModel
 import com.chromadmx.ui.viewmodel.ProvisioningViewModel
 import com.chromadmx.ui.viewmodel.SettingsViewModel
+import com.chromadmx.ui.viewmodel.SettingsViewModelV2
 import com.chromadmx.ui.viewmodel.StageViewModel
 import org.koin.compose.getKoin
 
@@ -60,6 +62,7 @@ fun ChromaDmxApp() {
         val currentState by appStateManager.currentState.collectAsState()
 
         val settingsVm = resolveOrNull<SettingsViewModel>()
+        val settingsVmV2 = resolveOrNull<SettingsViewModelV2>()
         val stageVm = resolveOrNull<StageViewModel>()
         val mascotVm = resolveOrNull<MascotViewModel>()
 
@@ -134,11 +137,11 @@ fun ChromaDmxApp() {
                         }
                     }
                     is AppState.Settings -> {
-                        if (settingsVm != null) {
+                        if (settingsVmV2 != null) {
                             SettingsScreen(
-                                viewModel = settingsVm,
-                                onClose = { appStateManager.navigateBack() },
-                                onOpenProvisioning = {
+                                viewModel = settingsVmV2,
+                                onBack = { appStateManager.navigateBack() },
+                                onProvisioning = {
                                     appStateManager.navigateTo(AppState.BleProvisioning)
                                 },
                             )
@@ -200,14 +203,9 @@ fun ChromaDmxApp() {
                 }
 
                 // Chat panel overlay -- slides up when mascot is tapped
-                val agentVm = resolveOrNull<AgentViewModel>()
-                if (mascotVm != null && agentVm != null) {
-                    val isChatOpen by mascotVm.isChatOpen.collectAsState()
-                    ChatPanel(
-                        isOpen = isChatOpen,
-                        agentViewModel = agentVm,
-                        onDismiss = { mascotVm.toggleChat() },
-                    )
+                val mascotV2 = resolveOrNull<MascotViewModelV2>()
+                if (mascotV2 != null) {
+                    ChatPanel(viewModel = mascotV2)
                 }
             }
         }
