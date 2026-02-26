@@ -36,6 +36,9 @@ koog = "0.6.3"
 # SQLDelight
 sqldelight = "2.0.2"
 
+# Multiplatform Settings
+multiplatform-settings = "1.3.0"
+
 # Testing
 kotlin-test = "2.3.10"
 
@@ -92,6 +95,11 @@ sqldelight-android-driver = { module = "app.cash.sqldelight:android-driver", ver
 sqldelight-native-driver = { module = "app.cash.sqldelight:native-driver", version.ref = "sqldelight" }
 sqldelight-coroutines = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "sqldelight" }
 sqldelight-sqlite-driver = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqldelight" }
+
+# Multiplatform Settings
+multiplatform-settings-no-arg = { module = "com.russhwolf:multiplatform-settings-no-arg", version.ref = "multiplatform-settings" }
+multiplatform-settings-coroutines = { module = "com.russhwolf:multiplatform-settings-coroutines", version.ref = "multiplatform-settings" }
+multiplatform-settings-test = { module = "com.russhwolf:multiplatform-settings-test", version.ref = "multiplatform-settings" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

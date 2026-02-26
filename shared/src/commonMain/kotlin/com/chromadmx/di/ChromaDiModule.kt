@@ -6,6 +6,7 @@ import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.core.persistence.FixtureRepository
 import com.chromadmx.core.persistence.NetworkStateRepository
 import com.chromadmx.core.persistence.PresetRepository
+import com.chromadmx.core.persistence.SettingsRepository
 import com.chromadmx.engine.bridge.DmxBridge
 import com.chromadmx.engine.bridge.DmxOutputBridge
 import com.chromadmx.engine.effect.EffectRegistry
@@ -26,6 +27,8 @@ import com.chromadmx.networking.output.DmxOutputService
 import com.chromadmx.networking.transport.PlatformUdpTransport
 import com.chromadmx.tempo.clock.BeatClock
 import com.chromadmx.tempo.tap.TapTempoClock
+import com.russhwolf.settings.ObservableSettings
+import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -101,6 +104,8 @@ val chromaDiModule = module {
     single { FixtureRepository(get()) }
     single { NetworkStateRepository(get()) }
     single { PresetRepository(get()) }
+    single<ObservableSettings> { Settings() as ObservableSettings }
+    single { SettingsRepository(get()) }
 
     // --- Presets ---
     single { PresetLibrary(get(), get(), get()) }
