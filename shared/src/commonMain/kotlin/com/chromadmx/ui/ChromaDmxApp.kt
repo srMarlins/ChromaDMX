@@ -22,12 +22,14 @@ import com.chromadmx.ui.navigation.AppState
 import com.chromadmx.ui.navigation.AppStateManager
 import com.chromadmx.ui.screen.chat.ChatPanel
 import com.chromadmx.ui.screen.onboarding.OnboardingScreen
+import com.chromadmx.ui.screen.settings.ProvisioningScreen
 import com.chromadmx.ui.screen.settings.SettingsScreen
 import com.chromadmx.ui.screen.simulation.RigPresetSelector
 import com.chromadmx.ui.screen.stage.StagePreviewScreen
 import com.chromadmx.ui.theme.ChromaDmxTheme
 import com.chromadmx.ui.viewmodel.AgentViewModel
 import com.chromadmx.ui.viewmodel.MascotViewModel
+import com.chromadmx.ui.viewmodel.ProvisioningViewModel
 import com.chromadmx.ui.viewmodel.SettingsViewModel
 import com.chromadmx.ui.viewmodel.StageViewModel
 import org.koin.compose.getKoin
@@ -97,9 +99,26 @@ fun ChromaDmxApp() {
                             SettingsScreen(
                                 viewModel = settingsVm,
                                 onClose = { appStateManager.navigateBack() },
+                                onOpenProvisioning = {
+                                    appStateManager.navigateTo(AppState.BleProvisioning)
+                                },
                             )
                         } else {
                             ScreenPlaceholder("Settings", "Services not registered.")
+                        }
+                    }
+                    is AppState.BleProvisioning -> {
+                        val provisioningVm = resolveOrNull<ProvisioningViewModel>()
+                        if (provisioningVm != null) {
+                            DisposableEffect(provisioningVm) {
+                                onDispose { provisioningVm.onCleared() }
+                            }
+                            ProvisioningScreen(
+                                viewModel = provisioningVm,
+                                onClose = { appStateManager.navigateBack() },
+                            )
+                        } else {
+                            ScreenPlaceholder("BLE Provisioning", "BLE services not registered.")
                         }
                     }
                     is AppState.RigSelection -> {
