@@ -118,7 +118,7 @@ class OnboardingViewModelTest {
         val vm = createVm(scope = backgroundScope)
         // Manually write the pref to simulate completion
         fakeStorage.mkdirs("prefs")
-        fakeStorage.saveFile(OnboardingViewModel.PREFS_PATH, "onboarding_complete=true")
+        fakeStorage.saveFile(OnboardingViewModel.PREFS_PATH, "true")
         assertFalse(vm.isFirstLaunch())
     }
 

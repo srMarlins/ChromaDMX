@@ -8,7 +8,7 @@ import kotlin.test.assertTrue
 class AppStateTest {
     @Test
     fun onboardingIsInitialStateForFirstLaunch() {
-        val state: AppState = AppState.Onboarding(OnboardingStep.Splash)
+        val state: AppState = AppState.Onboarding
         assertIs<AppState.Onboarding>(state)
     }
 

@@ -130,7 +130,7 @@ class OnboardingViewModel(
      */
     fun isFirstLaunch(): Boolean {
         val value = fileStorage.readFile(PREFS_PATH)
-        return value == null || !value.contains("onboarding_complete=true")
+        return value != "true"
     }
 
     /**
@@ -138,14 +138,20 @@ class OnboardingViewModel(
      */
     private fun markOnboardingComplete() {
         fileStorage.mkdirs("prefs")
-        fileStorage.saveFile(PREFS_PATH, "onboarding_complete=true")
+        fileStorage.saveFile(PREFS_PATH, "true")
     }
 
     /**
      * Save the last known node IP addresses for repeat launch comparison.
+     * Limits persisted nodes to [MAX_PERSISTED_NODES] to prevent DoS via
+     * fake node flooding. Validates IP address format before persisting.
      */
     private fun saveLastKnownNodes(nodes: List<DmxNode>) {
-        val nodeIps = nodes.joinToString(",") { it.ipAddress }
+        val nodeIps = nodes
+            .take(MAX_PERSISTED_NODES)
+            .map { it.ipAddress }
+            .filter { isValidIpAddress(it) }
+            .joinToString(",")
         fileStorage.mkdirs("prefs")
         fileStorage.saveFile(NODES_PATH, nodeIps)
     }
@@ -425,6 +431,20 @@ class OnboardingViewModel(
         nodeDiscovery.stop()
     }
 
+    /**
+     * Validate that a string looks like a valid IPv4 address (e.g. "192.168.1.1").
+     * Rejects strings that are too long or don't match the expected format.
+     */
+    private fun isValidIpAddress(ip: String): Boolean {
+        if (ip.length > 15) return false // max IPv4 length "XXX.XXX.XXX.XXX"
+        val parts = ip.split(".")
+        if (parts.size != 4) return false
+        return parts.all { part ->
+            val num = part.toIntOrNull() ?: return false
+            num in 0..255
+        }
+    }
+
     companion object {
         /** Splash auto-advance delay. */
         const val SPLASH_DURATION_MS = 2_500L
@@ -443,6 +463,9 @@ class OnboardingViewModel(
 
         /** Quick network scan duration on repeat launches. */
         const val REPEAT_SCAN_DURATION_MS = 2_000L
+
+        /** Maximum number of nodes to persist (DoS prevention). */
+        const val MAX_PERSISTED_NODES = 50
 
         /** Preferences file path for first-launch flag. */
         const val PREFS_PATH = "prefs/onboarding.txt"

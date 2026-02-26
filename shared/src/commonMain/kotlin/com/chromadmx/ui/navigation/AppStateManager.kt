@@ -1,6 +1,5 @@
 package com.chromadmx.ui.navigation
 
-import com.chromadmx.ui.onboarding.OnboardingStep
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,7 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 class AppStateManager(isFirstLaunch: Boolean) {
 
     private val _currentState = MutableStateFlow<AppState>(
-        if (isFirstLaunch) AppState.Onboarding(OnboardingStep.Splash)
+        if (isFirstLaunch) AppState.Onboarding
         else AppState.StagePreview
     )
     val currentState: StateFlow<AppState> = _currentState.asStateFlow()

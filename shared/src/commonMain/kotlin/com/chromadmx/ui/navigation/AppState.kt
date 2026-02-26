@@ -1,7 +1,5 @@
 package com.chromadmx.ui.navigation
 
-import com.chromadmx.ui.onboarding.OnboardingStep
-
 /**
  * Top-level app navigation state.
  *
@@ -15,10 +13,10 @@ import com.chromadmx.ui.onboarding.OnboardingStep
  */
 sealed class AppState {
     /**
-     * First-launch onboarding flow. The [step] tracks where in the
-     * 5-step flow the user currently is.
+     * First-launch onboarding flow. Step state is managed by
+     * OnboardingViewModel, not the navigation state.
      */
-    data class Onboarding(val step: OnboardingStep = OnboardingStep.Splash) : AppState()
+    data object Onboarding : AppState()
 
     data object StagePreview : AppState()
     data object Settings : AppState()

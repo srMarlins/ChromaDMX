@@ -65,9 +65,8 @@ fun ChromaDmxApp() {
 
         // Repeat launch: quick network health check + mascot alert
         if (!isFirstLaunch && onboardingVm != null) {
-            DisposableEffect(Unit) {
+            LaunchedEffect(Unit) {
                 onboardingVm.performRepeatLaunchCheck()
-                onDispose { }
             }
 
             val networkChanged by onboardingVm.networkChanged.collectAsState()
@@ -179,7 +178,7 @@ fun ChromaDmxApp() {
 
                                 if (state.returnToOnboarding) {
                                     appStateManager.navigateTo(
-                                        AppState.Onboarding()
+                                        AppState.Onboarding
                                     )
                                 } else {
                                     appStateManager.navigateBack()
