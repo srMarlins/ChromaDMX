@@ -1,14 +1,21 @@
 package com.chromadmx.ui.viewmodel
 
+import com.chromadmx.agent.pregen.PreGenerationService
 import com.chromadmx.core.model.Genre
 import com.chromadmx.core.persistence.FileStorage
+import com.chromadmx.engine.effect.EffectRegistry
+import com.chromadmx.engine.effect.EffectStack
+import com.chromadmx.engine.preset.PresetLibrary
 import com.chromadmx.networking.discovery.NodeDiscovery
 import com.chromadmx.networking.model.DmxNode
 import com.chromadmx.networking.transport.PlatformUdpTransport
 import com.chromadmx.simulation.fixtures.RigPreset
 import com.chromadmx.ui.onboarding.OnboardingStep
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -41,6 +48,7 @@ class OnboardingViewModelTest {
         storage: FileStorage = fakeStorage,
         discovery: NodeDiscovery = nodeDiscovery,
         scope: kotlinx.coroutines.CoroutineScope? = null,
+        preGenService: PreGenerationService? = null,
     ): OnboardingViewModel {
         val vmScope = scope ?: kotlinx.coroutines.CoroutineScope(
             kotlinx.coroutines.Dispatchers.Default + kotlinx.coroutines.SupervisorJob()
@@ -50,7 +58,15 @@ class OnboardingViewModelTest {
             nodeDiscovery = discovery,
             fileStorage = storage,
             presetLibrary = null,
+            preGenService = preGenService,
         )
+    }
+
+    private fun createPreGenService(
+        storage: FileStorage = fakeStorage,
+    ): PreGenerationService {
+        val presetLibrary = PresetLibrary(storage, EffectRegistry(), EffectStack())
+        return PreGenerationService(presetLibrary)
     }
 
     // -- OnboardingStep Tests --
@@ -503,5 +519,147 @@ class OnboardingViewModelTest {
     fun genreOptionGenreDefaultsToNull() {
         val option = GenreOption("test", "Test", 0xFF000000)
         assertNull(option.genre)
+    }
+
+    // -- Generation State Tests --
+
+    @Test
+    fun initiallyNotGenerating() = runTest {
+        val vm = createVm(scope = backgroundScope)
+        assertFalse(vm.isGenerating.value)
+    }
+
+    @Test
+    fun initialGenerationProgressIsZero() = runTest {
+        val vm = createVm(scope = backgroundScope)
+        assertEquals(0f, vm.generationProgress.value)
+    }
+
+    @Test
+    fun initialGenerationErrorIsNull() = runTest {
+        val vm = createVm(scope = backgroundScope)
+        assertNull(vm.generationError.value)
+    }
+
+    // -- confirmGenre triggers startGeneration --
+
+    @Test
+    fun confirmGenreTriggersGenerationAndAdvances() = runTest {
+        val service = createPreGenService()
+        // Use UnconfinedTestDispatcher so launched coroutines run eagerly
+        val vmScope = kotlinx.coroutines.CoroutineScope(
+            UnconfinedTestDispatcher(testScheduler) + SupervisorJob()
+        )
+        val vm = createVm(scope = vmScope, preGenService = service)
+
+        // Navigate to VibeCheck step manually (no start() to avoid splash timer)
+        vm.advance() // Splash -> NetworkDiscovery
+        vm.advance() // -> FixtureScan
+        vm.advance() // -> VibeCheck
+        assertIs<OnboardingStep.VibeCheck>(vm.currentStep.value)
+
+        val techno = vm.genres.first { it.id == "techno" }
+        vm.selectGenre(techno)
+        vm.confirmGenre()
+
+        // With UnconfinedTestDispatcher, generation runs eagerly.
+        // advance() is called inside the coroutine, moving to StagePreview.
+        // StagePreview starts a timer but it hasn't fired yet (needs time advance).
+        // So we should be at StagePreview now.
+        assertFalse(vm.isGenerating.value)
+        assertEquals(1f, vm.generationProgress.value)
+        // advance() was called by startGeneration, which goes to StagePreview.
+        // StagePreview triggers startStagePreviewTimer + markOnboardingComplete.
+        // The timer is a delayed coroutine that hasn't been advanced yet.
+        assertIs<OnboardingStep.StagePreview>(vm.currentStep.value)
+
+        vm.onCleared()
+    }
+
+    // -- startGeneration without service --
+
+    @Test
+    fun startGenerationWithoutServiceShowsErrorAndAdvances() = runTest {
+        val vm = createVm(scope = backgroundScope, preGenService = null)
+        vm.start()
+        vm.advance() // -> NetworkDiscovery
+        vm.advance() // -> FixtureScan
+        vm.advance() // -> VibeCheck
+
+        val techno = vm.genres.first { it.id == "techno" }
+        vm.selectGenre(techno)
+        vm.confirmGenre()
+
+        // Should have set error message
+        assertNotNull(vm.generationError.value)
+        assertTrue(vm.generationError.value!!.contains("Agent unavailable"))
+        // Should have advanced despite error
+        assertIs<OnboardingStep.StagePreview>(vm.currentStep.value)
+    }
+
+    // -- startGeneration handles exception gracefully --
+
+    @Test
+    fun startGenerationHandlesExceptionGracefully() = runTest {
+        // Create a service that will throw when generate() is called
+        // by using a storage that fails on save for generated presets (id pattern: "techno_1_...")
+        val throwingStorage = object : FileStorage {
+            private val files = mutableMapOf<String, String>()
+            private var saveCount = 0
+            override fun saveFile(path: String, content: String) {
+                saveCount++
+                // Let built-in presets save, then fail on the first generated preset
+                if (path.startsWith("presets/techno_")) {
+                    throw RuntimeException("Simulated storage failure")
+                }
+                files[path] = content
+            }
+            override fun readFile(path: String): String? = files[path]
+            override fun deleteFile(path: String): Boolean = files.remove(path) != null
+            override fun listFiles(directory: String): List<String> =
+                files.keys.filter { it.startsWith(directory) }.map { it.substringAfterLast("/") }
+            override fun exists(path: String): Boolean = files.containsKey(path)
+            override fun mkdirs(directory: String) {}
+        }
+        val service = createPreGenService(storage = throwingStorage)
+        // Use UnconfinedTestDispatcher so launched coroutines run eagerly
+        val vmScope = kotlinx.coroutines.CoroutineScope(
+            UnconfinedTestDispatcher(testScheduler) + SupervisorJob()
+        )
+        val vm = createVm(scope = vmScope, preGenService = service)
+        vm.advance() // Splash -> NetworkDiscovery
+        vm.advance() // -> FixtureScan
+        vm.advance() // -> VibeCheck
+
+        val techno = vm.genres.first { it.id == "techno" }
+        vm.selectGenre(techno)
+        vm.confirmGenre()
+
+        // With UnconfinedTestDispatcher, generation runs eagerly
+        // Should have set error message
+        assertNotNull(vm.generationError.value)
+        assertTrue(vm.generationError.value!!.contains("Generation failed"))
+        // Should not be generating anymore
+        assertFalse(vm.isGenerating.value)
+        // Should still advance despite error
+        assertIs<OnboardingStep.StagePreview>(vm.currentStep.value)
+
+        vm.onCleared()
+    }
+
+    @Test
+    fun startGenerationWithNoSelectedGenreDoesNothing() = runTest {
+        val service = createPreGenService()
+        val vm = createVm(scope = backgroundScope, preGenService = service)
+        vm.advance() // Splash -> NetworkDiscovery
+        vm.advance() // -> FixtureScan
+        vm.advance() // -> VibeCheck
+
+        // Don't select a genre
+        vm.confirmGenre()
+
+        // Should still be on VibeCheck since no genre was selected
+        assertIs<OnboardingStep.VibeCheck>(vm.currentStep.value)
+        assertFalse(vm.isGenerating.value)
     }
 }
