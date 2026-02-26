@@ -469,8 +469,10 @@ class SettingsViewModelV2Test {
 
     @Test
     fun stateDerivesSimulationFromRepository() = runTest {
-        val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler) + SupervisorJob())
-        val repo = createSettingsRepository()
+        val testDispatcher = UnconfinedTestDispatcher(testScheduler)
+        val scope = CoroutineScope(testDispatcher + SupervisorJob())
+        // Use the test dispatcher for FlowSettings so emissions are synchronous
+        val repo = SettingsRepository(MapSettings().toFlowSettings(testDispatcher))
         // Set simulation to true in the repo before creating the VM
         repo.setIsSimulation(true)
 
