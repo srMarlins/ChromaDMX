@@ -116,7 +116,7 @@ fun FixtureEditOverlay(
             Spacer(Modifier.height(10.dp))
 
             // --- Z-Height slider ---
-            val zStr = ((fixture.position.z * 10f).toInt() / 10f).toString()
+            val zStr = (kotlin.math.round(fixture.position.z * 10f) / 10f).toString()
             Text(
                 text = "Z-HEIGHT: ${zStr}m",
                 style = MaterialTheme.typography.labelSmall.copy(

@@ -97,37 +97,10 @@ fun VenueCanvas(
             }
             .then(
                 if (isEditMode) {
-                    Modifier.pointerInput(fixtures.size, zoom, panOffset) {
+                    Modifier.pointerInput(fixtures.size, zoom, panOffset, fixtureScreenPositions) {
                         detectDragGestures(
                             onDragStart = { startOffset ->
                                 // Find nearest fixture within touch radius
-                                val touchRadius = 40f * zoom
-                                val touchRadiusSq = touchRadius * touchRadius
-                                var closestIndex = -1
-                                var closestDistSq = Float.MAX_VALUE
-                                for ((i, pos) in fixtureScreenPositions.withIndex()) {
-                                    val dx = startOffset.x - pos.x
-                                    val dy = startOffset.y - pos.y
-                                    val distSq = dx * dx + dy * dy
-                                    if (distSq < touchRadiusSq && distSq < closestDistSq) {
-                                        closestDistSq = distSq
-                                        closestIndex = i
-                                    }
-                                }
-                                dragTargetIndex = closestIndex
-                            },
-                            onDrag = { _, _ -> /* position update happens on drag end */ },
-                            onDragEnd = {
-                                dragTargetIndex = -1
-                            },
-                            onDragCancel = {
-                                dragTargetIndex = -1
-                            },
-                        )
-                    }.pointerInput(fixtures.size, zoom, panOffset, fixtureScreenPositions) {
-                        // Separate drag handler that can compute world coordinates
-                        detectDragGestures(
-                            onDragStart = { startOffset ->
                                 val touchRadius = 40f * zoom
                                 val touchRadiusSq = touchRadius * touchRadius
                                 var closestIndex = -1

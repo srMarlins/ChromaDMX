@@ -393,7 +393,7 @@ class StageViewModel(
 
     /** Create a new fixture group. Returns the new group ID. */
     fun createGroup(name: String, color: Long = 0xFF00FBFF): String {
-        val groupId = "grp-${name.lowercase().replace(" ", "-")}-${currentTimeMillis()}"
+        val groupId = "grp-${name.lowercase().replace(" ", "-")}-${currentTimeMillis()}-${kotlin.random.Random.nextInt()}"
         val group = FixtureGroup(groupId = groupId, name = name, color = color)
         val currentGroups = _groups.value.toMutableList()
         currentGroups.add(group)

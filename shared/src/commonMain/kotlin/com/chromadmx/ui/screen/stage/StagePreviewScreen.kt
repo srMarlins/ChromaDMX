@@ -22,12 +22,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -94,6 +97,8 @@ fun StagePreviewScreen(
     val groups by viewModel.groups.collectAsState()
 
     var showSimTooltip by remember { mutableStateOf(false) }
+    var showNewGroupDialog by remember { mutableStateOf(false) }
+    var newGroupName by remember { mutableStateOf("") }
 
     val pagerState = rememberPagerState(
         initialPage = if (isTopDownView) 0 else 1,
@@ -334,7 +339,8 @@ fun StagePreviewScreen(
                             onZHeightChanged = { z -> viewModel.updateZHeight(index, z) },
                             onGroupAssigned = { groupId -> viewModel.assignGroup(index, groupId) },
                             onCreateGroup = {
-                                viewModel.createGroup("New Group")
+                                newGroupName = ""
+                                showNewGroupDialog = true
                             },
                             onTestFire = { viewModel.testFireFixture(index) },
                             onDismiss = { viewModel.selectFixture(null) },
@@ -349,6 +355,41 @@ fun StagePreviewScreen(
                     }
                 }
             }
+        }
+
+        // --- New Group dialog ---
+        if (showNewGroupDialog) {
+            AlertDialog(
+                onDismissRequest = { showNewGroupDialog = false },
+                title = { Text("New Group") },
+                text = {
+                    OutlinedTextField(
+                        value = newGroupName,
+                        onValueChange = { newGroupName = it },
+                        label = { Text("Group name") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            val name = newGroupName.trim()
+                            if (name.isNotEmpty()) {
+                                viewModel.createGroup(name)
+                            }
+                            showNewGroupDialog = false
+                        },
+                    ) {
+                        Text("OK")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showNewGroupDialog = false }) {
+                        Text("Cancel")
+                    }
+                },
+            )
         }
 
         // --- Node list overlay ---
