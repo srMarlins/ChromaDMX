@@ -1,5 +1,7 @@
 package com.chromadmx.networking.output
 
+import com.chromadmx.networking.ConnectionState
+import com.chromadmx.networking.DmxTransport
 import com.chromadmx.networking.protocol.ArtNetCodec
 import com.chromadmx.networking.protocol.ArtNetConstants
 import com.chromadmx.networking.protocol.SacnCodec
@@ -14,6 +16,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
@@ -60,12 +65,15 @@ class DmxOutputService(
     private val sourceName: String = "ChromaDMX",
     private val sacnCid: ByteArray = ByteArray(SacnConstants.CID_SIZE),
     private val sacnPriority: Int = SacnConstants.DEFAULT_PRIORITY
-) {
+) : DmxTransport {
     /**
      * Atomic reference to the latest frame data.
      * Map<universeNumber, 512-byte channel data>.
      */
     private val frameRef: AtomicRef<Map<Int, ByteArray>> = atomic(emptyMap())
+
+    private val _connectionState = MutableStateFlow(ConnectionState.Disconnected)
+    override val connectionState: StateFlow<ConnectionState> = _connectionState.asStateFlow()
 
     /** Rolling Art-Net sequence counter (1..255, 0 disables reordering). */
     private var artNetSequence: Int = 1
@@ -77,7 +85,7 @@ class DmxOutputService(
     private var outputJob: Job? = null
 
     /** Whether the output loop is running. */
-    val isRunning: Boolean get() = scope != null
+    override val isRunning: Boolean get() = scope != null
 
     /** Interval between frames in milliseconds. */
     val frameIntervalMs: Long get() = (1000L / frameRateHz)
@@ -94,7 +102,7 @@ class DmxOutputService(
      *
      * @param universeData Map of universe number to 512-byte channel data
      */
-    fun updateFrame(universeData: Map<Int, ByteArray>) {
+    override fun updateFrame(universeData: Map<Int, ByteArray>) {
         frameRef.value = universeData
     }
 
@@ -111,17 +119,27 @@ class DmxOutputService(
     }
 
     /**
+     * Send channel data to a single universe via [DmxTransport].
+     * Delegates to [updateUniverse].
+     */
+    override fun sendFrame(universe: Int, channels: ByteArray) {
+        updateUniverse(universe, channels)
+    }
+
+    /**
      * Start the 40Hz output loop.
      */
-    fun start() {
+    override fun start() {
         if (isRunning) return
 
         frameCount = 0L
         artNetSequence = 1
         sacnSequence = 0
+        _connectionState.value = ConnectionState.Connecting
 
         val newScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
         scope = newScope
+        _connectionState.value = ConnectionState.Connected
 
         outputJob = newScope.launch {
             outputLoop()
@@ -131,10 +149,11 @@ class DmxOutputService(
     /**
      * Stop the output loop.
      */
-    fun stop() {
+    override fun stop() {
         scope?.cancel()
         scope = null
         outputJob = null
+        _connectionState.value = ConnectionState.Disconnected
     }
 
     // ------------------------------------------------------------------ //
@@ -148,7 +167,7 @@ class DmxOutputService(
             val startTime = monotonicTimeMs()
 
             try {
-                if (sendFrame()) {
+                if (sendAllUniverses()) {
                     frameCount++
                 }
             } catch (_: CancellationException) {
@@ -172,7 +191,7 @@ class DmxOutputService(
      *
      * @return `true` if data was actually sent, `false` if skipped (no frame data).
      */
-    internal suspend fun sendFrame(): Boolean {
+    internal suspend fun sendAllUniverses(): Boolean {
         val frame = frameRef.value
         if (frame.isEmpty()) return false
 

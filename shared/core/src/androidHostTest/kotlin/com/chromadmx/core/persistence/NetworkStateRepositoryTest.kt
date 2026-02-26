@@ -73,10 +73,8 @@ class NetworkStateRepositoryTest {
         )
 
         val diff = repo.detectTopologyChanges(currentNodes)
-        assertEquals(2, diff.newNodes.size)
+        assertEquals(setOf("MAC1", "MAC2"), diff.newNodes.map { it.nodeKey }.toSet())
         assertEquals(0, diff.lostNodes.size)
-        assertEquals("MAC1", diff.newNodes[0].nodeKey)
-        assertEquals("MAC2", diff.newNodes[1].nodeKey)
     }
 
     @Test

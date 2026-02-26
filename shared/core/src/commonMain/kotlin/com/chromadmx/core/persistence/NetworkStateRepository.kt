@@ -61,11 +61,11 @@ class NetworkStateRepository(private val db: ChromaDmxDatabase) {
      */
     suspend fun detectTopologyChanges(currentNodes: List<DmxNode>): TopologyDiff {
         val known = knownNodes().first()
-        val knownMap = known.associateBy { it.nodeKey }
-        val currentMap = currentNodes.associateBy { it.nodeKey }
+        val knownKeys = known.map { it.nodeKey }.toSet()
+        val currentKeys = currentNodes.map { it.nodeKey }.toSet()
 
-        val newNodes = currentNodes.filter { it.nodeKey !in knownMap }
-        val lostNodes = known.filter { it.nodeKey !in currentMap }
+        val newNodes = currentNodes.filter { it.nodeKey !in knownKeys }
+        val lostNodes = known.filter { it.nodeKey !in currentKeys }
 
         return TopologyDiff(
             newNodes = newNodes,

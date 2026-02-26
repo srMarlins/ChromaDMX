@@ -50,3 +50,24 @@ DELETE FROM fixture_group WHERE group_id = ?;
 
 selectFixturesByGroup:
 SELECT * FROM fixture WHERE group_id = ?;
+
+CREATE TABLE known_node (
+    node_id TEXT NOT NULL PRIMARY KEY,
+    ip_address TEXT NOT NULL,
+    name TEXT NOT NULL,
+    universes TEXT NOT NULL,
+    last_seen INTEGER NOT NULL
+);
+
+selectAllKnownNodes:
+SELECT * FROM known_node ORDER BY last_seen DESC;
+
+insertKnownNode:
+INSERT OR REPLACE INTO known_node (node_id, ip_address, name, universes, last_seen)
+VALUES (?, ?, ?, ?, ?);
+
+updateKnownNode:
+UPDATE known_node SET ip_address = ?, name = ?, universes = ?, last_seen = ? WHERE node_id = ?;
+
+deleteKnownNode:
+DELETE FROM known_node WHERE node_id = ?;

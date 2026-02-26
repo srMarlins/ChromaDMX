@@ -1,0 +1,727 @@
+<![CDATA[<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChromaDMX — Pixel Design System</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Matcha Dark (default) */
+  --primary: #9CCC65;
+  --on-primary: #1B261D;
+  --secondary: #F48FB1;
+  --on-secondary: #3E2723;
+  --tertiary: #FFF59D;
+  --on-tertiary: #3E2723;
+  --background: #1B261D;
+  --on-background: #DCEDC8;
+  --surface: #263228;
+  --on-surface: #DCEDC8;
+  --surface-variant: #37473A;
+  --on-surface-variant: rgba(220,237,200,0.8);
+  --error: #E57373;
+  --on-error: #3E2723;
+  --info: #81D4FA;
+  --outline: rgba(156,204,101,0.6);
+  --outline-variant: rgba(156,204,101,0.3);
+  --glow: #9CCC65;
+  --scrim: rgba(0,0,0,0.6);
+  --chamfer: 9px;
+  --chamfer-sm: 6px;
+  --pixel: 4px;
+  --font-pixel: 'Press Start 2P', monospace;
+  --font-body: 'Inter', sans-serif;
+}
+.theme-light {
+  --primary: #558B2F; --on-primary: #fff;
+  --secondary: #AD1457; --on-secondary: #fff;
+  --tertiary: #F9A825; --on-tertiary: #3E2723;
+  --background: #F5F5F0; --on-background: #1B261D;
+  --surface: #fff; --on-surface: #263228;
+  --surface-variant: #E8F0E4; --on-surface-variant: rgba(38,50,40,0.8);
+  --error: #D32F2F; --on-error: #fff;
+  --info: #1976D2; --outline: #8D9D85; --outline-variant: rgba(141,157,133,0.5);
+  --glow: #558B2F; --scrim: rgba(0,0,0,0.4);
+}
+.theme-hc {
+  --primary: #FFFF00; --on-primary: #000;
+  --secondary: #00FFFF; --on-secondary: #000;
+  --tertiary: #FF00FF; --on-tertiary: #000;
+  --background: #000; --on-background: #fff;
+  --surface: #000; --on-surface: #fff;
+  --surface-variant: #1A1A1A; --on-surface-variant: #fff;
+  --error: #F00; --on-error: #fff;
+  --info: #0FF; --outline: #fff; --outline-variant: rgba(255,255,255,0.7);
+  --glow: #FFFF00; --scrim: rgba(0,0,0,0.8);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-body);
+  background: var(--background);
+  color: var(--on-surface);
+  min-height: 100vh;
+  background-image: repeating-linear-gradient(
+    0deg, transparent, transparent calc(var(--pixel)*2 - 1px),
+    rgba(156,204,101,0.03) calc(var(--pixel)*2 - 1px), rgba(156,204,101,0.03) calc(var(--pixel)*2)
+  ), repeating-linear-gradient(
+    90deg, transparent, transparent calc(var(--pixel)*2 - 1px),
+    rgba(156,204,101,0.03) calc(var(--pixel)*2 - 1px), rgba(156,204,101,0.03) calc(var(--pixel)*2)
+  );
+}
+.container { max-width: 900px; margin: 0 auto; padding: 32px 16px; }
+h1 { font-family: var(--font-pixel); font-size: 18px; color: var(--primary); margin-bottom: 8px; letter-spacing: 1px; }
+.subtitle { color: var(--on-surface); opacity: 0.7; margin-bottom: 32px; font-size: 13px; }
+
+/* Chamfered clip-path */
+.chamfer { clip-path: polygon(var(--chamfer) 0%, calc(100% - var(--chamfer)) 0%, 100% var(--chamfer), 100% calc(100% - var(--chamfer)), calc(100% - var(--chamfer)) 100%, var(--chamfer) 100%, 0% calc(100% - var(--chamfer)), 0% var(--chamfer)); }
+.chamfer-sm { clip-path: polygon(var(--chamfer-sm) 0%, calc(100% - var(--chamfer-sm)) 0%, 100% var(--chamfer-sm), 100% calc(100% - var(--chamfer-sm)), calc(100% - var(--chamfer-sm)) 100%, var(--chamfer-sm) 100%, 0% calc(100% - var(--chamfer-sm)), 0% var(--chamfer-sm)); }
+
+/* Section */
+.section { margin-bottom: 40px; }
+.section-title { font-family: var(--font-pixel); font-size: 11px; color: var(--on-surface); margin-bottom: 4px; }
+.section-title::before { content: "▸ "; }
+.section-title::after { content: " █"; animation: blink 1s step-end infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.section-desc { font-size: 13px; color: var(--on-surface); opacity: 0.7; margin-bottom: 16px; }
+.section-desc::before { content: "└─ "; }
+
+/* Component meta */
+.comp-meta { background: var(--surface-variant); padding: 12px 16px; margin-top: 12px; border-left: 3px solid var(--primary); font-size: 12px; line-height: 1.6; }
+.comp-meta code { font-family: var(--font-pixel); font-size: 9px; color: var(--primary); background: rgba(0,0,0,0.3); padding: 1px 4px; }
+.comp-meta .params { color: var(--on-surface-variant); }
+
+/* Buttons */
+.pixel-btn {
+  display: inline-block; position: relative; cursor: pointer; border: none;
+  font-family: var(--font-pixel); font-size: 10px; letter-spacing: 0.5px;
+  padding: 12px 20px; min-height: 48px;
+  transition: transform 0.1s;
+  margin-top: 6px;
+}
+.pixel-btn .shadow { position: absolute; inset: 0; top: 6px; background: rgba(0,0,0,0.3); }
+.pixel-btn .face {
+  position: relative; display: flex; align-items: center; justify-content: center;
+  padding: 12px 20px; transition: transform 0.1s;
+  box-shadow: 0 0 8px var(--glow-c, var(--glow));
+  border: 2px solid var(--outline);
+}
+.pixel-btn:active .face { transform: translateY(4px); }
+.pixel-btn.primary .face { background: var(--primary); color: var(--on-primary); --glow-c: var(--primary); }
+.pixel-btn.secondary .face { background: var(--secondary); color: var(--on-secondary); --glow-c: var(--secondary); }
+.pixel-btn.surface .face { background: var(--surface); color: var(--on-surface); --glow-c: var(--surface); }
+.pixel-btn.danger .face { background: var(--error); color: var(--on-error); --glow-c: var(--error); }
+.pixel-btn.disabled .face { background: var(--surface-variant); color: var(--on-surface-variant); opacity: 0.5; pointer-events: none; box-shadow: none; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+/* Icon Button */
+.pixel-icon-btn {
+  width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--surface); border: 2px solid var(--outline); cursor: pointer; font-size: 18px;
+  transition: box-shadow 0.2s;
+}
+.pixel-icon-btn:hover { box-shadow: 0 0 12px var(--glow); }
+.pixel-icon-btn.glow { box-shadow: 0 0 12px var(--glow); animation: pulse-glow 1.5s ease-in-out infinite; }
+@keyframes pulse-glow { 0%,100% { box-shadow: 0 0 6px var(--glow); } 50% { box-shadow: 0 0 16px var(--glow); } }
+
+/* Cards */
+.pixel-card {
+  position: relative; margin-bottom: 12px;
+}
+.pixel-card .card-shadow { position: absolute; inset: 0; top: 4px; left: 4px; background: rgba(0,0,0,0.2); }
+.pixel-card .card-body {
+  position: relative; background: var(--surface); border: 2px solid var(--outline); padding: 16px;
+}
+.pixel-card.glowing .card-body { box-shadow: 0 0 12px var(--glow); animation: pulse-glow 1.5s ease-in-out infinite; }
+.pixel-card.clickable { cursor: pointer; }
+.pixel-card.clickable:active { transform: scale(0.97); }
+
+/* Badges */
+.pixel-badge {
+  display: inline-block; font-family: var(--font-pixel); font-size: 8px; letter-spacing: 0.5px;
+  padding: 3px 8px; text-transform: uppercase;
+}
+.pixel-badge.primary { background: var(--primary); color: var(--on-primary); }
+.pixel-badge.secondary { background: var(--secondary); color: var(--on-secondary); }
+.pixel-badge.tertiary { background: var(--tertiary); color: var(--on-tertiary); }
+.pixel-badge.error { background: var(--error); color: var(--on-error); }
+.pixel-badge.info { background: var(--info); color: var(--on-background); }
+
+/* Form Inputs */
+.pixel-input {
+  background: var(--surface-variant); border: 2px solid var(--outline-variant); padding: 12px;
+  color: var(--on-surface); font-family: var(--font-body); font-size: 14px; width: 100%;
+  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+}
+.pixel-input:focus { border-color: var(--outline); box-shadow: 0 0 10px var(--glow); }
+.pixel-input::placeholder { color: var(--on-surface-variant); opacity: 0.4; }
+.field-label { font-family: var(--font-pixel); font-size: 8px; color: var(--on-surface-variant); margin-bottom: 4px; }
+.field-label::before { content: "✦ "; }
+
+/* Switch */
+.pixel-switch { position: relative; width: 52px; height: 32px; cursor: pointer; display: inline-block; }
+.pixel-switch input { display: none; }
+.pixel-switch .track {
+  position: absolute; inset: 0; background: var(--surface-variant);
+  border: 2px solid var(--outline); transition: background 0.2s, box-shadow 0.3s;
+}
+.pixel-switch input:checked + .track { background: var(--primary); box-shadow: 0 0 10px var(--glow); }
+.pixel-switch .thumb {
+  position: absolute; top: 6px; left: 6px; width: 20px; height: 20px;
+  background: #fff; border: 2px solid var(--outline); transition: left 0.2s;
+}
+.pixel-switch input:checked ~ .thumb { left: 26px; }
+
+/* Slider */
+.pixel-slider-wrap { position: relative; height: 32px; display: flex; align-items: center; }
+.pixel-slider {
+  -webkit-appearance: none; width: 100%; height: 8px; background: var(--surface-variant);
+  border: 2px solid var(--outline-variant); outline: none;
+}
+.pixel-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 20px; height: 20px; background: var(--primary);
+  border: 2px solid var(--outline); cursor: pointer;
+}
+.slider-val { font-family: var(--font-pixel); font-size: 9px; color: var(--on-surface); margin-left: 8px; min-width: 35px; }
+
+/* Progress */
+.pixel-progress { height: 16px; background: var(--surface-variant); border: 2px solid var(--outline-variant); padding: 2px; display: flex; gap: 2px; position: relative; overflow: hidden; }
+.pixel-progress .seg { flex: 1; }
+.pixel-progress .seg.active { background: var(--primary); animation: shimmer 2s linear infinite; }
+@keyframes shimmer { 0% { filter: brightness(1); } 50% { filter: brightness(1.3); } 100% { filter: brightness(1); } }
+.pixel-progress.indeterminate::after {
+  content: ""; position: absolute; inset: 2px; background: linear-gradient(90deg, transparent, var(--primary), var(--secondary), var(--primary), transparent);
+  animation: march 1.5s linear infinite; background-size: 40% 100%;
+}
+@keyframes march { from { transform: translateX(-100%); } to { transform: translateX(200%); } }
+.pct-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-pixel); font-size: 8px; color: var(--on-primary); z-index: 1; }
+
+/* Spinner */
+.pixel-spinner { display: inline-block; border: 3px solid var(--surface-variant); border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+.pixel-spinner.sm { width: 20px; height: 20px; }
+.pixel-spinner.md { width: 32px; height: 32px; }
+.pixel-spinner.lg { width: 48px; height: 48px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Dividers */
+.pixel-divider { height: 8px; width: 100%; position: relative; }
+.pixel-divider canvas { width: 100%; height: 100%; }
+.pixel-divider-flat { height: 4px; background: var(--outline-variant); }
+.pixel-enchanted {
+  height: 2px; width: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--secondary), var(--tertiary), var(--primary));
+  background-size: 200% 100%; animation: sweep 2s linear infinite;
+}
+@keyframes sweep { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+/* Chip */
+.pixel-chip {
+  display: inline-block; font-family: var(--font-pixel); font-size: 9px; padding: 6px 12px;
+  border: 2px solid var(--outline); cursor: pointer; transition: all 0.15s; user-select: none;
+}
+.pixel-chip.selected { background: var(--primary); color: var(--on-primary); box-shadow: 0 0 8px var(--glow); }
+.pixel-chip:not(.selected) { background: transparent; color: var(--on-surface); }
+
+/* List Item */
+.pixel-list-item {
+  display: flex; align-items: center; gap: 12px; padding: 12px 0;
+  border-bottom: 1px solid var(--outline-variant);
+}
+.pixel-list-item .icon { color: var(--primary); font-size: 20px; }
+.pixel-list-item .title { font-weight: 600; }
+.pixel-list-item .sub { font-size: 12px; color: var(--on-surface-variant); }
+
+/* Table */
+.pixel-table { width: 100%; border-collapse: separate; border-spacing: 0; border: 2px solid var(--outline); overflow: hidden; }
+.pixel-table th { font-family: var(--font-pixel); font-size: 8px; text-transform: uppercase; background: var(--surface-variant); color: var(--on-surface); padding: 8px 12px; text-align: left; }
+.pixel-table td { padding: 8px 12px; font-size: 13px; border-top: 1px solid var(--outline-variant); }
+.pixel-table tr:nth-child(even) td { background: rgba(156,204,101,0.04); }
+
+/* Decorative */
+.cursor-demo { font-family: var(--font-pixel); font-size: 12px; }
+.cursor-demo .block { animation: blink 1s step-end infinite; }
+.star { display: inline-block; color: var(--tertiary); }
+.sparkles-box { width: 64px; height: 64px; position: relative; border: 1px dashed var(--outline-variant); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.sparkle-dot { position: absolute; width: 4px; height: 4px; background: var(--primary); border-radius: 50; animation: orbit var(--dur, 3s) linear infinite; }
+@keyframes orbit { from { transform: rotate(0deg) translateX(20px); } to { transform: rotate(360deg) translateX(20px); } }
+
+/* Dialog overlay */
+.overlay { display: none; position: fixed; inset: 0; background: var(--scrim); z-index: 100; align-items: center; justify-content: center; }
+.overlay.active { display: flex; }
+.dialog-box { background: var(--surface); border: 2px solid var(--outline); box-shadow: 0 0 20px var(--glow); padding: 24px; max-width: 400px; width: 90%; animation: pop-in 0.2s ease-out; }
+@keyframes pop-in { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.dialog-title { font-family: var(--font-pixel); font-size: 11px; margin-bottom: 12px; color: var(--on-surface); }
+.dialog-body { font-size: 13px; color: var(--on-surface); margin-bottom: 16px; line-height: 1.5; }
+.dialog-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* Toast */
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--surface); border: 2px solid var(--outline); padding: 12px 20px; font-size: 13px; color: var(--on-surface); z-index: 200; box-shadow: 0 0 12px var(--glow); transition: transform 0.3s ease-out; display: flex; align-items: center; gap: 10px; }
+.toast.visible { transform: translateX(-50%) translateY(0); }
+.toast .toast-action { font-family: var(--font-pixel); font-size: 9px; color: var(--primary); cursor: pointer; text-decoration: underline; }
+
+/* Theme switcher bar */
+.theme-bar { display: flex; gap: 8px; margin-bottom: 32px; }
+
+/* Dropdown */
+.pixel-dropdown { position: relative; }
+.pixel-dropdown .dd-trigger {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  background: var(--surface-variant); border: 2px solid var(--outline); padding: 10px 12px;
+  cursor: pointer; font-size: 13px; color: var(--on-surface); min-width: 200px;
+}
+.pixel-dropdown .dd-trigger .arrow { transition: transform 0.2s; }
+.pixel-dropdown.open .dd-trigger .arrow { transform: rotate(180deg); }
+.pixel-dropdown .dd-menu {
+  display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 10;
+  background: var(--surface); border: 2px solid var(--outline); border-top: none; max-height: 200px; overflow-y: auto;
+}
+.pixel-dropdown.open .dd-menu { display: block; }
+.pixel-dropdown .dd-item { padding: 10px 12px; cursor: pointer; font-size: 13px; }
+.pixel-dropdown .dd-item:hover { background: var(--surface-variant); }
+.pixel-dropdown .dd-item.selected { color: var(--primary); font-weight: 600; }
+
+/* Scanlines */
+.scanlines { pointer-events: none; position: fixed; inset: 0; z-index: 999;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px);
+}
+
+/* Icon wrapper */
+.pixel-icon-wrap {
+  width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--outline-variant); padding: 4px; font-size: 18px;
+}
+
+/* Bottom sheet */
+.bottom-sheet-overlay { display: none; position: fixed; inset: 0; background: var(--scrim); z-index: 100; align-items: flex-end; }
+.bottom-sheet-overlay.active { display: flex; }
+.bottom-sheet {
+  width: 100%; background: var(--surface); border-top: 2px solid var(--outline); padding: 24px;
+  animation: slide-up 0.3s ease-out;
+  clip-path: polygon(16px 0%, calc(100% - 16px) 0%, 100% 16px, 100% 100%, 0% 100%, 0% 16px);
+}
+@keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.drag-handle { width: 40px; height: 4px; background: var(--outline-variant); margin: 0 auto 16px; border-radius: 2px; }
+</style>
+</head>
+<body>
+<div class="scanlines"></div>
+<div class="container">
+
+<h1>▸ CHROMADMX PIXEL DESIGN SYSTEM</h1>
+<p class="subtitle">└─ Interactive component library · Matcha/Sakura/Yuzu palette · Chamfered corners</p>
+
+<!-- Theme Switcher -->
+<div class="section">
+  <div class="section-title">THEME SWITCHER</div>
+  <div class="section-desc">Switch between the 3 built-in color themes</div>
+  <div class="theme-bar">
+    <span class="pixel-chip chamfer-sm selected" onclick="setTheme('dark',this)">DARK</span>
+    <span class="pixel-chip chamfer-sm" onclick="setTheme('light',this)">LIGHT</span>
+    <span class="pixel-chip chamfer-sm" onclick="setTheme('hc',this)">HIGH CONTRAST</span>
+  </div>
+  <div class="comp-meta chamfer-sm">
+    <strong>Themes:</strong> <code>MatchaDark</code> <code>MatchaLight</code> <code>HighContrast</code><br>
+    <span class="params">Set via <code>ChromaDmxTheme(colorTheme = ...)</code>. Colors accessible via <code>PixelDesign.colors</code>.</span>
+  </div>
+</div>
+
+<!-- Typography -->
+<div class="section">
+  <div class="section-title">TYPOGRAPHY</div>
+  <div class="section-desc">All typography styles from the design system</div>
+  <div style="display:flex;flex-direction:column;gap:6px;">
+    <span style="font-size:28px;font-weight:700">headlineLarge</span>
+    <span style="font-size:22px;font-weight:700">headlineMedium</span>
+    <span style="font-size:18px;font-weight:600">headlineSmall</span>
+    <span style="font-size:18px;font-weight:500">titleLarge</span>
+    <span style="font-size:15px;font-weight:500">titleMedium</span>
+    <span style="font-size:13px;font-weight:500">titleSmall</span>
+    <span style="font-size:15px">bodyLarge</span>
+    <span style="font-size:14px">bodyMedium</span>
+    <span style="font-size:12px">bodySmall</span>
+    <span style="font-family:var(--font-pixel);font-size:11px">labelLarge</span>
+    <span style="font-family:var(--font-pixel);font-size:9px">labelMedium</span>
+    <span style="font-family:var(--font-pixel);font-size:8px">labelSmall</span>
+  </div>
+  <div class="comp-meta chamfer-sm">
+    <strong>Components:</strong> <code>PixelSectionTitle</code> <code>PixelLabel</code> <code>PixelDecorators</code><br>
+    <span class="params">Prefix constants: <code>▸</code> section, <code>└─</code> sub, <code>✦</code> label, <code>▪</code> bullet, <code>█</code> cursor</span>
+  </div>
+</div>
+
+<!-- Buttons -->
+<div class="section">
+  <div class="section-title">BUTTONS</div>
+  <div class="section-desc">All button variants and states</div>
+  <div class="row">
+    <div class="pixel-btn primary chamfer"><div class="shadow chamfer"></div><div class="face chamfer">PRIMARY</div></div>
+    <div class="pixel-btn secondary chamfer"><div class="shadow chamfer"></div><div class="face chamfer">SECONDARY</div></div>
+    <div class="pixel-btn surface chamfer"><div class="shadow chamfer"></div><div class="face chamfer">SURFACE</div></div>
+    <div class="pixel-btn danger chamfer"><div class="shadow chamfer"></div><div class="face chamfer">DANGER</div></div>
+    <div class="pixel-btn disabled chamfer"><div class="shadow chamfer"></div><div class="face chamfer">DISABLED</div></div>
+  </div>
+  <div class="row" style="margin-top:12px">
+    <div class="pixel-icon-btn chamfer-sm">⭐</div>
+    <div class="pixel-icon-btn chamfer-sm glow">❤️</div>
+  </div>
+  <div class="comp-meta chamfer-sm">
+    <strong>Components:</strong> <code>PixelButton</code> <code>PixelIconButton</code><br>
+    <span class="params">Variants: <code>Primary</code> <code>Secondary</code> <code>Surface</code> <code>Danger</code> · Press animation: 6dp spring depth · Glowing border when enabled</span>
+  </div>
+</div>
+
+<!-- Form Inputs -->
+<div class="section">
+  <div class="section-title">FORM INPUTS</div>
+  <div class="section-desc">Text fields, switches, sliders, dropdowns</div>
+  <div style="display:flex;flex-direction:column;gap:16px;max-width:400px;">
+    <div>
+      <div class="field-label">EMPTY FIELD</div>
+      <input class="pixel-input chamfer-sm" placeholder="Enter some text...">
+    </div>
+    <div>
+      <div class="field-label">FILLED FIELD</div>
+      <input class="pixel-input chamfer-sm" value="Hello, pixel world!">
+    </div>
+    <div class="row">
+      <span style="font-size:13px">Checked:</span>
+      <label class="pixel-switch"><input type="checkbox" checked><div class="track chamfer-sm"></div><div class="thumb chamfer-sm"></div></label>
+      <span style="font-size:13px;margin-left:12px">Unchecked:</span>
+      <label class="pixel-switch"><input type="checkbox"><div class="track chamfer-sm"></div><div class="thumb chamfer-sm"></div></label>
+    </div>
+    <div>
+      <div class="row"><input type="range" class="pixel-slider chamfer-sm" min="0" max="100" value="65" oninput="this.nextElementSibling.textContent=this.value+'%'"><span class="slider-val">65%</span></div>
+    </div>
+    <div class="pixel-dropdown chamfer-sm" id="dropdown1">
+      <div class="dd-trigger chamfer-sm" onclick="this.parentElement.classList.toggle('open')">
+        <span>Moving Head</span><span class="arrow">▾</span>
+      </div>
+      <div class="dd-menu chamfer-sm">
+        <div class="dd-item" onclick="selectDD(this)">RGB Par</div>
+        <div class="dd-item selected" onclick="selectDD(this)">Moving Head</div>
+        <div class="dd-item" onclick="selectDD(this)">Pixel Bar</div>
+        <div class="dd-item" onclick="selectDD(this)">Strobe</div>
+      </div>
+    </div>
+  </div>
+  <div class="comp-meta chamfer-sm">
+    <strong>Components:</strong> <code>PixelTextField</code> <code>PixelSwitch</code> <code>PixelSlider</code> <code>PixelDropdown</code><br>
+    <span class="params">TextField: focus glow border · Switch: spring thumb animation, glow when checked · Slider: drag return spring, value label · Dropdown: chamfered expandable card</span>
+  </div>
+</div>
+
+<!-- Cards -->
+<div class="section">
+  <div class="section-title">CARDS</div>
+  <div class="section-desc">Static, glowing, and clickable variants</div>
+  <div class="pixel-card" style="max-width:400px">
+    <div class="card-shadow chamfer"></div>
+    <div class="card-body chamfer">Static Card</div>
+  </div>
+  <div class="pixel-card glowing" style="max-width:400px">
+    <div class="card-shadow chamfer"></div>
+    <div class="card-body chamfer">Glowing Card</div>
+  </div>
+  <div class="pixel-card clickable" style="max-width:400px">
+    <div class="card-shadow chamfer"></div>
+    <div class="card-body chamfer">Clickable Card (press me)</div>
+  </div>
+  <div class="comp-meta chamfer-sm">
+    <strong>Component:</strong> <code>PixelCard</code><br>
+    <span class="params">Props: <code>glowing</code> <code>onClick</code> <code>elevation</code> <code>title</code> · Press scale: 0.97 via cardExpand spring · Hard shadow offset</span>
+  </div>
+</div>
+
+<!-- Badges -->
+<div class="section">
+  <div class="section-title">BADGES</div>
+  <div class="section-desc">All badge variants</div>
+  <div class="row">
+    <span class="pixel-badge chamfer-sm primary">PRIMARY</span>
+    <span class="pixel-badge chamfer-sm secondary">SECONDARY</span>
+    <span class="pixel-badge chamfer-sm tertiary">TERTIARY</span>
+    <span class="pixel-badge chamfer-sm error">ERROR</span>
+    <span class="pixel-badge chamfer-sm info">INFO</span>
+  </div>
+  <div class="comp-meta chamfer-sm">
+    <strong>Component:</strong> <code>PixelBadge</code><br>
+    <span class="params">Variants: <code>Primary</code> <code>Secondary</code> <code>Tertiary</code> <code>Error</code> <code>Info</code> · 4dp chamfer</span>
+  </div>
+</div>
+
+<!-- Data Display -->
+<div class="section">
+  <div class="section-title">DATA DISPLAY</div>
+  <div class="section-desc">List items, chips, and tables</div>
+  <div class="pixel-list-item"><span class="icon">⭐</span><div><div class="title">Fixture #1</div><div class="sub">RGB Par, Universe 1, Ch 1-3</div></div></div>
+  <div class="row" style="margin:12px 0">
+    <span class="pixel-chip chamfer-sm selected" onclick="this.classList.toggle('selected')">Selected</span>
+    <span class="pixel-chip chamfer-sm" onclick="this.classList.toggle('selected')">Unselected</span>
+  </div>
+  <table class="pixel-table chamfer-sm">
+    <thead><tr><th>Fixture</th><th>Universe</th><th>Channel</th></tr></thead>
+    <tbody>
+      <tr><td>RGB Par</td><td>1</td><td>1-3</td></tr>
+      <tr><td>Moving Head</td><td>1</td><td>4-20</td></tr>
+      <tr><td>Pixel Bar</td><td>2</td><td>1-48</td></tr>
+    </tbody>
+  </table>
+  <div class="comp-meta chamfer-sm">
+    <strong>Components:</strong> <code>PixelListItem</code> <code>PixelChip</code> <code>PixelTable</code><br>
+    <span class="params">ListItem: icon + title + subtitle + divider · Chip: selected/unselected toggle with glow · Table: alternating row colors, uppercase headers</span>
+  </div>
+</div>
+
+<!-- Feedback -->
+<div class="section">
+  <div class="section-title">FEEDBACK</div>
+  <div class="section-desc">Progress bars and loading spinners</div>
+  <div style="display:flex;flex-direction:column;gap:16px;max-width:500px;">
+    <div>
+      <span style="font-family:var(--font-pixel);font-size:9px">Determinate (65%)</span>
+      <div class="pixel-progress chamfer-sm" style="margin-top:6px">
+        <div class="pct-label">65%</div>
+        <div class="seg active"></div><div class="seg active"></div><div class="seg active"></div>
+        <div class="seg active"></div><div class="seg active"></div><div class="seg active"></div>
+        <div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div>
+      </div>
+    </div>
+    <div>
+      <span style="font-family:var(--font-pixel);font-size:9px">Indeterminate</span>
+      <div class="pixel-progress chamfer-sm indeterminate" style="margin-top:6px"></div>
+    </div>
+    <div>
+      <span style="font-family:var(--font-pixel);font-size:9px">Loading Spinners</span>
+      <div class="row" style="margin-top:6px">
+        <div class="pixel-spinner sm"></div>
+        <div class="pixel-spinner md"></div>
+        <div class="pixel-spinner lg"></div>
+      </div>
+    </div>
+  </div>
+  <div class="comp-meta chamfer-sm">
+    <strong>Components:</strong> <code>PixelProgressBar</code> <code>PixelLoadingSpinner</code><br>
+    <span class="params">ProgressBar: 10 segments, shimmer sweep, indeterminate marching gradient, percentage overlay · Spinner: Small/Medium/Large, sweep arc + orbiting sparkle dots</span>
+  </div>
+</div>
+
+<!-- Decorative -->
+<div class="section">
+  <div class="section-title">DECORATIVE</div>
+  <div class="section-desc">Stars, sparkles, dividers, and cursors</div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div>
+      <span style="font-family:var(--font-pixel);font-size:9px">PixelStar</span>
+      <div class="row" style="margin-top:6px">
+        <span class="star" style="font-size:12px">✦</span>
+        <span class="star" style="font-size:16px">✦</span>
+        <span class="star" style="font-size:24px">✦</span>
+        <span class="star" style="font-size:20px;color:var(--secondary)">✦</span>
+      </div>
+    </div>
+    <div>
+      <span style="font-family:var(--font-pixel);font-size:9px">PixelSparkles</span>
+      <div class="sparkles-box" style="margin-top:6px">
+        <div class="sparkle-dot" style="--dur:3s;animation-delay:0s"></div>
+        <div class="sparkle-dot" style="--dur:3s;animation-delay:0.5s"></div>
+        <div class="sparkle-dot" style="--dur:3s;animation-delay:1s"></div>
+        <div class="sparkle-dot" style="--dur:3s;animation-delay:1.5s"></div>
+        <div class="sparkle-dot" style="--dur:3s;animation-delay:2s"></div>
+        <div class="sparkle-dot" style="--dur:3s;animation-delay:2.5s"></div>
+      </div>
+    </div>
+    <div>
+      <span style="font-family:var(--font-pixel);font-size:9px">PixelDivider (stepped)</span>
+      <canvas class="stepped-divider" height="8" style="margin-top:6px"></canvas>
+    </div>
+    <div>
+      <span style="font-family:var(--font-pixel);font-size:9px">PixelDivider (flat)</span>
+      <div class="pixel-divider-flat" style="margin-top:6px"></div>
+    </div>
+    <div>
+      <span style="font-family:var(--font-pixel);font-size:9px">PixelEnchantedDivider</span>
+      <div class="pixel-enchanted" style="margin-top:6px"></div>
+    </div>
+    <div>
+      <span style="font-family:var(--font-pixel);font-size:9px">BlinkingCursor</span>
+      <div class="cursor-demo" style="margin-top:6px">Type here<span class="block">█</span></div>
+    </div>
+  </div>
+  <div class="comp-meta chamfer-sm">
+    <strong>Components:</strong> <code>BlinkingCursor</code> <code>PixelStar</code> <code>PixelSparkles</code> <code>PixelDivider</code> <code>PixelEnchantedDivider</code> <code>ScanlineOverlay</code> <code>PixelLoadingSpinner</code><br>
+    <span class="params">Star: 4-pointed, rotating + twinkle · Sparkles: 6 orbiting particles · Divider: stepped/flat/enchanted shimmer · Scanlines: CRT overlay with drift</span>
+  </div>
+</div>
+
+<!-- Dialogs & Overlays -->
+<div class="section">
+  <div class="section-title">DIALOGS & OVERLAYS</div>
+  <div class="section-desc">Trigger buttons for modal components</div>
+  <div class="row">
+    <div class="pixel-btn primary chamfer" onclick="showOverlay('dialog')"><div class="shadow chamfer"></div><div class="face chamfer">SHOW DIALOG</div></div>
+    <div class="pixel-btn secondary chamfer" onclick="showOverlay('bottomsheet')"><div class="shadow chamfer"></div><div class="face chamfer">SHOW BOTTOM SHEET</div></div>
+    <div class="pixel-btn surface chamfer" onclick="showToast()"><div class="shadow chamfer"></div><div class="face chamfer">SHOW TOAST</div></div>
+  </div>
+  <div class="comp-meta chamfer-sm">
+    <strong>Components:</strong> <code>PixelDialog</code> <code>PixelBottomSheet</code> <code>PixelToast</code> / <code>PixelSnackbar</code><br>
+    <span class="params">Dialog: scale 0.8→1.0 via cardExpand spring, glowing border, scrim · BottomSheet: slide-up, chamfered top corners, drag handle · Toast: slide-in from bottom, 3s auto-dismiss, optional action</span>
+  </div>
+</div>
+
+<!-- Foundation -->
+<div class="section">
+  <div class="section-title">FOUNDATION</div>
+  <div class="section-desc">Low-level primitives and utilities</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px">
+    <div class="comp-meta chamfer-sm">
+      <strong><code>PixelShape</code></strong><br>
+      Chamfered octagon clip path<br>
+      <code>Small</code> = 6dp · <code>Large</code> = 9dp
+    </div>
+    <div class="comp-meta chamfer-sm">
+      <strong><code>PixelBorder</code></strong><br>
+      3-layer border system:<br>
+      <code>pixelBorder</code> · <code>pixelBorderGlowing</code> · <code>pixelBorderActive</code>
+    </div>
+    <div class="comp-meta chamfer-sm">
+      <strong><code>PixelSurface</code></strong><br>
+      Background + subtle pixel grid<br>
+      <code>showGrid</code> · <code>color</code>
+    </div>
+    <div class="comp-meta chamfer-sm">
+      <strong><code>PixelScaffold</code></strong><br>
+      Top bar + bottom bar + content<br>
+      Uses SubcomposeLayout
+    </div>
+    <div class="comp-meta chamfer-sm">
+      <strong><code>PixelImage</code></strong><br>
+      Pixel-perfect scaling<br>
+      <code>FilterQuality.None</code>
+    </div>
+    <div class="comp-meta chamfer-sm">
+      <strong><code>PixelIcon</code></strong><br>
+      32dp framed icon wrapper<br>
+      Border + padding around icon
+    </div>
+    <div class="comp-meta chamfer-sm">
+      <strong><code>PixelAnimations</code></strong><br>
+      <code>pixelDissolve</code> · <code>pixelSlide</code> · <code>pixelAssemble</code>
+    </div>
+    <div class="comp-meta chamfer-sm">
+      <strong><code>ChromaAnimations</code></strong><br>
+      Spring configs: buttonPress, cardExpand, dragReturn, panelSlide · Timing: cursorBlink, shimmerSweep, starRotate, sparkleOrbit
+    </div>
+  </div>
+</div>
+
+<!-- Color Palette -->
+<div class="section">
+  <div class="section-title">COLOR PALETTE</div>
+  <div class="section-desc">All design system colors for the active theme</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px">
+    <div style="text-align:center"><div class="chamfer-sm" style="height:48px;background:var(--primary)"></div><span style="font-family:var(--font-pixel);font-size:7px">primary</span></div>
+    <div style="text-align:center"><div class="chamfer-sm" style="height:48px;background:var(--secondary)"></div><span style="font-family:var(--font-pixel);font-size:7px">secondary</span></div>
+    <div style="text-align:center"><div class="chamfer-sm" style="height:48px;background:var(--tertiary)"></div><span style="font-family:var(--font-pixel);font-size:7px">tertiary</span></div>
+    <div style="text-align:center"><div class="chamfer-sm" style="height:48px;background:var(--error)"></div><span style="font-family:var(--font-pixel);font-size:7px">error</span></div>
+    <div style="text-align:center"><div class="chamfer-sm" style="height:48px;background:var(--info)"></div><span style="font-family:var(--font-pixel);font-size:7px">info</span></div>
+    <div style="text-align:center"><div class="chamfer-sm" style="height:48px;background:var(--surface);border:1px solid var(--outline)"></div><span style="font-family:var(--font-pixel);font-size:7px">surface</span></div>
+    <div style="text-align:center"><div class="chamfer-sm" style="height:48px;background:var(--surface-variant);border:1px solid var(--outline)"></div><span style="font-family:var(--font-pixel);font-size:7px">surfaceVariant</span></div>
+    <div style="text-align:center"><div class="chamfer-sm" style="height:48px;background:var(--background);border:1px solid var(--outline)"></div><span style="font-family:var(--font-pixel);font-size:7px">background</span></div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<!-- Dialog Overlay -->
+<div class="overlay" id="dialog-overlay" onclick="if(event.target===this)hideOverlay('dialog')">
+  <div class="dialog-box chamfer">
+    <div class="dialog-title">▸ SAMPLE DIALOG</div>
+    <div class="dialog-body">This is a pixel-styled dialog with chamfered corners and a glowing border.</div>
+    <div class="dialog-actions">
+      <div class="pixel-btn surface chamfer" onclick="hideOverlay('dialog')" style="font-size:9px"><div class="shadow chamfer"></div><div class="face chamfer" style="padding:8px 16px">CANCEL</div></div>
+      <div class="pixel-btn primary chamfer" onclick="hideOverlay('dialog')" style="font-size:9px"><div class="shadow chamfer"></div><div class="face chamfer" style="padding:8px 16px">OK</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Sheet Overlay -->
+<div class="bottom-sheet-overlay" id="bottomsheet-overlay" onclick="if(event.target===this)hideOverlay('bottomsheet')">
+  <div class="bottom-sheet">
+    <div class="drag-handle"></div>
+    <div class="section-title" style="margin-bottom:4px">BOTTOM SHEET</div>
+    <div class="section-desc" style="margin-bottom:12px">Slides up from the bottom</div>
+    <p style="font-size:13px;margin-bottom:16px">This is a pixel-styled bottom sheet with chamfered top corners and a drag handle.</p>
+    <div class="pixel-btn primary chamfer" onclick="hideOverlay('bottomsheet')" style="width:100%"><div class="shadow chamfer"></div><div class="face chamfer" style="width:100%;text-align:center">DISMISS</div></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast chamfer-sm" id="toast">
+  <span>ℹ️</span>
+  <span>This is a pixel-styled toast notification!</span>
+  <span class="toast-action" onclick="hideToast()">Undo</span>
+</div>
+
+<script>
+// Theme switcher
+function setTheme(theme, el) {
+  document.body.classList.remove('theme-light','theme-hc');
+  if (theme === 'light') document.body.classList.add('theme-light');
+  if (theme === 'hc') document.body.classList.add('theme-hc');
+  document.querySelectorAll('.theme-bar .pixel-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  drawSteppedDivider();
+}
+
+// Dialog/BottomSheet
+function showOverlay(id) { document.getElementById(id+'-overlay').classList.add('active'); }
+function hideOverlay(id) { document.getElementById(id+'-overlay').classList.remove('active'); }
+
+// Toast
+let toastTimer;
+function showToast() {
+  const t = document.getElementById('toast');
+  t.classList.add('visible');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('visible'), 3000);
+}
+function hideToast() { document.getElementById('toast').classList.remove('visible'); clearTimeout(toastTimer); }
+
+// Dropdown
+function selectDD(el) {
+  const dd = el.closest('.pixel-dropdown');
+  dd.querySelector('.dd-trigger span:first-child').textContent = el.textContent;
+  dd.querySelectorAll('.dd-item').forEach(i => i.classList.remove('selected'));
+  el.classList.add('selected');
+  dd.classList.remove('open');
+}
+document.addEventListener('click', e => {
+  document.querySelectorAll('.pixel-dropdown.open').forEach(dd => {
+    if (!dd.contains(e.target)) dd.classList.remove('open');
+  });
+});
+
+// Stepped divider canvas
+function drawSteppedDivider() {
+  const canvas = document.querySelector('.stepped-divider');
+  if (!canvas) return;
+  canvas.width = canvas.parentElement.offsetWidth;
+  const ctx = canvas.getContext('2d');
+  const ps = 4;
+  const style = getComputedStyle(document.body);
+  ctx.fillStyle = style.getPropertyValue('--outline-variant').trim() || 'rgba(156,204,101,0.3)';
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  let x = 0, step = 0;
+  while (x < canvas.width) {
+    const y = step % 2 === 0 ? 0 : ps;
+    ctx.fillRect(x, y, ps * 2, ps);
+    x += ps * 2;
+    step++;
+  }
+}
+window.addEventListener('load', drawSteppedDivider);
+window.addEventListener('resize', drawSteppedDivider);
+</script>
+</body>
+</html>
+]]>
