@@ -6,6 +6,7 @@ import com.chromadmx.core.db.ChromaDmxDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 
 /**
  * Abstraction for app settings, enabling fake implementations in tests.
@@ -30,7 +31,7 @@ interface SettingsStore {
  * SQLDelight-backed repository for app settings persistence.
  *
  * Uses a single-row app_settings table with typed columns.
- * Provides reactive [Flow]-based reads and synchronous setters.
+ * Provides reactive [Flow]-based reads and suspend setters dispatched to [Dispatchers.Default].
  */
 class SettingsRepository(private val db: ChromaDmxDatabase) : SettingsStore {
 
@@ -51,27 +52,27 @@ class SettingsRepository(private val db: ChromaDmxDatabase) : SettingsStore {
     override val transportMode: Flow<String> = settingsFlow.map { it.transport_mode }
     override val setupCompleted: Flow<Boolean> = settingsFlow.map { it.setup_completed != 0L }
 
-    override suspend fun setMasterDimmer(value: Float) {
+    override suspend fun setMasterDimmer(value: Float) = withContext(Dispatchers.Default) {
         queries.updateMasterDimmer(value.toDouble())
     }
 
-    override suspend fun setIsSimulation(value: Boolean) {
+    override suspend fun setIsSimulation(value: Boolean) = withContext(Dispatchers.Default) {
         queries.updateIsSimulation(if (value) 1L else 0L)
     }
 
-    override suspend fun setActivePresetId(value: String?) {
+    override suspend fun setActivePresetId(value: String?) = withContext(Dispatchers.Default) {
         queries.updateActivePresetId(value)
     }
 
-    override suspend fun setThemePreference(value: String) {
+    override suspend fun setThemePreference(value: String) = withContext(Dispatchers.Default) {
         queries.updateThemePreference(value)
     }
 
-    override suspend fun setTransportMode(value: String) {
+    override suspend fun setTransportMode(value: String) = withContext(Dispatchers.Default) {
         queries.updateTransportMode(value)
     }
 
-    override suspend fun setSetupCompleted(value: Boolean) {
+    override suspend fun setSetupCompleted(value: Boolean) = withContext(Dispatchers.Default) {
         queries.updateSetupCompleted(if (value) 1L else 0L)
     }
 }

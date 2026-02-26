@@ -378,10 +378,10 @@ class StageViewModelV2(
                 state
             }
         }
-        if (updatedFixtureId != null && updatedPosition != null) {
-            scope.launch {
-                fixtureRepository?.updatePosition(updatedFixtureId!!, updatedPosition!!)
-            }
+        val id = updatedFixtureId
+        val pos = updatedPosition
+        if (id != null && pos != null) {
+            scope.launch { fixtureRepository?.updatePosition(id, pos) }
         }
     }
 

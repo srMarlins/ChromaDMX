@@ -310,9 +310,12 @@ class MascotViewModelV2Test {
             )
         ))
         vm.onEvent(MascotEvent.OnBubbleAction("diagnose_connection"))
-        // After bubble action, thinking state is triggered then bubble is dismissed
-        // The bubble gets set to "Analyzing network..." then dismissed
-        // Final state: bubble is null (dismissed)
+        // After bubble action, thinking state is triggered and a new bubble is shown
+        assertEquals(MascotAnimState.THINKING, vm.state.value.animState)
+        assertNotNull(vm.state.value.currentBubble)
+        assertEquals("Analyzing network...", vm.state.value.currentBubble?.text)
+        // The bubble auto-dismisses after 2000ms
+        advanceTimeBy(2100L)
         assertNull(vm.state.value.currentBubble)
     }
 

@@ -285,9 +285,8 @@ class MascotViewModelV2(
                 triggerThinking()
                 showBubble(SpeechBubble(text = "Analyzing network...", autoDismissMs = 2000))
             }
-            else -> { /* unknown action — no-op */ }
+            else -> dismissBubble()
         }
-        dismissBubble()
     }
 
     private fun triggerHappy() {
