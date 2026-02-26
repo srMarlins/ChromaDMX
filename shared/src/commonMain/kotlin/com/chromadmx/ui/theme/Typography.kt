@@ -24,29 +24,31 @@ val DmxTypography = Typography(
         fontFamily = PixelFontFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 28.sp,
-        letterSpacing = 0.sp
+        letterSpacing = 1.0.sp
     ),
     headlineMedium = TextStyle(
         fontFamily = PixelFontFamily,
         fontWeight = FontWeight.SemiBold,
         fontSize = 22.sp,
-        letterSpacing = 0.sp
+        letterSpacing = 1.0.sp
     ),
     headlineSmall = TextStyle(
         fontFamily = PixelFontFamily,
         fontWeight = FontWeight.SemiBold,
         fontSize = 18.sp,
-        letterSpacing = 0.sp
+        letterSpacing = 0.5.sp
     ),
     titleLarge = TextStyle(
         fontFamily = PixelFontFamily,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 16.sp
+        fontSize = 16.sp,
+        letterSpacing = 0.5.sp
     ),
     titleMedium = TextStyle(
         fontFamily = BodyFontFamily,
         fontWeight = FontWeight.Medium,
-        fontSize = 16.sp
+        fontSize = 16.sp,
+        letterSpacing = 0.5.sp
     ),
     titleSmall = TextStyle(
         fontFamily = BodyFontFamily,
@@ -56,23 +58,26 @@ val DmxTypography = Typography(
     bodyLarge = TextStyle(
         fontFamily = BodyFontFamily,
         fontSize = 16.sp,
-        lineHeight = 24.sp
+        lineHeight = 24.sp,
+        letterSpacing = 0.25.sp
     ),
     bodyMedium = TextStyle(
         fontFamily = BodyFontFamily,
         fontSize = 14.sp,
-        lineHeight = 20.sp
+        lineHeight = 20.sp,
+        letterSpacing = 0.25.sp
     ),
     bodySmall = TextStyle(
         fontFamily = BodyFontFamily,
         fontSize = 12.sp,
-        lineHeight = 16.sp
+        lineHeight = 16.sp,
+        letterSpacing = 0.25.sp
     ),
     labelLarge = TextStyle(
         fontFamily = DataFontFamily,
         fontWeight = FontWeight.SemiBold,
         fontSize = 14.sp,
-        letterSpacing = 0.1.sp
+        letterSpacing = 1.0.sp
     ),
     labelMedium = TextStyle(
         fontFamily = DataFontFamily,
@@ -84,6 +89,6 @@ val DmxTypography = Typography(
         fontFamily = DataFontFamily,
         fontWeight = FontWeight.Medium,
         fontSize = 10.sp,
-        letterSpacing = 0.5.sp
+        letterSpacing = 0.4.sp
     ),
 )

@@ -48,31 +48,42 @@ fun PixelProgressBar(
     showPercentage: Boolean = false,
 ) {
     val barShape = PixelShape.Small
-    val shimmerConfig = ChromaAnimations.shimmerSweep
+    val reduceMotion = PixelDesign.reduceMotion
 
-    // Shimmer animation for the fill
-    val shimmerTransition = rememberInfiniteTransition(label = "progressShimmer")
-    val shimmerOffset by shimmerTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(shimmerConfig.durationMillis, easing = shimmerConfig.easing),
-            repeatMode = shimmerConfig.repeatMode,
-        ),
-        label = "shimmerOffset",
-    )
+    // Shimmer animation for the fill (static when reduced motion)
+    val shimmerOffset = if (reduceMotion) {
+        0f
+    } else {
+        val shimmerConfig = ChromaAnimations.shimmerSweep
+        val shimmerTransition = rememberInfiniteTransition(label = "progressShimmer")
+        val animated by shimmerTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(shimmerConfig.durationMillis, easing = shimmerConfig.easing),
+                repeatMode = shimmerConfig.repeatMode,
+            ),
+            label = "shimmerOffset",
+        )
+        animated
+    }
 
-    // Indeterminate marching animation
-    val indeterminateTransition = rememberInfiniteTransition(label = "indeterminate")
-    val marchOffset by indeterminateTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1500, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "marchOffset",
-    )
+    // Indeterminate marching animation (static when reduced motion)
+    val marchOffset = if (reduceMotion) {
+        0f
+    } else {
+        val indeterminateTransition = rememberInfiniteTransition(label = "indeterminate")
+        val animated by indeterminateTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(1500, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart,
+            ),
+            label = "marchOffset",
+        )
+        animated
+    }
 
     val primaryColor = PixelDesign.colors.primary
     val secondaryColor = PixelDesign.colors.secondary

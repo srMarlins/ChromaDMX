@@ -69,7 +69,8 @@ fun NetworkDiscoveryScreen(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 PixelProgressBar(
-                    progress = 0.5f,
+                    progress = 0f,
+                    indeterminate = true,
                     modifier = Modifier.fillMaxWidth(0.7f),
                     progressColor = NeonCyan,
                 )

@@ -59,6 +59,10 @@ data class PixelColors(
     val success: Color = MatchaPrimary,
     val warning: Color = YuzuYellow,
     val info: Color = Color(0xFF81D4FA), // Soft Sky Blue
+    val onSurfaceDim: Color = MatchaLightColor.copy(alpha = 0.6f),
+    val primaryDark: Color = MatchaDark,
+    val primaryLight: Color = MatchaLightColor,
+    val scrim: Color = Color.Black.copy(alpha = 0.6f),
     val outline: Color = MatchaPrimary.copy(alpha = 0.6f),
     val outlineVariant: Color = MatchaPrimary.copy(alpha = 0.3f),
     val glow: Color = MatchaPrimary,
@@ -88,6 +92,10 @@ val MatchaLightColors = PixelColors(
     success = Color(0xFF388E3C),
     warning = Color(0xFFF57F17),
     info = Color(0xFF1976D2),
+    onSurfaceDim = Color(0xFF263228).copy(alpha = 0.5f),
+    primaryDark = Color(0xFF33691E),         // Very dark matcha
+    primaryLight = Color(0xFF8BC34A),        // Light matcha
+    scrim = Color.Black.copy(alpha = 0.4f),
     outline = Color(0xFF8D9D85),             // Muted green (solid, no glow)
     outlineVariant = Color(0xFF8D9D85).copy(alpha = 0.5f),
     glow = Color(0xFF558B2F),
@@ -112,6 +120,10 @@ val HighContrastColors = PixelColors(
     success = Color(0xFF00FF00),
     warning = Color(0xFFFFFF00),
     info = Color(0xFF00FFFF),
+    onSurfaceDim = Color(0xFFCCCCCC),        // Slightly dimmed white
+    primaryDark = Color(0xFFCCCC00),         // Darker yellow
+    primaryLight = Color(0xFFFFFF99),        // Lighter yellow
+    scrim = Color.Black.copy(alpha = 0.8f),  // Stronger scrim for contrast
     outline = Color(0xFFFFFFFF),             // Full-opacity borders
     outlineVariant = Color(0xFFFFFFFF).copy(alpha = 0.7f),
     glow = Color(0xFFFFFF00),
@@ -137,6 +149,8 @@ data class PixelSpacing(
     val large: Dp = 24.dp,
     val extraLarge: Dp = 32.dp,
     val screenPadding: Dp = 16.dp,
+    val componentPadding: Dp = 12.dp,
+    val sectionGap: Dp = 20.dp,
     val pixelSize: Dp = 4.dp // Base unit for borders/grid
 )
 

@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.chromadmx.ui.theme.ChromaAnimations
 import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.theme.PixelShape
 
@@ -184,23 +185,30 @@ fun Modifier.pixelBorderGlowing(
     val borderWidthPx = with(density) { borderWidth.toPx() }
     val glowWidthPx = with(density) { glowWidth.toPx() }
 
-    val infiniteTransition = rememberInfiniteTransition(label = "pixelGlow")
-    val animatedAlpha by infiniteTransition.animateFloat(
-        initialValue = minAlpha,
-        targetValue = maxAlpha,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = durationMs, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "glowAlpha",
-    )
+    val reduceMotion = PixelDesign.reduceMotion
+
+    val glowAlpha = if (reduceMotion) {
+        ChromaAnimations.Reduced.STATIC_GLOW_ALPHA
+    } else {
+        val infiniteTransition = rememberInfiniteTransition(label = "pixelGlow")
+        val animatedAlpha by infiniteTransition.animateFloat(
+            initialValue = minAlpha,
+            targetValue = maxAlpha,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = durationMs, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse,
+            ),
+            label = "glowAlpha",
+        )
+        animatedAlpha
+    }
 
     return this.drawWithCache {
         onDrawBehind {
             drawPixelBorderLayers(
                 borderColor = color,
                 glowColor = glowColor,
-                glowAlpha = animatedAlpha,
+                glowAlpha = glowAlpha,
                 chamferPx = chamferPx,
                 borderWidth = borderWidthPx,
                 glowWidth = glowWidthPx,

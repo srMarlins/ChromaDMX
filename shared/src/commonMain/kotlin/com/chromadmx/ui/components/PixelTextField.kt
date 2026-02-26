@@ -51,7 +51,7 @@ fun PixelTextField(
         // Label with decorative prefix
         if (label != null) {
             Text(
-                text = "\u2726 ${label.uppercase()}",
+                text = "${PixelDecorators.LABEL_PREFIX}${label.uppercase()}",
                 style = MaterialTheme.typography.labelSmall,
                 color = PixelDesign.colors.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 4.dp)

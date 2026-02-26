@@ -284,7 +284,7 @@ fun PixelDialog(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.6f))
+                .background(PixelDesign.colors.scrim)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -414,7 +414,7 @@ fun PixelBottomSheet(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.4f))
+                .background(PixelDesign.colors.scrim)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -445,7 +445,8 @@ fun PixelBottomSheet(
                 targetOffsetY = { it }, // Slide down to exit
             ),
         ) {
-            val topChamferShape = remember { TopChamferShape(chamferPx = 27f) } // ~9.dp at mdpi
+            val chamferPx = with(androidx.compose.ui.platform.LocalDensity.current) { 9.dp.toPx() }
+            val topChamferShape = remember(chamferPx) { TopChamferShape(chamferPx = chamferPx) }
 
             Column(
                 modifier = Modifier
