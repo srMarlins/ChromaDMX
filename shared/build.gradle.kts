@@ -32,12 +32,6 @@ kotlin {
             implementation(libs.ktor.serialization.kotlinx.json)
         }
 
-        commonTest.dependencies {
-            implementation(libs.multiplatform.settings)
-            implementation(libs.multiplatform.settings.coroutines)
-            implementation(libs.multiplatform.settings.test)
-        }
-
         androidMain.dependencies {
             implementation(libs.ktor.client.okhttp)
             implementation(libs.koin.android)

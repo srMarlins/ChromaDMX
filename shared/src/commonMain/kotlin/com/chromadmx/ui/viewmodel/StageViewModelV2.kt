@@ -347,48 +347,60 @@ class StageViewModelV2(
     }
 
     private fun handleRemoveFixture(index: Int) {
+        var removedFixtureId: String? = null
         _fixtureState.update { state ->
             val current = state.fixtures.toMutableList()
             if (index in current.indices) {
                 val removed = current.removeAt(index)
+                removedFixtureId = removed.fixture.fixtureId
                 val newSelection = if (state.selectedFixtureIndex == index) null else state.selectedFixtureIndex
-                fixtureRepository?.deleteFixture(removed.fixture.fixtureId)
                 state.copy(fixtures = current, selectedFixtureIndex = newSelection)
             } else {
                 state
             }
         }
+        removedFixtureId?.let { fixtureRepository?.deleteFixture(it) }
     }
 
     private fun handleUpdateZHeight(index: Int, z: Float) {
+        var updatedFixtureId: String? = null
+        var updatedPosition: Vec3? = null
         _fixtureState.update { state ->
             val current = state.fixtures.toMutableList()
             if (index in current.indices) {
                 val f = current[index]
                 val newPos = f.position.copy(z = z)
                 current[index] = f.copy(position = newPos)
-                scope.launch {
-                    fixtureRepository?.updatePosition(f.fixture.fixtureId, newPos)
-                }
+                updatedFixtureId = f.fixture.fixtureId
+                updatedPosition = newPos
                 state.copy(fixtures = current)
             } else {
                 state
+            }
+        }
+        if (updatedFixtureId != null && updatedPosition != null) {
+            scope.launch {
+                fixtureRepository?.updatePosition(updatedFixtureId!!, updatedPosition!!)
             }
         }
     }
 
     private fun handleAssignGroup(index: Int, groupId: String?) {
+        var assignedFixtureId: String? = null
+        var assignedGroupId: String? = null
         _fixtureState.update { state ->
             val current = state.fixtures.toMutableList()
             if (index in current.indices) {
                 val updated = current[index].copy(groupId = groupId)
                 current[index] = updated
-                fixtureRepository?.updateGroup(updated.fixture.fixtureId, groupId)
+                assignedFixtureId = updated.fixture.fixtureId
+                assignedGroupId = groupId
                 state.copy(fixtures = current)
             } else {
                 state
             }
         }
+        assignedFixtureId?.let { fixtureRepository?.updateGroup(it, assignedGroupId) }
     }
 
     private fun handleCreateGroup(name: String, color: Long) {

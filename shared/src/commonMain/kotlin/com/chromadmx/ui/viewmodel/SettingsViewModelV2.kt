@@ -1,6 +1,6 @@
 package com.chromadmx.ui.viewmodel
 
-import com.chromadmx.core.persistence.SettingsRepository
+import com.chromadmx.core.persistence.SettingsStore
 import com.chromadmx.networking.DmxTransportRouter
 import com.chromadmx.networking.FixtureDiscovery
 import com.chromadmx.networking.TransportMode
@@ -23,12 +23,12 @@ import kotlinx.coroutines.launch
  * original [SettingsViewModel].
  *
  * Dependencies:
- * - [SettingsRepository] for persisting settings (simulation, onboarding)
+ * - [SettingsStore] for persisting settings (simulation, onboarding)
  * - [DmxTransportRouter] for switching transport modes at runtime
  * - [FixtureDiscovery] for triggering network rescans
  */
 class SettingsViewModelV2(
-    private val settingsRepository: SettingsRepository,
+    private val settingsRepository: SettingsStore,
     private val transportRouter: DmxTransportRouter,
     private val fixtureDiscovery: FixtureDiscovery,
     private val scope: CoroutineScope,
@@ -115,6 +115,9 @@ class SettingsViewModelV2(
 
     private fun resetSimulation() {
         _state.update { it.copy(simulationEnabled = false) }
+        scope.launch {
+            settingsRepository.setIsSimulation(false)
+        }
         transportRouter.switchTo(TransportMode.Real)
     }
 

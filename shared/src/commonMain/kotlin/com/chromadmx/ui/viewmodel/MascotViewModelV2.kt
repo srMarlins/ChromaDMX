@@ -231,12 +231,15 @@ class MascotViewModelV2(
         triggerThinking()
 
         scope.launch {
-            val responseText = if (lightingAgent != null && lightingAgent.isAvailable) {
-                lightingAgent.send(text)
-            } else {
-                // Simulated fallback response when no agent is configured
-                delay(500)
-                "I'll help you with that! (Agent not configured — set an API key in Settings.)"
+            val responseText = try {
+                if (lightingAgent != null && lightingAgent.isAvailable) {
+                    lightingAgent.send(text)
+                } else {
+                    delay(500)
+                    "I'll help you with that! (Agent not configured — set an API key in Settings.)"
+                }
+            } catch (e: Exception) {
+                "Sorry, something went wrong: ${e.message ?: "unknown error"}"
             }
 
             val response = ChatMessage(

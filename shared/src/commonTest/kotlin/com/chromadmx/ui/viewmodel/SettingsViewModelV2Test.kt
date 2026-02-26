@@ -6,7 +6,7 @@ import com.chromadmx.core.model.DmxNode
 import com.chromadmx.core.model.FixtureProfile
 import com.chromadmx.core.model.FixtureType
 import com.chromadmx.core.model.Channel
-import com.chromadmx.core.persistence.SettingsRepository
+import com.chromadmx.core.persistence.SettingsStore
 import com.chromadmx.networking.ConnectionState
 import com.chromadmx.networking.DmxTransport
 import com.chromadmx.networking.DmxTransportRouter
@@ -16,12 +16,10 @@ import com.chromadmx.simulation.fixtures.RigPreset
 import com.chromadmx.ui.state.AgentStatus
 import com.chromadmx.ui.state.ProtocolType
 import com.chromadmx.ui.state.SettingsEvent
-import com.russhwolf.settings.ExperimentalSettingsApi
-import com.russhwolf.settings.MapSettings
-import com.russhwolf.settings.coroutines.toFlowSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -80,11 +78,37 @@ private class FakeFixtureDiscovery : FixtureDiscovery {
     }
 }
 
-@OptIn(ExperimentalCoroutinesApi::class, ExperimentalSettingsApi::class)
+/**
+ * Fake [SettingsStore] backed by MutableStateFlows for in-memory testing.
+ */
+private class FakeSettingsStore : SettingsStore {
+    private val _masterDimmer = MutableStateFlow(1.0f)
+    private val _themePreference = MutableStateFlow("MatchaDark")
+    private val _isSimulation = MutableStateFlow(false)
+    private val _transportMode = MutableStateFlow("Real")
+    private val _activePresetId = MutableStateFlow<String?>(null)
+    private val _setupCompleted = MutableStateFlow(false)
+
+    override val masterDimmer: Flow<Float> = _masterDimmer
+    override val themePreference: Flow<String> = _themePreference
+    override val isSimulation: Flow<Boolean> = _isSimulation
+    override val transportMode: Flow<String> = _transportMode
+    override val activePresetId: Flow<String?> = _activePresetId
+    override val setupCompleted: Flow<Boolean> = _setupCompleted
+
+    override suspend fun setMasterDimmer(value: Float) { _masterDimmer.value = value }
+    override suspend fun setThemePreference(value: String) { _themePreference.value = value }
+    override suspend fun setIsSimulation(value: Boolean) { _isSimulation.value = value }
+    override suspend fun setTransportMode(value: String) { _transportMode.value = value }
+    override suspend fun setActivePresetId(value: String?) { _activePresetId.value = value }
+    override suspend fun setSetupCompleted(value: Boolean) { _setupCompleted.value = value }
+}
+
+@OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelV2Test {
 
-    private fun createSettingsRepository(): SettingsRepository {
-        return SettingsRepository(MapSettings().toFlowSettings())
+    private fun createSettingsStore(): FakeSettingsStore {
+        return FakeSettingsStore()
     }
 
     private fun createRouter(scope: CoroutineScope): DmxTransportRouter {
@@ -101,14 +125,14 @@ class SettingsViewModelV2Test {
      * coroutines (init collectors, scope.launch calls) run eagerly.
      */
     private fun createVm(
-        settingsRepository: SettingsRepository = createSettingsRepository(),
+        settingsStore: FakeSettingsStore = createSettingsStore(),
         transportRouter: DmxTransportRouter? = null,
         fixtureDiscovery: FakeFixtureDiscovery = FakeFixtureDiscovery(),
         scope: CoroutineScope,
     ): Triple<SettingsViewModelV2, DmxTransportRouter, FakeFixtureDiscovery> {
         val router = transportRouter ?: createRouter(scope)
         val vm = SettingsViewModelV2(
-            settingsRepository = settingsRepository,
+            settingsRepository = settingsStore,
             transportRouter = router,
             fixtureDiscovery = fixtureDiscovery,
             scope = scope,
@@ -180,14 +204,14 @@ class SettingsViewModelV2Test {
     }
 
     @Test
-    fun toggleSimulationPersistsToRepository() = runTest {
+    fun toggleSimulationPersistsToStore() = runTest {
         val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler) + SupervisorJob())
-        val repo = createSettingsRepository()
-        val (vm, _, _) = createVm(settingsRepository = repo, scope = scope)
+        val store = createSettingsStore()
+        val (vm, _, _) = createVm(settingsStore = store, scope = scope)
 
         vm.onEvent(SettingsEvent.ToggleSimulation(true))
 
-        assertTrue(repo.isSimulation.first())
+        assertTrue(store.isSimulation.first())
     }
 
     // -- Force rescan --
@@ -450,34 +474,32 @@ class SettingsViewModelV2Test {
     // -- Reset onboarding --
 
     @Test
-    fun resetOnboardingPersistsToRepository() = runTest {
+    fun resetOnboardingPersistsToStore() = runTest {
         val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler) + SupervisorJob())
-        val repo = createSettingsRepository()
-        val (vm, _, _) = createVm(settingsRepository = repo, scope = scope)
+        val store = createSettingsStore()
+        val (vm, _, _) = createVm(settingsStore = store, scope = scope)
 
         // First, mark setup as completed
-        repo.setSetupCompleted(true)
-        assertTrue(repo.setupCompleted.first())
+        store.setSetupCompleted(true)
+        assertTrue(store.setupCompleted.first())
 
         // Reset onboarding
         vm.onEvent(SettingsEvent.ResetOnboarding)
 
-        assertFalse(repo.setupCompleted.first())
+        assertFalse(store.setupCompleted.first())
     }
 
-    // -- State derivation from repository --
+    // -- State derivation from store --
 
     @Test
-    fun stateDerivesSimulationFromRepository() = runTest {
-        val testDispatcher = UnconfinedTestDispatcher(testScheduler)
-        val scope = CoroutineScope(testDispatcher + SupervisorJob())
-        // Use the test dispatcher for FlowSettings so emissions are synchronous
-        val repo = SettingsRepository(MapSettings().toFlowSettings(testDispatcher))
-        // Set simulation to true in the repo before creating the VM
-        repo.setIsSimulation(true)
+    fun stateDerivesSimulationFromStore() = runTest {
+        val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler) + SupervisorJob())
+        val store = createSettingsStore()
+        // Set simulation to true in the store before creating the VM
+        store.setIsSimulation(true)
 
-        val (vm, _, _) = createVm(settingsRepository = repo, scope = scope)
-        // Allow the init collector to receive the initial emission from FlowSettings
+        val (vm, _, _) = createVm(settingsStore = store, scope = scope)
+        // Allow the init collector to receive the initial emission
         advanceUntilIdle()
 
         assertTrue(vm.state.value.simulationEnabled)
