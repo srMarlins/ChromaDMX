@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -13,15 +12,15 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.chromadmx.ui.theme.LocalPixelTheme
+import com.chromadmx.ui.theme.PixelDesign
 
 @Composable
 fun PixelCard(
     modifier: Modifier = Modifier,
-    backgroundColor: Color = MaterialTheme.colorScheme.surface,
-    borderColor: Color = MaterialTheme.colorScheme.outline,
+    backgroundColor: Color = PixelDesign.colors.surface,
+    borderColor: Color = PixelDesign.colors.outline,
     glowColor: Color? = null,
-    pixelSize: Dp = LocalPixelTheme.current.pixelSize,
+    pixelSize: Dp = PixelDesign.spacing.pixelSize,
     title: (@Composable () -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
@@ -50,7 +49,7 @@ fun PixelCard(
                 )
                 .pixelBorder(color = borderColor, pixelSize = pixelSize)
                 .background(backgroundColor)
-                .padding(pixelSize)
+                .padding(pixelSize) // Padding for border inset visual
                 .padding(12.dp)
         ) {
             content()

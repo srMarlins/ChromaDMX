@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
+// Retain for backward compatibility during migration, but map to new system where possible
 @Immutable
 data class PixelThemeData(
     val pixelSize: Dp = 4.dp,
@@ -22,22 +23,53 @@ data class PixelThemeData(
 
 val LocalPixelTheme = staticCompositionLocalOf { PixelThemeData() }
 
-private val DmxDarkColorScheme = darkColorScheme(
-    primary = DmxPrimary,
-    onPrimary = DmxOnPrimary,
-    primaryContainer = DmxPrimaryContainer,
-    secondary = DmxSecondary,
-    onSecondary = DmxOnSecondary,
-    background = DmxBackground,
-    surface = DmxSurface,
-    surfaceVariant = DmxSurfaceVariant,
-    onBackground = DmxOnBackground,
-    onSurface = DmxOnSurface,
-    error = DmxError,
-    onError = DmxOnError,
-    outline = Color.White.copy(alpha = 0.5f),
-    outlineVariant = Color.White.copy(alpha = 0.2f)
-)
+@Composable
+fun ChromaDmxTheme(
+    pixelThemeData: PixelThemeData = PixelThemeData(), // Legacy support
+    content: @Composable () -> Unit
+) {
+    // Construct the new design system
+    val pixelSystem = PixelSystem(
+        spacing = PixelSpacing(
+            pixelSize = pixelThemeData.pixelSize
+        )
+    )
+
+    // Map PixelColors to Material3 ColorScheme
+    val colorScheme = darkColorScheme(
+        primary = pixelSystem.colors.primary,
+        onPrimary = pixelSystem.colors.onPrimary,
+        primaryContainer = pixelSystem.colors.primary.copy(alpha = 0.2f),
+        onPrimaryContainer = pixelSystem.colors.primary,
+        secondary = pixelSystem.colors.secondary,
+        onSecondary = pixelSystem.colors.onSecondary,
+        secondaryContainer = pixelSystem.colors.secondary.copy(alpha = 0.2f),
+        onSecondaryContainer = pixelSystem.colors.secondary,
+        tertiary = pixelSystem.colors.tertiary,
+        onTertiary = pixelSystem.colors.onTertiary,
+        background = pixelSystem.colors.background,
+        onBackground = pixelSystem.colors.onBackground,
+        surface = pixelSystem.colors.surface,
+        onSurface = pixelSystem.colors.onSurface,
+        surfaceVariant = pixelSystem.colors.surfaceVariant,
+        onSurfaceVariant = pixelSystem.colors.onSurfaceVariant,
+        error = pixelSystem.colors.error,
+        onError = pixelSystem.colors.onError,
+        outline = pixelSystem.colors.outline,
+        outlineVariant = pixelSystem.colors.outlineVariant
+    )
+
+    CompositionLocalProvider(
+        LocalPixelTheme provides pixelThemeData,
+        LocalPixelSystem provides pixelSystem
+    ) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = DmxTypography, // Assuming this exists from previous listing
+            content = content,
+        )
+    }
+}
 
 /**
  * Applies a subtle pixel grid texture to the background.
@@ -71,21 +103,5 @@ fun Modifier.pixelGrid(
         for ((start, end) in horizontalLines) {
             drawLine(color, start, end, strokeWidth = 1f)
         }
-    }
-}
-
-@Composable
-fun ChromaDmxTheme(
-    pixelThemeData: PixelThemeData = PixelThemeData(),
-    content: @Composable () -> Unit
-) {
-    CompositionLocalProvider(
-        LocalPixelTheme provides pixelThemeData
-    ) {
-        MaterialTheme(
-            colorScheme = DmxDarkColorScheme,
-            typography = DmxTypography,
-            content = content,
-        )
     }
 }
