@@ -22,7 +22,8 @@ kotlin {
         iosMain.dependencies {
             implementation(libs.sqldelight.native.driver)
         }
-        commonTest.dependencies {
+        val androidHostTest by getting
+        androidHostTest.dependencies {
             implementation(libs.sqldelight.sqlite.driver)
         }
     }
