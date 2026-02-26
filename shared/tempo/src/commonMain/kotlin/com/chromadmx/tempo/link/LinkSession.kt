@@ -42,4 +42,5 @@ expect class LinkSession() : LinkSessionApi {
     override val beatPhase: Double
     override val barPhase: Double
     override fun requestBpm(bpm: Double)
+    override fun close()
 }

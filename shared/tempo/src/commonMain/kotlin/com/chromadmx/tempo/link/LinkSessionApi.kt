@@ -9,8 +9,12 @@ package com.chromadmx.tempo.link
  *
  * Production code uses [LinkSession] (which implements this interface) via
  * platform-specific `actual` classes.
+ *
+ * Extends [AutoCloseable] so that sessions can be used in structured resource
+ * management (e.g., `use { }` blocks). Implementations should release native
+ * resources in [close].
  */
-interface LinkSessionApi {
+interface LinkSessionApi : AutoCloseable {
 
     /** Enable this Link session, joining the network mesh. */
     fun enable()

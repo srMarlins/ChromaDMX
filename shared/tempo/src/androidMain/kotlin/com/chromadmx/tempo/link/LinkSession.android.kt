@@ -137,7 +137,7 @@ actual class LinkSession actual constructor() : LinkSessionApi {
     /**
      * Release native resources. Call when the session is no longer needed.
      */
-    fun destroy() {
+    actual override fun close() {
         // TODO: When native library is available:
         // if (nativePtr != 0L) {
         //     nativeDestroy(nativePtr)

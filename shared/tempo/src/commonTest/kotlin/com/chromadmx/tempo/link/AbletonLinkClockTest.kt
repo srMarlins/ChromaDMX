@@ -40,6 +40,7 @@ class AbletonLinkClockTest {
         override val beatPhase: Double get() = _beatPhase
         override val barPhase: Double get() = _barPhase
         override fun requestBpm(bpm: Double) { _bpm = bpm }
+        override fun close() { _enabled = false }
 
         fun setPeerCount(count: Int) { _peerCount = count }
         fun setBpm(value: Double) { _bpm = value }

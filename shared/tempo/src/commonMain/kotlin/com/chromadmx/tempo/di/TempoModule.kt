@@ -32,9 +32,9 @@ import org.koin.dsl.module
  *
  * ## Overriding
  *
- * To force tap-tempo only (e.g., in settings), use the named binding:
+ * To force tap-tempo only (e.g., in settings), retrieve by type:
  * ```kotlin
- * val tapClock: TapTempoClock = get(named("tapClock"))
+ * val tapClock: TapTempoClock = get<TapTempoClock>()
  * ```
  */
 val tempoModule = module {

@@ -98,4 +98,12 @@ actual class LinkSession actual constructor() : LinkSessionApi {
     actual override fun requestBpm(bpm: Double) {
         // TODO: ABLLinkSetTempo(state, bpm, hostTimeNanos) when cinterop is configured
     }
+
+    /**
+     * Release native resources. No-op in stub mode.
+     */
+    actual override fun close() {
+        _enabled = false
+        // TODO: ABLLinkDelete(ref) when cinterop is configured
+    }
 }

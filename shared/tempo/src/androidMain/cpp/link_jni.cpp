@@ -31,8 +31,31 @@
  */
 
 #include <jni.h>
+#include <cmath>
 // TODO: Uncomment when Link SDK is available:
 // #include <ableton/Link.hpp>
+
+// TODO: Uncomment when Link SDK is available:
+// namespace {
+// /**
+//  * Common helper for computing normalized phase from the Link timeline.
+//  *
+//  * Captures the app session state, reads the current beat position, and
+//  * normalizes it into [0, 1) relative to the given quantum.
+//  *
+//  * @param link    Pointer to the ableton::Link instance.
+//  * @param quantum Number of beats per phase cycle (1.0 for beat, 4.0 for bar).
+//  * @return Phase in [0.0, 1.0).
+//  */
+// double calculatePhase(ableton::Link* link, double quantum) {
+//     auto state = link->captureAppSessionState();
+//     auto hostTime = link->clock().micros();
+//     double beats = state.beatAtTime(hostTime, quantum);
+//     double phase = std::fmod(beats, quantum);
+//     if (phase < 0.0) phase += quantum;
+//     return phase / quantum;
+// }
+// } // anonymous namespace
 
 // JNI function naming: Java_<package>_<class>_<method>
 // Package: com.chromadmx.tempo.link
@@ -146,12 +169,7 @@ Java_com_chromadmx_tempo_link_LinkSession_nativeCaptureBeatPhase(
 {
     // TODO: Replace with real Link SDK call:
     // auto* link = reinterpret_cast<ableton::Link*>(ptr);
-    // auto state = link->captureAppSessionState();
-    // auto hostTime = link->clock().micros();
-    // double beats = state.beatAtTime(hostTime, quantum);
-    // double phase = std::fmod(beats, quantum);
-    // if (phase < 0.0) phase += quantum;
-    // return phase / quantum;
+    // return calculatePhase(link, quantum);
 
     (void)ptr;
     (void)quantum;
@@ -171,12 +189,7 @@ Java_com_chromadmx_tempo_link_LinkSession_nativeCaptureBarPhase(
 {
     // TODO: Replace with real Link SDK call:
     // auto* link = reinterpret_cast<ableton::Link*>(ptr);
-    // auto state = link->captureAppSessionState();
-    // auto hostTime = link->clock().micros();
-    // double beats = state.beatAtTime(hostTime, quantum);
-    // double phase = std::fmod(beats, quantum);
-    // if (phase < 0.0) phase += quantum;
-    // return phase / quantum;
+    // return calculatePhase(link, quantum);
 
     (void)ptr;
     (void)quantum;

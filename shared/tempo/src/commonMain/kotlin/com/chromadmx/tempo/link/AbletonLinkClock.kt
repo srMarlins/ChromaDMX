@@ -163,12 +163,15 @@ class AbletonLinkClock(
             hasSeenPeer = true
         }
 
-        // Update link state
+        // Update link state.
+        // Note: lastPeerSeenNanos is initialized to startTimeNanos, so when
+        // !hasSeenPeer the expression (now - lastPeerSeenNanos) equals
+        // (now - startTimeNanos). Both NO_LINK branches therefore reduce to
+        // the same check on nanosSinceLastPeer.
         _linkState.value = when {
             !_isRunning.value -> LinkState.DISABLED
             currentPeers > 0 -> LinkState.CONNECTED
-            hasSeenPeer && nanosSinceLastPeer(now) > noLinkTimeoutMs * NANOS_PER_MS -> LinkState.NO_LINK
-            !hasSeenPeer && (now - startTimeNanos) > noLinkTimeoutMs * NANOS_PER_MS -> LinkState.NO_LINK
+            nanosSinceLastPeer(now) > noLinkTimeoutMs * NANOS_PER_MS -> LinkState.NO_LINK
             else -> LinkState.SEARCHING
         }
 
