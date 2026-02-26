@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import com.chromadmx.networking.discovery.NodeDiscovery
 import com.chromadmx.networking.discovery.currentTimeMillis
-import com.chromadmx.networking.model.DmxNode
+import com.chromadmx.core.model.DmxNode
 import com.chromadmx.ui.screen.network.HealthLevel
 import com.chromadmx.ui.screen.network.healthLevel
 import kotlinx.coroutines.isActive

@@ -1,6 +1,6 @@
 package com.chromadmx.ui.components.network
 
-import com.chromadmx.networking.model.DmxNode
+import com.chromadmx.core.model.DmxNode
 
 /**
  * Health classification for a discovered DMX node based on its last-seen timestamp.

@@ -335,7 +335,7 @@ fun StagePreviewScreen(
 fun PixelTopBar(
     beatState: com.chromadmx.core.model.BeatState,
     masterDimmer: Float,
-    nodes: List<com.chromadmx.networking.model.DmxNode>,
+    nodes: List<com.chromadmx.core.model.DmxNode>,
     currentTimeMs: Long,
     isEditMode: Boolean,
     onTapTempo: () -> Unit,

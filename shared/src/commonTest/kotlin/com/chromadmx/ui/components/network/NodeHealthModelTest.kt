@@ -1,6 +1,6 @@
 package com.chromadmx.ui.components.network
 
-import com.chromadmx.networking.model.DmxNode
+import com.chromadmx.core.model.DmxNode
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

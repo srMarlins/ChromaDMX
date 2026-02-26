@@ -16,7 +16,7 @@ import com.chromadmx.engine.pipeline.EffectEngine
 import com.chromadmx.engine.preset.PresetLibrary
 import com.chromadmx.networking.discovery.NodeDiscovery
 import com.chromadmx.networking.discovery.currentTimeMillis
-import com.chromadmx.networking.model.DmxNode
+import com.chromadmx.core.model.DmxNode
 import com.chromadmx.tempo.clock.BeatClock
 import com.chromadmx.tempo.tap.TapTempoClock
 import com.chromadmx.core.model.Color as DmxColor

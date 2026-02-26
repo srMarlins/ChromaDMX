@@ -7,7 +7,7 @@ import com.chromadmx.engine.effect.EffectRegistry
 import com.chromadmx.engine.effect.EffectStack
 import com.chromadmx.engine.preset.PresetLibrary
 import com.chromadmx.networking.discovery.NodeDiscovery
-import com.chromadmx.networking.model.DmxNode
+import com.chromadmx.core.model.DmxNode
 import com.chromadmx.networking.transport.PlatformUdpTransport
 import com.chromadmx.simulation.fixtures.RigPreset
 import com.chromadmx.ui.onboarding.OnboardingStep

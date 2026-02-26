@@ -1,0 +1,20 @@
+CREATE TABLE known_node (
+    node_key TEXT NOT NULL PRIMARY KEY,
+    ip_address TEXT NOT NULL,
+    short_name TEXT NOT NULL,
+    long_name TEXT NOT NULL,
+    last_seen_ms INTEGER NOT NULL
+);
+
+selectAllKnownNodes:
+SELECT * FROM known_node ORDER BY last_seen_ms DESC;
+
+insertOrReplaceKnownNode:
+INSERT OR REPLACE INTO known_node (node_key, ip_address, short_name, long_name, last_seen_ms)
+VALUES (?, ?, ?, ?, ?);
+
+deleteKnownNode:
+DELETE FROM known_node WHERE node_key = ?;
+
+deleteAllKnownNodes:
+DELETE FROM known_node;

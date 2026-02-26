@@ -5,7 +5,7 @@ import com.chromadmx.core.model.Genre
 import com.chromadmx.core.persistence.FileStorage
 import com.chromadmx.engine.preset.PresetLibrary
 import com.chromadmx.networking.discovery.NodeDiscovery
-import com.chromadmx.networking.model.DmxNode
+import com.chromadmx.core.model.DmxNode
 import com.chromadmx.simulation.fixtures.RigPreset
 import com.chromadmx.simulation.fixtures.SimulatedFixtureRig
 import com.chromadmx.ui.onboarding.OnboardingStep
