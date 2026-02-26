@@ -1,0 +1,20 @@
+-- Migration from schema version 1 to 2.
+-- Adds tables introduced after the initial schema: known_node and app_settings.
+
+CREATE TABLE IF NOT EXISTS known_node (
+    node_key TEXT NOT NULL PRIMARY KEY,
+    ip_address TEXT NOT NULL,
+    short_name TEXT NOT NULL,
+    long_name TEXT NOT NULL,
+    last_seen_ms INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS app_settings (
+    id INTEGER NOT NULL PRIMARY KEY DEFAULT 1,
+    master_dimmer REAL NOT NULL DEFAULT 1.0,
+    is_simulation INTEGER NOT NULL DEFAULT 0,
+    active_preset_id TEXT,
+    theme_preference TEXT NOT NULL DEFAULT 'MatchaDark',
+    transport_mode TEXT NOT NULL DEFAULT 'Real',
+    setup_completed INTEGER NOT NULL DEFAULT 0
+);
