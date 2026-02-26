@@ -2,12 +2,14 @@ package com.chromadmx.ui.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -16,12 +18,15 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.pointerInput
 import com.chromadmx.core.model.BuiltInProfiles
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.core.model.RenderHint
+import com.chromadmx.core.model.Vec3
 import com.chromadmx.core.model.Color as DmxColor
 
 /** Scanline color for the subtle CRT-like horizontal lines. */
@@ -35,6 +40,9 @@ private val CanvasBackground = Color(0xFF060612)
 
 /** Highlight color for selected fixture border. */
 private val SelectionColor = Color(0xFF00FBFF)
+
+/** Highlight color for edit-mode drag crosshair. */
+private val EditDragColor = Color(0xFFFFFF00)
 
 /**
  * Canvas-based top-down venue visualization with profile-aware rendering.
@@ -60,8 +68,10 @@ fun VenueCanvas(
     fixtureColors: List<DmxColor>,
     modifier: Modifier = Modifier,
     selectedFixtureIndex: Int? = null,
+    isEditMode: Boolean = false,
     onFixtureTapped: ((Int) -> Unit)? = null,
     onBackgroundTapped: (() -> Unit)? = null,
+    onFixtureDragged: ((Int, Vec3) -> Unit)? = null,
 ) {
     // Zoom and pan state
     var zoom by remember { mutableFloatStateOf(1f) }
@@ -70,16 +80,126 @@ fun VenueCanvas(
     // Pre-compute fixture positions for hit testing in tap gesture
     var fixtureScreenPositions by remember { mutableStateOf(emptyList<Offset>()) }
 
+    // Edit mode drag tracking
+    var dragTargetIndex by remember { mutableIntStateOf(-1) }
+
     Canvas(
         modifier = modifier
             .fillMaxSize()
             .background(CanvasBackground)
-            .pointerInput(Unit) {
-                detectTransformGestures { _, pan, gestureZoom, _ ->
-                    zoom = (zoom * gestureZoom).coerceIn(0.5f, 4f)
-                    panOffset += pan
+            .pointerInput(isEditMode) {
+                if (!isEditMode) {
+                    detectTransformGestures { _, pan, gestureZoom, _ ->
+                        zoom = (zoom * gestureZoom).coerceIn(0.5f, 4f)
+                        panOffset += pan
+                    }
                 }
             }
+            .then(
+                if (isEditMode) {
+                    Modifier.pointerInput(fixtures.size, zoom, panOffset) {
+                        detectDragGestures(
+                            onDragStart = { startOffset ->
+                                // Find nearest fixture within touch radius
+                                val touchRadius = 40f * zoom
+                                val touchRadiusSq = touchRadius * touchRadius
+                                var closestIndex = -1
+                                var closestDistSq = Float.MAX_VALUE
+                                for ((i, pos) in fixtureScreenPositions.withIndex()) {
+                                    val dx = startOffset.x - pos.x
+                                    val dy = startOffset.y - pos.y
+                                    val distSq = dx * dx + dy * dy
+                                    if (distSq < touchRadiusSq && distSq < closestDistSq) {
+                                        closestDistSq = distSq
+                                        closestIndex = i
+                                    }
+                                }
+                                dragTargetIndex = closestIndex
+                            },
+                            onDrag = { _, _ -> /* position update happens on drag end */ },
+                            onDragEnd = {
+                                dragTargetIndex = -1
+                            },
+                            onDragCancel = {
+                                dragTargetIndex = -1
+                            },
+                        )
+                    }.pointerInput(fixtures.size, zoom, panOffset, fixtureScreenPositions) {
+                        // Separate drag handler that can compute world coordinates
+                        detectDragGestures(
+                            onDragStart = { startOffset ->
+                                val touchRadius = 40f * zoom
+                                val touchRadiusSq = touchRadius * touchRadius
+                                var closestIndex = -1
+                                var closestDistSq = Float.MAX_VALUE
+                                for ((i, pos) in fixtureScreenPositions.withIndex()) {
+                                    val dx = startOffset.x - pos.x
+                                    val dy = startOffset.y - pos.y
+                                    val distSq = dx * dx + dy * dy
+                                    if (distSq < touchRadiusSq && distSq < closestDistSq) {
+                                        closestDistSq = distSq
+                                        closestIndex = i
+                                    }
+                                }
+                                dragTargetIndex = closestIndex
+                                if (closestIndex >= 0) {
+                                    onFixtureTapped?.invoke(closestIndex)
+                                }
+                            },
+                            onDrag = { change, _ ->
+                                if (dragTargetIndex >= 0 && fixtures.isNotEmpty()) {
+                                    // Convert screen position back to world coordinates
+                                    val screenPos = change.position
+                                    val pivotX = size.width / 2f
+                                    val pivotY = size.height / 2f
+
+                                    // Undo pan and zoom transforms
+                                    val canvasX = (screenPos.x - panOffset.x - pivotX) / zoom + pivotX
+                                    val canvasY = (screenPos.y - panOffset.y - pivotY) / zoom + pivotY
+
+                                    val padding = 48f
+                                    val canvasW = size.width - 2 * padding
+                                    val canvasH = size.height - 2 * padding
+
+                                    if (canvasW > 0f && canvasH > 0f) {
+                                        // Compute bounds from fixtures
+                                        var minX = Float.MAX_VALUE; var maxX = Float.MIN_VALUE
+                                        var minY = Float.MAX_VALUE; var maxY = Float.MIN_VALUE
+                                        for (f in fixtures) {
+                                            if (f.position.x < minX) minX = f.position.x
+                                            if (f.position.x > maxX) maxX = f.position.x
+                                            if (f.position.y < minY) minY = f.position.y
+                                            if (f.position.y > maxY) maxY = f.position.y
+                                        }
+                                        val rangeX = (maxX - minX).coerceAtLeast(1f)
+                                        val rangeY = (maxY - minY).coerceAtLeast(1f)
+
+                                        // Reverse the normalization
+                                        val normX = ((canvasX - padding) / canvasW).coerceIn(0f, 1f)
+                                        val normY = (1f - (canvasY - padding) / canvasH).coerceIn(0f, 1f)
+                                        val worldX = minX + normX * rangeX
+                                        val worldY = minY + normY * rangeY
+
+                                        // Grid snap to 0.5 units
+                                        val snappedX = (worldX * 2f).let { kotlin.math.round(it) } / 2f
+                                        val snappedY = (worldY * 2f).let { kotlin.math.round(it) } / 2f
+
+                                        val currentZ = fixtures[dragTargetIndex].position.z
+                                        onFixtureDragged?.invoke(
+                                            dragTargetIndex,
+                                            Vec3(snappedX, snappedY, currentZ),
+                                        )
+                                    }
+                                }
+                            },
+                            onDragEnd = { dragTargetIndex = -1 },
+                            onDragCancel = { dragTargetIndex = -1 },
+                        )
+                    }
+                } else {
+                    Modifier
+                }
+            )
             .pointerInput(fixtures.size, zoom, panOffset) {
                 detectTapGestures { tapOffset ->
                     // Hit test: find the closest fixture within touch radius
@@ -163,6 +283,15 @@ fun VenueCanvas(
                         drawBarFixture(cx, cy, composeColor, pixelCount, isSelected)
                     }
                     RenderHint.BEAM_CONE -> drawBeamConeFixture(cx, cy, composeColor, isSelected, reusablePath)
+                }
+            }
+
+            // Draw edit-mode drag handle on the drag target or selected fixture
+            if (isEditMode) {
+                val editIndex = if (dragTargetIndex >= 0) dragTargetIndex else selectedFixtureIndex
+                if (editIndex != null && editIndex in positions.indices) {
+                    val pos = positions[editIndex]
+                    drawEditDragHandle(pos.x, pos.y)
                 }
             }
 
@@ -355,6 +484,39 @@ private fun DrawScope.drawScanlines() {
         drawLine(ScanlineColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 1f)
         y += 3f
     }
+}
+
+/**
+ * Draw a crosshair drag handle for edit mode on the selected fixture.
+ */
+private fun DrawScope.drawEditDragHandle(cx: Float, cy: Float) {
+    val armLen = 28f
+    val dashEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 4f), phase = 0f)
+
+    // Horizontal crosshair
+    drawLine(
+        color = EditDragColor,
+        start = Offset(cx - armLen, cy),
+        end = Offset(cx + armLen, cy),
+        strokeWidth = 2f,
+        pathEffect = dashEffect,
+    )
+    // Vertical crosshair
+    drawLine(
+        color = EditDragColor,
+        start = Offset(cx, cy - armLen),
+        end = Offset(cx, cy + armLen),
+        strokeWidth = 2f,
+        pathEffect = dashEffect,
+    )
+
+    // Dashed circle border
+    drawCircle(
+        color = EditDragColor,
+        radius = 24f,
+        center = Offset(cx, cy),
+        style = Stroke(width = 2f, pathEffect = dashEffect),
+    )
 }
 
 /**
