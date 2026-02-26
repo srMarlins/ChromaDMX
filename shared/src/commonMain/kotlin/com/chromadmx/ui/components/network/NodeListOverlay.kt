@@ -31,21 +31,6 @@ import com.chromadmx.ui.theme.NodeOnline
 import com.chromadmx.ui.theme.NodeWarning
 import com.chromadmx.ui.theme.PixelFontFamily
 
-/**
- * Full-screen overlay displaying detailed node status cards.
- *
- * Shows each discovered node with its name, IP, universe count, and
- * health status. Each card has a "Diagnose" button that fires [onDiagnose]
- * with the node's IP address.
- *
- * The overlay is dismissed by tapping outside the card list or
- * pressing back (handled by the caller via [onDismiss]).
- *
- * @param nodes       All discovered node statuses.
- * @param onDismiss   Called when the overlay should close.
- * @param onDiagnose  Called with the node IP when "Diagnose" is tapped.
- * @param modifier    Optional modifier.
- */
 @Composable
 fun NodeListOverlay(
     nodes: List<NodeStatus>,
@@ -53,7 +38,6 @@ fun NodeListOverlay(
     onDiagnose: (ip: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Scrim: semi-transparent background; tap to dismiss.
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -65,7 +49,6 @@ fun NodeListOverlay(
             ),
         contentAlignment = Alignment.Center,
     ) {
-        // Card list container — tap inside does NOT dismiss.
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
@@ -87,8 +70,6 @@ fun NodeListOverlay(
     }
 }
 
-// ── Single node card ───────────────────────────────────────────────
-
 @Composable
 private fun NodeCard(
     node: NodeStatus,
@@ -109,10 +90,9 @@ private fun NodeCard(
     PixelCard(
         modifier = modifier.fillMaxWidth(),
         borderColor = healthColor.copy(alpha = 0.7f),
-        glowColor = healthColor.copy(alpha = 0.15f),
+        // glowColor removed
     ) {
         Column {
-            // Header row: heart + name
             Row(verticalAlignment = Alignment.CenterVertically) {
                 PixelHeart(
                     health = node.health,
@@ -128,14 +108,12 @@ private fun NodeCard(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Details
             DetailRow(label = "IP", value = node.ip)
             DetailRow(label = "Universes", value = node.universes.joinToString(", ").ifEmpty { "none" })
             DetailRow(label = "Status", value = healthLabel, valueColor = healthColor)
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Diagnose button
             PixelButton(
                 onClick = onDiagnose,
                 backgroundColor = healthColor.copy(alpha = 0.3f),

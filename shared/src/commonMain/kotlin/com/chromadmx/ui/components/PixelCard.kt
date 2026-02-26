@@ -3,14 +3,13 @@ package com.chromadmx.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.chromadmx.ui.theme.PixelDesign
 
@@ -19,7 +18,7 @@ fun PixelCard(
     modifier: Modifier = Modifier,
     backgroundColor: Color = PixelDesign.colors.surface,
     borderColor: Color = PixelDesign.colors.outline,
-    glowColor: Color? = null,
+    elevation: Dp = 4.dp, // Physical elevation
     pixelSize: Dp = PixelDesign.spacing.pixelSize,
     title: (@Composable () -> Unit)? = null,
     content: @Composable () -> Unit
@@ -31,28 +30,25 @@ fun PixelCard(
             }
         }
 
-        Box(
-            modifier = Modifier
-                .then(
-                    if (glowColor != null) {
-                        Modifier.drawBehind {
-                            drawRect(
-                                brush = Brush.radialGradient(
-                                    colors = listOf(glowColor.copy(alpha = 0.3f), Color.Transparent),
-                                    center = Offset(size.width / 2f, size.height / 2f),
-                                    radius = size.minDimension
-                                ),
-                                size = size
-                            )
-                        }
-                    } else Modifier
-                )
-                .pixelBorder(color = borderColor, pixelSize = pixelSize)
-                .background(backgroundColor)
-                .padding(pixelSize) // Padding for border inset visual
-                .padding(12.dp)
-        ) {
-            content()
+        Box(modifier = Modifier) {
+            // Hard Shadow
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .offset(x = elevation, y = elevation)
+                    .pixelBorder(color = Color.Black.copy(alpha = 0.2f), pixelSize = pixelSize)
+                    .background(Color.Black.copy(alpha = 0.2f))
+            )
+
+            // Card Body
+            Box(
+                modifier = Modifier
+                    .pixelBorder(color = borderColor, pixelSize = pixelSize)
+                    .background(backgroundColor)
+                    .padding(16.dp) // Generous padding
+            ) {
+                content()
+            }
         }
     }
 }

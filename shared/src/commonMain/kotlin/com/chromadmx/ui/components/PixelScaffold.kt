@@ -39,19 +39,20 @@ fun PixelScaffold(
             val bottomBarHeight = bottomBarPlaceables.maxOfOrNull { it.height } ?: 0
 
             // Measure Content
-            val contentHeight = layoutHeight - topBarHeight - bottomBarHeight
-            val contentConstraints = constraints.copy(minHeight = 0, maxHeight = contentHeight.coerceAtLeast(0))
+            // We pass full height constraints but provide padding values so content *knows* where to avoid.
+            // This mimics Scaffold behavior where content is placed at (0,0) usually.
+            val contentConstraints = constraints.copy(minHeight = 0)
 
             val contentPlaceables = subcompose(ScaffoldLayoutContent.MainContent) {
                 content(PaddingValues(top = topBarHeight.toDp(), bottom = bottomBarHeight.toDp()))
             }.map { it.measure(contentConstraints) }
 
             layout(layoutWidth, layoutHeight) {
-                // Place Top Bar
-                topBarPlaceables.forEach { it.place(0, 0) }
+                // Place Content at (0,0) because it has internal padding applied via PaddingValues
+                contentPlaceables.forEach { it.place(0, 0) }
 
-                // Place Content
-                contentPlaceables.forEach { it.place(0, topBarHeight) }
+                // Place Top Bar on top of content (z-order wise, though order here is draw order)
+                topBarPlaceables.forEach { it.place(0, 0) }
 
                 // Place Bottom Bar
                 bottomBarPlaceables.forEach { it.place(0, layoutHeight - bottomBarHeight) }

@@ -29,11 +29,10 @@ import androidx.compose.ui.unit.sp
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.core.persistence.FixtureGroup
 import com.chromadmx.ui.components.PixelButton
+import com.chromadmx.ui.components.PixelCard
 import com.chromadmx.ui.components.PixelSlider
 import com.chromadmx.ui.components.pixelBorder
-import com.chromadmx.ui.theme.NeonCyan
-import com.chromadmx.ui.theme.NeonMagenta
-import com.chromadmx.ui.theme.NeonYellow
+import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.theme.PixelFontFamily
 
 /** Z-height presets for common fixture mounting positions. */
@@ -65,13 +64,12 @@ fun FixtureEditOverlay(
 ) {
     var groupDropdownExpanded by remember { mutableStateOf(false) }
 
-    Box(
+    PixelCard(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .pixelBorder(width = 2.dp, color = NeonCyan.copy(alpha = 0.6f), pixelSize = 2.dp)
-            .background(Color(0xDD0A0A1E))
-            .padding(12.dp),
+            .padding(horizontal = 16.dp),
+        borderColor = PixelDesign.colors.info,
+        backgroundColor = PixelDesign.colors.surface
     ) {
         Column {
             // --- Header: Name + DMX address ---
@@ -87,7 +85,7 @@ fun FixtureEditOverlay(
                             fontFamily = PixelFontFamily,
                             fontSize = 12.sp,
                         ),
-                        color = NeonCyan,
+                        color = PixelDesign.colors.info,
                     )
                     Text(
                         text = "U${fixture.fixture.universeId}/${fixture.fixture.channelStart} | ${fixture.fixture.profileId}",
@@ -95,7 +93,7 @@ fun FixtureEditOverlay(
                             fontFamily = PixelFontFamily,
                             fontSize = 7.sp,
                         ),
-                        color = Color.White.copy(alpha = 0.4f),
+                        color = PixelDesign.colors.onSurfaceVariant,
                     )
                 }
 
@@ -106,7 +104,7 @@ fun FixtureEditOverlay(
                         fontFamily = PixelFontFamily,
                         fontSize = 10.sp,
                     ),
-                    color = NeonMagenta.copy(alpha = 0.6f),
+                    color = PixelDesign.colors.error,
                     modifier = Modifier
                         .clickable { onDismiss() }
                         .padding(4.dp),
@@ -123,7 +121,7 @@ fun FixtureEditOverlay(
                     fontFamily = PixelFontFamily,
                     fontSize = 7.sp,
                 ),
-                color = NeonYellow.copy(alpha = 0.7f),
+                color = PixelDesign.colors.tertiary.copy(alpha = 0.8f),
             )
             Spacer(Modifier.height(4.dp))
 
@@ -131,7 +129,7 @@ fun FixtureEditOverlay(
                 value = fixture.position.z,
                 onValueChange = onZHeightChanged,
                 valueRange = 0f..6f,
-                accentColor = NeonYellow,
+                accentColor = PixelDesign.colors.tertiary,
                 modifier = Modifier.fillMaxWidth().height(28.dp),
             )
 
@@ -150,14 +148,14 @@ fun FixtureEditOverlay(
                             fontFamily = PixelFontFamily,
                             fontSize = 6.sp,
                         ),
-                        color = if (isActive) NeonYellow else Color.White.copy(alpha = 0.3f),
+                        color = if (isActive) PixelDesign.colors.tertiary else PixelDesign.colors.onSurface.copy(alpha = 0.5f),
                         modifier = Modifier
                             .clickable { onZHeightChanged(preset.value) }
                             .then(
                                 if (isActive) {
                                     Modifier.pixelBorder(
                                         width = 1.dp,
-                                        color = NeonYellow.copy(alpha = 0.4f),
+                                        color = PixelDesign.colors.tertiary.copy(alpha = 0.5f),
                                         pixelSize = 1.dp,
                                     )
                                 } else {
@@ -181,7 +179,7 @@ fun FixtureEditOverlay(
                         fontFamily = PixelFontFamily,
                         fontSize = 7.sp,
                     ),
-                    color = NeonCyan.copy(alpha = 0.6f),
+                    color = PixelDesign.colors.info.copy(alpha = 0.7f),
                 )
                 Spacer(Modifier.width(8.dp))
 
@@ -193,12 +191,12 @@ fun FixtureEditOverlay(
                             fontFamily = PixelFontFamily,
                             fontSize = 8.sp,
                         ),
-                        color = Color.White.copy(alpha = 0.7f),
+                        color = PixelDesign.colors.onSurface.copy(alpha = 0.9f),
                         modifier = Modifier
                             .clickable { groupDropdownExpanded = true }
                             .pixelBorder(
                                 width = 1.dp,
-                                color = NeonCyan.copy(alpha = 0.3f),
+                                color = PixelDesign.colors.info.copy(alpha = 0.3f),
                                 pixelSize = 1.dp,
                             )
                             .padding(horizontal = 8.dp, vertical = 4.dp),
@@ -207,13 +205,13 @@ fun FixtureEditOverlay(
                     DropdownMenu(
                         expanded = groupDropdownExpanded,
                         onDismissRequest = { groupDropdownExpanded = false },
-                        modifier = Modifier.background(Color(0xFF0A0A1E)),
+                        modifier = Modifier.background(PixelDesign.colors.surfaceVariant),
                     ) {
                         DropdownMenuItem(
                             text = {
                                 Text(
                                     "None",
-                                    color = Color.White.copy(alpha = 0.6f),
+                                    color = PixelDesign.colors.onSurface.copy(alpha = 0.6f),
                                     style = MaterialTheme.typography.labelSmall.copy(
                                         fontFamily = PixelFontFamily,
                                         fontSize = 8.sp,
@@ -237,7 +235,7 @@ fun FixtureEditOverlay(
                                         Spacer(Modifier.width(6.dp))
                                         Text(
                                             group.name,
-                                            color = Color.White.copy(alpha = 0.8f),
+                                            color = PixelDesign.colors.onSurface.copy(alpha = 0.9f),
                                             style = MaterialTheme.typography.labelSmall.copy(
                                                 fontFamily = PixelFontFamily,
                                                 fontSize = 8.sp,
@@ -255,7 +253,7 @@ fun FixtureEditOverlay(
                             text = {
                                 Text(
                                     "+ New Group...",
-                                    color = NeonCyan.copy(alpha = 0.8f),
+                                    color = PixelDesign.colors.info.copy(alpha = 0.9f),
                                     style = MaterialTheme.typography.labelSmall.copy(
                                         fontFamily = PixelFontFamily,
                                         fontSize = 8.sp,
@@ -280,8 +278,8 @@ fun FixtureEditOverlay(
             ) {
                 PixelButton(
                     onClick = onTestFire,
-                    backgroundColor = NeonYellow.copy(alpha = 0.8f),
-                    contentColor = Color.Black,
+                    backgroundColor = PixelDesign.colors.tertiary,
+                    contentColor = PixelDesign.colors.onTertiary,
                     modifier = Modifier.weight(1f),
                 ) {
                     Text("TEST FIRE", fontSize = 8.sp)
@@ -289,8 +287,8 @@ fun FixtureEditOverlay(
 
                 PixelButton(
                     onClick = onDismiss,
-                    backgroundColor = Color(0xFF2A2A3E),
-                    contentColor = Color.White.copy(alpha = 0.7f),
+                    backgroundColor = PixelDesign.colors.surfaceVariant,
+                    contentColor = PixelDesign.colors.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
                 ) {
                     Text("CLOSE", fontSize = 8.sp)

@@ -8,33 +8,43 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-// --- Pixel Specific Colors ---
-val PixelBackground = Color(0xFF060612)
-val PixelSurface = Color(0xFF0A0A1E)
-val PixelSurfaceVariant = Color(0xFF141428)
-val NeonRed = Color(0xFFFF0000)
+// --- Matcha Palette ---
+// Modern Japanese aesthetic: Soft, earthy greens, sakura pinks, yuzu yellows.
+// Optimized for dark mode (stage environment) but with a softer, "cutesy" feel.
+
+val MatchaPrimary = Color(0xFF9CCC65)      // Fresh Matcha Leaf
+val MatchaDark = Color(0xFF33691E)         // Deep Tea Green
+val MatchaLight = Color(0xFFDCEDC8)        // Milk Tea Green
+
+val SakuraPink = Color(0xFFF48FB1)         // Cherry Blossom
+val YuzuYellow = Color(0xFFFFF59D)         // Citrus Yellow
+val AzukiRed = Color(0xFFE57373)           // Red Bean (Error/Alert)
+
+val DarkMatchaBg = Color(0xFF1B261D)       // Very Dark Green-Black
+val DarkMatchaSurface = Color(0xFF263228)  // Dark Moss Green
+val DarkMatchaSurfaceVariant = Color(0xFF37473A) // Lighter Moss
 
 @Immutable
 data class PixelColors(
-    val primary: Color = NeonCyan,
-    val onPrimary: Color = Color.Black,
-    val secondary: Color = NeonMagenta,
-    val onSecondary: Color = Color.Black,
-    val tertiary: Color = NeonYellow,
-    val onTertiary: Color = Color.Black,
-    val background: Color = PixelBackground,
-    val onBackground: Color = Color.White,
-    val surface: Color = PixelSurface,
-    val onSurface: Color = Color.White,
-    val surfaceVariant: Color = PixelSurfaceVariant,
-    val onSurfaceVariant: Color = Color.White.copy(alpha = 0.7f),
-    val error: Color = NeonRed,
-    val onError: Color = Color.Black,
-    val success: Color = NeonGreen,
-    val warning: Color = NodeWarning,
-    val info: Color = NeonCyan,
-    val outline: Color = Color.White.copy(alpha = 0.5f),
-    val outlineVariant: Color = Color.White.copy(alpha = 0.2f),
+    val primary: Color = MatchaPrimary,
+    val onPrimary: Color = Color(0xFF1B261D), // Dark text on light green
+    val secondary: Color = SakuraPink,
+    val onSecondary: Color = Color(0xFF3E2723), // Dark brown on pink
+    val tertiary: Color = YuzuYellow,
+    val onTertiary: Color = Color(0xFF3E2723), // Dark brown on yellow
+    val background: Color = DarkMatchaBg,
+    val onBackground: Color = MatchaLight,
+    val surface: Color = DarkMatchaSurface,
+    val onSurface: Color = MatchaLight,
+    val surfaceVariant: Color = DarkMatchaSurfaceVariant,
+    val onSurfaceVariant: Color = MatchaLight.copy(alpha = 0.8f),
+    val error: Color = AzukiRed,
+    val onError: Color = Color(0xFF3E2723),
+    val success: Color = MatchaPrimary,
+    val warning: Color = YuzuYellow,
+    val info: Color = Color(0xFF81D4FA), // Soft Sky Blue
+    val outline: Color = MatchaPrimary.copy(alpha = 0.6f),
+    val outlineVariant: Color = MatchaPrimary.copy(alpha = 0.3f),
 )
 
 // --- Spacing ---

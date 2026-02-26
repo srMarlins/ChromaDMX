@@ -17,8 +17,12 @@ fun PixelSurface(
     showGrid: Boolean = true,
     content: @Composable BoxScope.() -> Unit
 ) {
-    val gridModifier = if (showGrid) {
-        Modifier.pixelGrid(pixelSize = PixelDesign.spacing.pixelSize * 2, opacity = 0.05f)
+    // Subtle Matcha Grid: Use primary color (green) but very low opacity
+    val gridColor = if (showGrid) {
+        Modifier.pixelGrid(
+            pixelSize = PixelDesign.spacing.pixelSize * 2,
+            opacity = 0.03f // Very subtle
+        )
     } else {
         Modifier
     }
@@ -26,7 +30,7 @@ fun PixelSurface(
     Box(
         modifier = modifier
             .background(color)
-            .then(gridModifier),
+            .then(gridColor),
         content = content
     )
 }

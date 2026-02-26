@@ -55,9 +55,6 @@ import com.chromadmx.ui.components.VenueCanvas
 import com.chromadmx.ui.components.beat.BeatBar
 import com.chromadmx.ui.components.pixelBorder
 import com.chromadmx.ui.screen.network.NodeListOverlay
-import com.chromadmx.ui.theme.NeonCyan
-import com.chromadmx.ui.theme.NeonMagenta
-import com.chromadmx.ui.theme.NeonYellow
 import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.theme.PixelFontFamily
 import com.chromadmx.ui.viewmodel.StageViewModel
@@ -179,8 +176,9 @@ fun StagePreviewScreen(
                     exit = fadeOut(),
                 ) {
                     PixelCard(
-                        backgroundColor = PixelDesign.colors.surface.copy(alpha = 0.9f),
-                        borderColor = PixelDesign.colors.primary
+                        backgroundColor = PixelDesign.colors.surface.copy(alpha = 0.95f),
+                        borderColor = PixelDesign.colors.primary,
+                        modifier = Modifier.padding(top = 8.dp)
                     ) {
                         Text(
                             text = "SIMULATION: ${simPresetName ?: "Custom"} ($simFixtureCount fixtures)",
@@ -205,9 +203,9 @@ fun StagePreviewScreen(
                         fontFamily = PixelFontFamily,
                         fontSize = 8.sp,
                     ),
-                    color = NeonYellow,
+                    color = PixelDesign.colors.warning,
                     modifier = Modifier
-                        .pixelBorder(width = 1.dp, color = NeonYellow.copy(alpha = 0.4f), pixelSize = 1.dp)
+                        .pixelBorder(width = 1.dp, color = PixelDesign.colors.warning.copy(alpha = 0.4f), pixelSize = 1.dp)
                         .background(Color(0x88000000))
                         .padding(horizontal = 8.dp, vertical = 4.dp),
                 )
@@ -235,8 +233,8 @@ fun StagePreviewScreen(
             ) {
                 FloatingActionButton(
                     onClick = { viewModel.rescanFixtures() },
-                    containerColor = NeonCyan.copy(alpha = 0.8f),
-                    contentColor = Color.Black,
+                    containerColor = PixelDesign.colors.secondary,
+                    contentColor = PixelDesign.colors.onSecondary,
                     elevation = FloatingActionButtonDefaults.elevation(0.dp),
                     modifier = Modifier.size(48.dp),
                 ) {
@@ -350,7 +348,7 @@ fun PixelTopBar(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(PixelDesign.colors.surface.copy(alpha = 0.9f))
+            .background(PixelDesign.colors.surface.copy(alpha = 0.95f))
             .pixelBorder(width = 1.dp, color = PixelDesign.colors.outlineVariant, pixelSize = 1.dp)
             .padding(horizontal = 8.dp, vertical = 8.dp)
     ) {
@@ -388,7 +386,7 @@ fun PixelTopBar(
                     Icon(
                         imageVector = Icons.Default.Edit,
                         contentDescription = "Edit Mode",
-                        tint = if (isEditMode) NeonYellow else PixelDesign.colors.onSurface.copy(alpha = 0.5f),
+                        tint = if (isEditMode) PixelDesign.colors.warning else PixelDesign.colors.onSurface.copy(alpha = 0.5f),
                         modifier = Modifier.size(20.dp),
                     )
                 }
@@ -426,12 +424,12 @@ private fun MasterDimmerCompact(
                 fontFamily = PixelFontFamily,
                 fontSize = 7.sp,
             ),
-            color = NeonMagenta.copy(alpha = 0.6f),
+            color = PixelDesign.colors.secondary.copy(alpha = 0.8f),
         )
         PixelSlider(
             value = value,
             onValueChange = onValueChange,
-            accentColor = NeonMagenta,
+            accentColor = PixelDesign.colors.secondary,
             modifier = Modifier.weight(1f).height(24.dp),
         )
         Text(
@@ -440,7 +438,7 @@ private fun MasterDimmerCompact(
                 fontFamily = PixelFontFamily,
                 fontSize = 8.sp,
             ),
-            color = NeonMagenta.copy(alpha = 0.8f),
+            color = PixelDesign.colors.secondary,
         )
     }
 }
@@ -454,7 +452,7 @@ private fun ViewModeIndicatorDot(isActive: Boolean, label: String) {
             modifier = Modifier
                 .size(6.dp)
                 .background(
-                    if (isActive) NeonCyan else Color.White.copy(alpha = 0.2f),
+                    if (isActive) PixelDesign.colors.primary else Color.White.copy(alpha = 0.2f),
                 ),
         )
         if (isActive) {
@@ -464,7 +462,7 @@ private fun ViewModeIndicatorDot(isActive: Boolean, label: String) {
                     fontFamily = PixelFontFamily,
                     fontSize = 6.sp,
                 ),
-                color = NeonCyan.copy(alpha = 0.5f),
+                color = PixelDesign.colors.primary.copy(alpha = 0.8f),
                 modifier = Modifier.padding(top = 2.dp),
             )
         }
@@ -486,8 +484,8 @@ internal fun FixtureInfoOverlay(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        borderColor = NeonCyan.copy(alpha = 0.5f),
-        backgroundColor = Color(0xDD0A0A1E)
+        borderColor = PixelDesign.colors.primary.copy(alpha = 0.5f),
+        backgroundColor = PixelDesign.colors.surface
     ) {
         Column {
             Row(
@@ -501,7 +499,7 @@ internal fun FixtureInfoOverlay(
                         fontFamily = PixelFontFamily,
                         fontSize = 12.sp,
                     ),
-                    color = NeonCyan,
+                    color = PixelDesign.colors.primary,
                 )
                 Text(
                     text = "#${fixtureIndex + 1}",
@@ -509,7 +507,7 @@ internal fun FixtureInfoOverlay(
                         fontFamily = PixelFontFamily,
                         fontSize = 10.sp,
                     ),
-                    color = Color.White.copy(alpha = 0.4f),
+                    color = PixelDesign.colors.onSurfaceVariant,
                 )
             }
 
@@ -538,7 +536,7 @@ private fun InfoLabel(label: String, value: String) {
                 fontFamily = PixelFontFamily,
                 fontSize = 6.sp,
             ),
-            color = NeonYellow.copy(alpha = 0.5f),
+            color = PixelDesign.colors.tertiary.copy(alpha = 0.7f),
         )
         Text(
             text = value,
@@ -546,7 +544,7 @@ private fun InfoLabel(label: String, value: String) {
                 fontFamily = PixelFontFamily,
                 fontSize = 9.sp,
             ),
-            color = Color.White.copy(alpha = 0.8f),
+            color = PixelDesign.colors.onSurface,
         )
     }
 }

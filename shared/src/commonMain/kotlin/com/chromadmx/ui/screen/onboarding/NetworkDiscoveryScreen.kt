@@ -39,19 +39,6 @@ import com.chromadmx.ui.theme.NeonMagenta
 import com.chromadmx.ui.theme.NeonYellow
 import com.chromadmx.ui.theme.PixelFontFamily
 
-/**
- * Network discovery screen shown during onboarding.
- *
- * While scanning, shows an animated progress indicator and discovered
- * nodes. After scanning completes:
- * - If nodes were found, displays them and auto-advances (via ViewModel).
- * - If no nodes found, shows "No lights found" with retry/simulation options.
- *
- * @param isScanning Whether the scan is currently in progress.
- * @param discoveredNodes List of discovered Art-Net nodes.
- * @param onRetry Called when the user wants to retry the scan.
- * @param onSimulation Called when the user chooses simulation mode.
- */
 @Composable
 fun NetworkDiscoveryScreen(
     isScanning: Boolean,
@@ -67,7 +54,6 @@ fun NetworkDiscoveryScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        // Scanning state
         AnimatedVisibility(
             visible = isScanning,
             enter = fadeIn(),
@@ -83,14 +69,13 @@ fun NetworkDiscoveryScreen(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 PixelProgressBar(
-                    progress = 0.5f, // indeterminate feel -- always half
+                    progress = 0.5f,
                     modifier = Modifier.fillMaxWidth(0.7f),
                     progressColor = NeonCyan,
                 )
             }
         }
 
-        // Results -- nodes found
         AnimatedVisibility(
             visible = !isScanning && discoveredNodes.isNotEmpty(),
             enter = fadeIn(),
@@ -124,7 +109,6 @@ fun NetworkDiscoveryScreen(
             }
         }
 
-        // Results -- no nodes found
         AnimatedVisibility(
             visible = !isScanning && discoveredNodes.isEmpty(),
             enter = fadeIn(),
@@ -140,7 +124,7 @@ fun NetworkDiscoveryScreen(
 
                 PixelCard(
                     borderColor = NeonMagenta.copy(alpha = 0.5f),
-                    glowColor = NeonMagenta.copy(alpha = 0.1f),
+                    // glowColor removed
                 ) {
                     Text(
                         text = "No Art-Net nodes detected on the network. Want to try a virtual stage instead?",
@@ -179,9 +163,6 @@ fun NetworkDiscoveryScreen(
     }
 }
 
-/**
- * A single discovered node row.
- */
 @Composable
 private fun DiscoveredNodeItem(node: DmxNode) {
     PixelCard(
@@ -202,9 +183,6 @@ private fun DiscoveredNodeItem(node: DmxNode) {
     }
 }
 
-/**
- * Animated scanning dots indicator.
- */
 @Composable
 private fun ScanDotsAnimation() {
     val infiniteTransition = rememberInfiniteTransition(label = "scan-dots")
