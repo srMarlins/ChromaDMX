@@ -129,28 +129,29 @@ class NodeDiscovery(
             }
         }
 
-        var resultNode: DmxNode? = null
+        // Build the node outside the update lambda to avoid side effects.
+        // Read the current map snapshot for firstSeenMs lookup.
+        val nodeKey = reply.macString.ifEmpty { reply.ipString }
+        val existing = _nodes.value[nodeKey]
+        val firstSeen = existing?.firstSeenMs ?: currentTimeMs
+        val pollSent = lastPollSentMs.value
+        val latency = if (pollSent > 0) (currentTimeMs - pollSent) else 0L
+
+        val node = DmxNode(
+            ipAddress = reply.ipString,
+            macAddress = reply.macString,
+            shortName = reply.shortName,
+            longName = reply.longName,
+            firmwareVersion = reply.firmwareVersion,
+            numPorts = reply.numPorts,
+            universes = universes,
+            style = reply.style.toInt() and 0xFF,
+            lastSeenMs = currentTimeMs,
+            firstSeenMs = firstSeen,
+            latencyMs = latency
+        )
+
         _nodes.update { currentNodes ->
-            val existing = currentNodes[reply.macString.ifEmpty { reply.ipString }]
-            val firstSeen = existing?.firstSeenMs ?: currentTimeMs
-            val pollSent = lastPollSentMs.value
-            val latency = if (pollSent > 0) (currentTimeMs - pollSent) else 0L
-
-            val node = DmxNode(
-                ipAddress = reply.ipString,
-                macAddress = reply.macString,
-                shortName = reply.shortName,
-                longName = reply.longName,
-                firmwareVersion = reply.firmwareVersion,
-                numPorts = reply.numPorts,
-                universes = universes,
-                style = reply.style.toInt() and 0xFF,
-                lastSeenMs = currentTimeMs,
-                firstSeenMs = firstSeen,
-                latencyMs = latency
-            )
-            resultNode = node
-
             val mutableNodes = currentNodes.toMutableMap()
 
             // If this is a new node and we've reached the capacity limit,
@@ -166,7 +167,7 @@ class NodeDiscovery(
             mutableNodes
         }
 
-        return resultNode
+        return node
     }
 
     /**

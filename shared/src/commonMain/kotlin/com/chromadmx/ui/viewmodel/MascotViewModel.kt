@@ -13,6 +13,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import com.chromadmx.networking.discovery.NodeDiscovery
+import com.chromadmx.networking.discovery.currentTimeMillis
+import com.chromadmx.networking.model.DmxNode
+import com.chromadmx.ui.screen.network.HealthLevel
+import com.chromadmx.ui.screen.network.healthLevel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
@@ -26,9 +31,6 @@ import kotlinx.coroutines.launch
  * Includes a proactive idle timer that shows random tip bubbles after 30 seconds
  * of inactivity (no state changes or bubble activity).
  */
-import com.chromadmx.networking.discovery.NodeDiscovery
-import com.chromadmx.networking.model.DmxNode
-import com.chromadmx.networking.discovery.currentTimeMillis
 
 class MascotViewModel(
     private val scope: CoroutineScope,
@@ -151,11 +153,8 @@ class MascotViewModel(
         }
     }
 
-    private fun isHealthy(node: DmxNode): Boolean {
-        val currentTime = currentTimeMillis()
-        return (currentTime - node.lastSeenMs) < DmxNode.DEGRADED_TIMEOUT_MS &&
-               node.latencyMs < DmxNode.LATENCY_THRESHOLD_MS
-    }
+    private fun isHealthy(node: DmxNode): Boolean =
+        node.healthLevel(currentTimeMillis()) == HealthLevel.FULL
 
     // ── Beat-reactive sync ──────────────────────────────────────────
 
