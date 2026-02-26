@@ -25,6 +25,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.chromadmx.ui.theme.ChromaAnimations
@@ -101,6 +106,21 @@ fun PixelSlider(
                 .height(32.dp)
                 .fillMaxWidth()
                 .onSizeChanged { width = it.width }
+                .semantics(mergeDescendants = true) {
+                    if (!enabled) disabled()
+                    progressBarRangeInfo = ProgressBarRangeInfo(
+                        current = value,
+                        range = valueRange
+                    )
+                    setProgress { targetValue ->
+                        if (enabled && targetValue in valueRange) {
+                            onValueChange(targetValue)
+                            true
+                        } else {
+                            false
+                        }
+                    }
+                }
                 .pointerInput(enabled) {
                     if (!enabled) return@pointerInput
                     detectTapGestures { offset ->
