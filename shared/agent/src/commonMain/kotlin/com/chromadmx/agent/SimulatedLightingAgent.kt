@@ -91,11 +91,29 @@ class SimulatedLightingAgent(
 
             // Preset commands
             lower.containsAny("party", "strobe") -> handlePresetLoad("builtin_strobe_storm", "Strobe Storm")
-            lower.containsAny("chill", "ambient", "relax", "sunset") -> handlePresetLoad("builtin_sunset_sweep", "Sunset Sweep")
+            lower.containsAny("chill", "ambient", "relax") -> handlePresetLoad("builtin_sunset_sweep", "Sunset Sweep")
             lower.containsAny("ocean", "wave", "sea") -> handlePresetLoad("builtin_ocean_waves", "Ocean Waves")
             lower.containsAny("rainbow") -> handlePresetLoad("builtin_midnight_rainbow", "Midnight Rainbow")
             lower.containsAny("neon", "pulse", "techno") -> handlePresetLoad("builtin_neon_pulse", "Neon Pulse")
             lower.containsAny("fire", "ice") -> handlePresetLoad("builtin_fire_and_ice", "Fire & Ice")
+
+            // Creative scene requests (multi-step)
+            lower.containsAny("sunset", "warm vibe", "golden hour") -> handleCreativeScene("sunset")
+            lower.containsAny("energetic", "hype", "pump") -> handleCreativeScene("energetic")
+            lower.containsAny("calm", "peaceful", "zen", "meditat") -> handleCreativeScene("calm")
+            lower.containsAny("spooky", "halloween", "creepy") -> handleCreativeScene("spooky")
+            lower.containsAny("underwater", "deep sea", "aqua") -> handleCreativeScene("underwater")
+
+            // Direct effect requests
+            lower.containsAny("gradient", "sweep") -> handleEffectDirect("gradient_sweep_3d", "Gradient Sweep")
+            lower.containsAny("wave") -> handleEffectDirect("wave_3d", "Wave")
+            lower.containsAny("chase") -> handleEffectDirect("chase_3d", "Chase")
+            lower.containsAny("pulse", "radial") -> handleEffectDirect("radial_pulse_3d", "Radial Pulse")
+            lower.containsAny("noise", "perlin", "organic") -> handleEffectDirect("perlin_noise_3d", "Perlin Noise")
+            lower.containsAny("burst", "particle", "explosion") -> handleEffectDirect("particle_burst_3d", "Particle Burst")
+
+            // Save/create preset
+            lower.containsAny("save", "create preset", "store", "remember this") -> handleCreatePreset(lower)
 
             // Unknown
             else -> handleUnknown(message)
@@ -202,8 +220,75 @@ class SimulatedLightingAgent(
         }
     }
 
+    private data class SceneConfig(
+        val colors: List<String>,
+        val effectId: String,
+        val effectParams: Map<String, Float>,
+        val dimmer: Float,
+        val description: String,
+    )
+
+    private fun handleCreativeScene(mood: String): String {
+        val config = when (mood) {
+            "sunset" -> SceneConfig(
+                listOf("#FF6B35", "#F7931E", "#FFD700", "#8B0000"),
+                "gradient_sweep_3d", mapOf("speed" to 0.3f), 0.8f,
+                "Warm sunset gradient with amber, gold, and deep red"
+            )
+            "energetic" -> SceneConfig(
+                listOf("#FF00FF", "#00FFFF", "#FFFF00", "#FF0000"),
+                "chase_3d", mapOf("speed" to 3.0f), 1.0f,
+                "High-energy chase with neon colors at full brightness"
+            )
+            "calm" -> SceneConfig(
+                listOf("#4169E1", "#6A5ACD", "#483D8B", "#191970"),
+                "wave_3d", mapOf("speed" to 0.5f), 0.5f,
+                "Calm blue waves at 50% brightness"
+            )
+            "spooky" -> SceneConfig(
+                listOf("#8B0000", "#FF4500", "#800080", "#000000"),
+                "perlin_noise_3d", mapOf("speed" to 0.8f), 0.6f,
+                "Eerie noise pattern in dark reds and purples"
+            )
+            "underwater" -> SceneConfig(
+                listOf("#006994", "#00CED1", "#20B2AA", "#008B8B"),
+                "wave_3d", mapOf("speed" to 0.7f), 0.7f,
+                "Deep sea waves in teal and cyan"
+            )
+            else -> return "I don't know that mood. Try: sunset, energetic, calm, spooky, or underwater."
+        }
+
+        engineController.setEffect(0, config.effectId, config.effectParams)
+        engineController.setColorPalette(config.colors)
+        engineController.setMasterDimmer(config.dimmer)
+        return "${config.description}. Set ${config.effectId.replace('_', ' ')} with ${config.colors.size} colors at ${formatPercent(config.dimmer)} dimmer."
+    }
+
+    private fun handleEffectDirect(effectId: String, displayName: String): String {
+        val success = engineController.setEffect(0, effectId, emptyMap())
+        return if (success) {
+            "Applied $displayName effect on layer 0. Adjust colors with a color command."
+        } else {
+            "Effect '$effectId' not found in the registry."
+        }
+    }
+
+    private fun handleCreatePreset(lower: String): String {
+        val nameMatch = PRESET_NAME_REGEX.find(lower)
+        val name = nameMatch?.groupValues?.get(1)?.trim()?.replace(' ', '_')
+            ?: "scene_${conversationStore.messages.value.size}"
+        val preset = engineController.capturePreset(name)
+        presetLibrary.savePreset(preset)
+        return "Saved current state as preset \"$name\" with ${preset.layers.size} layers."
+    }
+
     private fun handleUnknown(original: String): String =
-        "I didn't understand \"$original\". Say \"help\" to see what I can do!"
+        "I didn't quite get \"$original\". Try:\n" +
+        "\u2022 A color: \"blue\", \"warm amber\", \"cyan\"\n" +
+        "\u2022 A mood: \"sunset\", \"energetic\", \"calm\"\n" +
+        "\u2022 An effect: \"wave\", \"chase\", \"gradient\"\n" +
+        "\u2022 A preset: \"party\", \"chill\", \"ocean\"\n" +
+        "\u2022 Or say \"help\" for all commands"
 
     // ── Utility ─────────────────────────────────────────────────────────
 
@@ -222,6 +307,9 @@ class SimulatedLightingAgent(
 
         /** Regex for extracting percentages like "50%", "75 %", "50 percent". */
         private val PERCENT_REGEX = Regex("""(\d+)\s*%?""")
+
+        /** Regex for extracting preset names from save/create commands. */
+        private val PRESET_NAME_REGEX = Regex("""(?:save|create|store)\s+(?:as|preset|scene)?\s*(.+)""")
 
         // ── Hex color component helpers ─────────────────────────────────
         private fun hexR(hex: String): Float = hex.substring(1, 3).toInt(16) / 255f
