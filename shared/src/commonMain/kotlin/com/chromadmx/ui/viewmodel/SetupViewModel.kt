@@ -6,6 +6,9 @@ import com.chromadmx.core.persistence.SettingsStore
 import com.chromadmx.networking.FixtureDiscovery
 import com.chromadmx.simulation.fixtures.RigPreset
 import com.chromadmx.simulation.fixtures.SimulatedFixtureRig
+import com.chromadmx.simulation.rigs.PixelBarVRig
+import com.chromadmx.simulation.vision.SimulatedScanRunner
+import com.chromadmx.vision.calibration.ScanState
 import com.chromadmx.ui.state.GenreOption
 import com.chromadmx.ui.state.SetupEvent
 import com.chromadmx.ui.state.SetupStep
@@ -54,6 +57,14 @@ class SetupViewModel(
         // Auto-start scan
         startScan()
 
+        // Auto-advance from SPLASH after delay
+        scope.launch {
+            delay(SPLASH_DURATION_MS)
+            if (_state.value.currentStep == SetupStep.SPLASH) {
+                advance()
+            }
+        }
+
         // Collect discovered nodes into UI state
         scope.launch {
             fixtureDiscovery.discoveredNodes.collect { nodes ->
@@ -82,6 +93,7 @@ class SetupViewModel(
             is SetupEvent.ConfirmGenre -> confirmGenre()
             is SetupEvent.SkipStagePreview -> skipStagePreview()
             is SetupEvent.PerformRepeatLaunchCheck -> performRepeatLaunchCheck()
+            is SetupEvent.StartFixtureScan -> startFixtureScan()
         }
     }
 
@@ -145,7 +157,7 @@ class SetupViewModel(
     }
 
     /**
-     * Enter simulation mode: stop scanning, set flag, advance.
+     * Enter simulation mode: stop scanning, set flag, jump to fixture scan.
      */
     private fun enterSimulationMode() {
         fixtureDiscovery.stopScan()
@@ -153,12 +165,12 @@ class SetupViewModel(
         val rig = SimulatedFixtureRig(_state.value.selectedRigPreset)
         _state.update {
             it.copy(
+                currentStep = SetupStep.FIXTURE_SCAN,
                 isSimulationMode = true,
                 isScanning = false,
                 simulationFixtureCount = rig.fixtureCount,
             )
         }
-        advance()
     }
 
     /**
@@ -205,6 +217,37 @@ class SetupViewModel(
      */
     private fun skipStagePreview() {
         advance()
+    }
+
+    // -- Fixture Scan --
+
+    private fun startFixtureScan() {
+        if (!_state.value.isSimulationMode) return
+        if (_state.value.selectedRigPreset != RigPreset.PIXEL_BAR_V) return
+
+        _state.update { it.copy(isScanningFixtures = true) }
+
+        scope.launch {
+            val runner = SimulatedScanRunner(PixelBarVRig)
+
+            // Collect active fixtures for flash animation
+            val flashJob = scope.launch {
+                runner.activeFixtures.collect { active ->
+                    _state.update { it.copy(scanActiveFixtures = active) }
+                }
+            }
+
+            val result = runner.runScan()
+
+            flashJob.cancel()
+            _state.update {
+                it.copy(
+                    isScanningFixtures = false,
+                    scanComplete = result != null,
+                    scanActiveFixtures = emptySet(),
+                )
+            }
+        }
     }
 
     // -- Persistence --
