@@ -4,7 +4,7 @@ import com.chromadmx.core.model.BuiltInProfiles
 import com.chromadmx.core.persistence.FixtureStore
 import com.chromadmx.core.persistence.SettingsStore
 import com.chromadmx.networking.DmxTransportRouter
-import com.chromadmx.networking.FixtureDiscovery
+import com.chromadmx.networking.FixtureDiscoveryRouter
 import com.chromadmx.networking.TransportMode
 import com.chromadmx.service.DataExportService
 import com.chromadmx.service.ImportResult
@@ -22,6 +22,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -36,13 +37,13 @@ import kotlinx.coroutines.withContext
  *
  * Dependencies:
  * - [SettingsStore] for persisting settings (simulation, onboarding)
- * - [DmxTransportRouter] for switching transport modes at runtime
- * - [FixtureDiscovery] for triggering network rescans
+ * - [DmxTransportRouter] for switching DMX output transport modes at runtime
+ * - [FixtureDiscoveryRouter] for switching node discovery modes and triggering rescans
  */
 class SettingsViewModelV2(
     private val settingsRepository: SettingsStore,
     private val transportRouter: DmxTransportRouter,
-    private val fixtureDiscovery: FixtureDiscovery,
+    private val discoveryRouter: FixtureDiscoveryRouter,
     private val scope: CoroutineScope,
     private val fixtureStore: FixtureStore? = null,
     private val dataExportService: DataExportService? = null,
@@ -54,7 +55,18 @@ class SettingsViewModelV2(
         // Seed the built-in fixture profiles so they appear immediately.
         _state.update { it.copy(fixtureProfiles = BuiltInProfiles.all().toImmutableList()) }
 
-        // Derive simulation state from the persisted repository value.
+        // One-time startup: sync routers from persisted simulation state.
+        // Subsequent router switches are handled directly by toggleSimulation/resetSimulation.
+        scope.launch {
+            val sim = settingsRepository.isSimulation.first()
+            if (sim) {
+                transportRouter.switchTo(TransportMode.Simulated)
+                discoveryRouter.switchTo(TransportMode.Simulated)
+                discoveryRouter.startScan()
+            }
+        }
+
+        // Derive simulation UI state from the persisted repository value.
         scope.launch {
             settingsRepository.isSimulation.collect { sim ->
                 _state.update { it.copy(simulationEnabled = sim) }
@@ -141,7 +153,7 @@ class SettingsViewModelV2(
     }
 
     private fun forceRescan() {
-        fixtureDiscovery.startScan()
+        discoveryRouter.startScan()
     }
 
     private fun handleSetRigPreset(preset: com.chromadmx.simulation.fixtures.RigPreset) {
@@ -163,6 +175,10 @@ class SettingsViewModelV2(
         }
         val mode = if (enabled) TransportMode.Simulated else TransportMode.Real
         transportRouter.switchTo(mode)
+        discoveryRouter.switchTo(mode)
+        if (enabled) {
+            discoveryRouter.startScan()
+        }
     }
 
     private fun resetSimulation() {
@@ -171,6 +187,7 @@ class SettingsViewModelV2(
             withContext(Dispatchers.IO) { settingsRepository.setIsSimulation(false) }
         }
         transportRouter.switchTo(TransportMode.Real)
+        discoveryRouter.switchTo(TransportMode.Real)
     }
 
     private fun testAgentConnection() {

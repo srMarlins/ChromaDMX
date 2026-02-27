@@ -6,6 +6,7 @@ import com.chromadmx.agent.pregen.PreGenerationService
 import com.chromadmx.core.persistence.FixtureRepository
 import com.chromadmx.core.persistence.FixtureStore
 import com.chromadmx.core.persistence.NetworkStateStore
+import com.chromadmx.networking.FixtureDiscoveryRouter
 import com.chromadmx.networking.ble.BleProvisioningService
 import com.chromadmx.ui.navigation.AppStateManager
 import com.chromadmx.ui.viewmodel.MascotViewModelV2
@@ -35,7 +36,7 @@ import org.koin.dsl.module
  * - SetupViewModel requires: FixtureDiscovery, FixtureStore, SettingsStore
  * - StageViewModelV2 requires: EffectEngine, EffectRegistry, PresetLibrary,
  *     BeatClock, FixtureDiscovery, NodeDiscovery (optional)
- * - SettingsViewModelV2 requires: SettingsStore, DmxTransportRouter, FixtureDiscovery
+ * - SettingsViewModelV2 requires: SettingsStore, DmxTransportRouter, FixtureDiscoveryRouter
  * - MascotViewModelV2 requires: BeatClock, knownNodesFlow, LightingAgentInterface (optional)
  * - ProvisioningViewModel requires: BleProvisioningService (optional)
  */
@@ -92,7 +93,7 @@ val uiModule = module {
         SettingsViewModelV2(
             settingsRepository = get(),
             transportRouter = get(),
-            fixtureDiscovery = get(),
+            discoveryRouter = get(),
             scope = vmScope,
             fixtureStore = getOrNull<FixtureStore>(),
         )
