@@ -16,9 +16,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.chromadmx.ui.theme.NodeOffline
-import com.chromadmx.ui.theme.NodeOnline
-import com.chromadmx.ui.theme.NodeWarning
+import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.theme.PixelFontFamily
 
 /**
@@ -65,7 +63,7 @@ fun NodeHealthBar(
             Text(
                 text = overflowText,
                 style = MaterialTheme.typography.labelSmall.copy(fontFamily = PixelFontFamily),
-                color = MaterialTheme.colorScheme.onSurface,
+                color = PixelDesign.colors.onSurface,
                 modifier = Modifier.padding(start = 2.dp),
             )
         }
@@ -97,10 +95,11 @@ internal fun PixelHeart(
     health: NodeHealth,
     modifier: Modifier = Modifier,
 ) {
+    val colors = PixelDesign.colors
     val color: Color = when (health) {
-        NodeHealth.HEALTHY -> NodeOnline
-        NodeHealth.DEGRADED -> NodeWarning
-        NodeHealth.LOST -> NodeOffline
+        NodeHealth.HEALTHY -> colors.success
+        NodeHealth.DEGRADED -> colors.warning
+        NodeHealth.LOST -> colors.error
     }
     val fillFraction: Float = when (health) {
         NodeHealth.HEALTHY -> 1f

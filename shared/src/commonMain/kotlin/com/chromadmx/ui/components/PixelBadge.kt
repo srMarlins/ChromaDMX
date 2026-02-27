@@ -41,10 +41,10 @@ fun PixelBadge(
     val badgeShape = PixelShape(4.dp)
     Box(
         modifier = modifier
-            .clip(badgeShape)
             .pixelBorder(chamfer = 4.dp)
+            .clip(badgeShape)
             .background(containerColor, badgeShape)
-            .padding(horizontal = 6.dp, vertical = 2.dp)
+            .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
         Text(
             text = text.uppercase(),

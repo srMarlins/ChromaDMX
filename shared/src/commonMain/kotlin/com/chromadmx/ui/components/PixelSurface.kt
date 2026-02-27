@@ -21,7 +21,7 @@ fun PixelSurface(
     val gridColor = if (showGrid) {
         Modifier.pixelGrid(
             pixelSize = PixelDesign.spacing.pixelSize * 2,
-            opacity = 0.03f // Very subtle
+            opacity = 0.05f // Subtle but visible
         )
     } else {
         Modifier

@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.unit.dp
 import com.chromadmx.ui.theme.ChromaAnimations
 import com.chromadmx.ui.theme.PixelDesign
@@ -93,15 +94,15 @@ fun PixelButton(
             modifier = Modifier
                 .matchParentSize()
                 .offset(y = 0.dp)
-                .clip(PixelShape.Large)
                 .pixelBorder(chamfer = 9.dp)
+                .clip(PixelShape.Large)
                 .background(Color.Black.copy(alpha = 0.3f), PixelShape.Large)
         )
 
         // Face / Top Layer — uses glowing border when enabled, standard when disabled
         val faceModifier = Modifier
+            .fillMaxWidth()
             .offset { IntOffset(0, (currentOffset - pressDepth).roundToPx()) }
-            .clip(PixelShape.Large)
             .let { mod ->
                 if (enabled) {
                     mod.pixelBorderGlowing(color = currentBorderColor, chamfer = 9.dp)
@@ -109,6 +110,7 @@ fun PixelButton(
                     mod.pixelBorder(color = currentBorderColor, chamfer = 9.dp)
                 }
             }
+            .clip(PixelShape.Large)
             .background(currentBgColor, PixelShape.Large)
             .padding(contentPadding)
 

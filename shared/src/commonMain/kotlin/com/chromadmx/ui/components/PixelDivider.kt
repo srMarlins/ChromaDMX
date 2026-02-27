@@ -22,7 +22,7 @@ import com.chromadmx.ui.theme.PixelDesign
 @Composable
 fun PixelDivider(
     modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.outlineVariant,
+    color: Color = PixelDesign.colors.outlineVariant,
     pixelSize: Dp = PixelDesign.spacing.pixelSize,
     stepped: Boolean = true,
     enchanted: Boolean = false,

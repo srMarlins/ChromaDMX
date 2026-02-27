@@ -15,9 +15,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.chromadmx.ui.components.pixelBorder
-import com.chromadmx.ui.theme.BeatActive
-import com.chromadmx.ui.theme.BeatInactive
 import com.chromadmx.ui.theme.LocalPixelTheme
+import com.chromadmx.ui.theme.PixelDesign
 
 /**
  * A horizontal pixel bar showing beat phase progress (0.0 to 1.0).
@@ -37,8 +36,8 @@ import com.chromadmx.ui.theme.LocalPixelTheme
 fun BeatPhaseIndicator(
     beatPhase: Float,
     modifier: Modifier = Modifier,
-    activeColor: Color = BeatActive,
-    inactiveColor: Color = BeatInactive,
+    activeColor: Color = PixelDesign.colors.primary,
+    inactiveColor: Color = PixelDesign.colors.surfaceVariant,
     segments: Int = 16,
     pixelSize: Dp = LocalPixelTheme.current.pixelSize,
 ) {

@@ -26,9 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.chromadmx.ui.components.PixelButton
 import com.chromadmx.ui.components.PixelCard
-import com.chromadmx.ui.theme.NodeOffline
-import com.chromadmx.ui.theme.NodeOnline
-import com.chromadmx.ui.theme.NodeWarning
+import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.theme.PixelFontFamily
 
 @Composable
@@ -76,10 +74,11 @@ private fun NodeCard(
     onDiagnose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val colors = PixelDesign.colors
     val healthColor: Color = when (node.health) {
-        NodeHealth.HEALTHY -> NodeOnline
-        NodeHealth.DEGRADED -> NodeWarning
-        NodeHealth.LOST -> NodeOffline
+        NodeHealth.HEALTHY -> colors.success
+        NodeHealth.DEGRADED -> colors.warning
+        NodeHealth.LOST -> colors.error
     }
     val healthLabel: String = when (node.health) {
         NodeHealth.HEALTHY -> "Online"
@@ -102,7 +101,7 @@ private fun NodeCard(
                 Text(
                     text = node.name,
                     style = MaterialTheme.typography.titleSmall.copy(fontFamily = PixelFontFamily),
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = colors.onSurface,
                 )
             }
 
@@ -130,13 +129,13 @@ private fun NodeCard(
 private fun DetailRow(
     label: String,
     value: String,
-    valueColor: Color = MaterialTheme.colorScheme.onSurface,
+    valueColor: Color = PixelDesign.colors.onSurface,
 ) {
     Row(modifier = Modifier.padding(vertical = 1.dp)) {
         Text(
             text = "$label: ",
             style = MaterialTheme.typography.bodySmall.copy(fontFamily = PixelFontFamily),
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            color = PixelDesign.colors.onSurfaceDim,
         )
         Text(
             text = value,

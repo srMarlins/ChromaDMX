@@ -24,6 +24,7 @@ import com.chromadmx.ui.screen.setup.SetupScreen
 import com.chromadmx.ui.screen.stage.StageScreen
 import com.chromadmx.ui.state.MascotEvent
 import com.chromadmx.ui.theme.ChromaDmxTheme
+import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.viewmodel.MascotViewModelV2
 import com.chromadmx.ui.viewmodel.ProvisioningViewModel
 import com.chromadmx.ui.viewmodel.SettingsViewModelV2
@@ -56,7 +57,7 @@ fun ChromaDmxApp() {
 
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background,
+            color = PixelDesign.colors.background,
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 when (currentScreen) {
@@ -160,12 +161,12 @@ private fun ScreenPlaceholder(title: String, subtitle: String) {
         Text(
             text = title,
             style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onBackground,
+            color = PixelDesign.colors.onBackground,
         )
         Text(
             text = subtitle,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = PixelDesign.colors.onSurfaceVariant,
         )
     }
 }

@@ -16,11 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.chromadmx.core.model.DmxNode
 import com.chromadmx.ui.components.PixelButton
 import com.chromadmx.ui.components.PixelCard
-import com.chromadmx.ui.theme.NeonGreen
-import com.chromadmx.ui.theme.NeonYellow
-import com.chromadmx.ui.theme.NodeOffline
-import com.chromadmx.ui.theme.NodeOnline
-import com.chromadmx.ui.theme.NodeWarning
+import com.chromadmx.ui.theme.PixelDesign
 
 @Composable
 fun NodeStatusCard(
@@ -29,11 +25,12 @@ fun NodeStatusCard(
     onDiagnose: (DmxNode) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = PixelDesign.colors
     val level = node.healthLevel(currentTimeMs)
     val color = when (level) {
-        HealthLevel.FULL -> NodeOnline
-        HealthLevel.HALF -> NodeWarning
-        HealthLevel.EMPTY -> NodeOffline
+        HealthLevel.FULL -> colors.success
+        HealthLevel.HALF -> colors.warning
+        HealthLevel.EMPTY -> colors.error
     }
 
     val uptimeSec = (currentTimeMs - node.firstSeenMs) / 1000
@@ -53,20 +50,20 @@ fun NodeStatusCard(
     ) {
         Column {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("IP:", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(node.ipAddress, style = MaterialTheme.typography.bodySmall)
+                Text("IP:", style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
+                Text(node.ipAddress, style = MaterialTheme.typography.bodySmall, color = colors.onSurface)
             }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Latency:", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("${node.latencyMs}ms", style = MaterialTheme.typography.bodySmall, color = if (node.latencyMs >= DmxNode.LATENCY_THRESHOLD_MS) NeonYellow else NeonGreen)
+                Text("Latency:", style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
+                Text("${node.latencyMs}ms", style = MaterialTheme.typography.bodySmall, color = if (node.latencyMs >= DmxNode.LATENCY_THRESHOLD_MS) colors.warning else colors.success)
             }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Uptime:", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(uptimeStr, style = MaterialTheme.typography.bodySmall)
+                Text("Uptime:", style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
+                Text(uptimeStr, style = MaterialTheme.typography.bodySmall, color = colors.onSurface)
             }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Universes:", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(node.universes.joinToString(", "), style = MaterialTheme.typography.bodySmall)
+                Text("Universes:", style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
+                Text(node.universes.joinToString(", "), style = MaterialTheme.typography.bodySmall, color = colors.onSurface)
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -74,7 +71,7 @@ fun NodeStatusCard(
             PixelButton(
                 onClick = { onDiagnose(node) },
                 modifier = Modifier.align(Alignment.End),
-                backgroundColor = MaterialTheme.colorScheme.secondary
+                backgroundColor = colors.secondary
             ) {
                 Text("DIAGNOSE", style = MaterialTheme.typography.labelSmall)
             }

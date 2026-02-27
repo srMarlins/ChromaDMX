@@ -150,10 +150,12 @@ class SetupViewModel(
     private fun enterSimulationMode() {
         fixtureDiscovery.stopScan()
         scanJob?.cancel()
+        val rig = SimulatedFixtureRig(_state.value.selectedRigPreset)
         _state.update {
             it.copy(
                 isSimulationMode = true,
                 isScanning = false,
+                simulationFixtureCount = rig.fixtureCount,
             )
         }
         advance()

@@ -14,9 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.chromadmx.ui.theme.DmxPrimary
-import com.chromadmx.ui.theme.DmxSecondary
-import com.chromadmx.ui.theme.NodeOffline
+import com.chromadmx.ui.theme.PixelDesign
 
 /**
  * Pixel-styled speech bubble composable.
@@ -28,24 +26,25 @@ fun SpeechBubbleView(
     onDismiss: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    val colors = PixelDesign.colors
     val borderColor = when (bubble.type) {
-        BubbleType.INFO -> DmxSecondary
-        BubbleType.ACTION -> DmxPrimary
-        BubbleType.ALERT -> NodeOffline
+        BubbleType.INFO -> colors.secondary
+        BubbleType.ACTION -> colors.primary
+        BubbleType.ALERT -> colors.error
     }
 
     Column(
         modifier = modifier
             .widthIn(max = 200.dp)
             .border(2.dp, borderColor)
-            .background(Color(0xFF1A1A2E))
+            .background(colors.surface)
             .padding(8.dp)
             .clickable { onDismiss() },
     ) {
         Text(
             text = bubble.text,
             style = MaterialTheme.typography.bodySmall,
-            color = Color(0xFFE0E0E0),
+            color = colors.onSurface,
         )
 
         if (bubble.actionLabel != null && onAction != null) {
