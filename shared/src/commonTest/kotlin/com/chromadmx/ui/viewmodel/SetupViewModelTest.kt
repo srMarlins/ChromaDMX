@@ -1,10 +1,18 @@
 package com.chromadmx.ui.viewmodel
 
+import com.chromadmx.agent.pregen.PreGenerationService
 import com.chromadmx.core.model.DmxNode
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.core.model.Genre
+import com.chromadmx.core.model.KnownNode
+import com.chromadmx.core.model.TopologyDiff
+import com.chromadmx.core.persistence.FileStorage
 import com.chromadmx.core.persistence.FixtureStore
+import com.chromadmx.core.persistence.NetworkStateStore
 import com.chromadmx.core.persistence.SettingsStore
+import com.chromadmx.engine.effect.EffectRegistry
+import com.chromadmx.engine.effect.EffectStack
+import com.chromadmx.engine.preset.PresetLibrary
 import com.chromadmx.networking.FixtureDiscovery
 import com.chromadmx.simulation.fixtures.RigPreset
 import com.chromadmx.ui.state.GenreOption
@@ -136,7 +144,62 @@ class SetupViewModelTest {
         val isSimulationValue get() = _isSimulation
     }
 
+    /**
+     * Fake implementation of [NetworkStateStore] for testing.
+     * Maintains an in-memory list of known nodes for topology comparison.
+     */
+    private class FakeNetworkStateStore : NetworkStateStore {
+        private val _knownNodes = MutableStateFlow<List<KnownNode>>(emptyList())
+        var savedNodes: List<KnownNode> = emptyList()
+            private set
+
+        override fun knownNodes(): Flow<List<KnownNode>> = _knownNodes
+
+        override suspend fun saveKnownNodes(nodes: List<KnownNode>) {
+            savedNodes = nodes
+            _knownNodes.value = nodes
+        }
+
+        override suspend fun detectTopologyChanges(currentNodes: List<DmxNode>): TopologyDiff {
+            val known = _knownNodes.value
+            val knownKeys = known.map { it.nodeKey }.toSet()
+            val currentKeys = currentNodes.map { it.nodeKey }.toSet()
+
+            val newNodes = currentNodes.filter { it.nodeKey !in knownKeys }
+            val lostNodes = known.filter { it.nodeKey !in currentKeys }
+
+            return TopologyDiff(newNodes = newNodes, lostNodes = lostNodes)
+        }
+
+        /** Pre-populate known nodes (simulates previous launch). */
+        fun setKnownNodes(nodes: List<KnownNode>) {
+            _knownNodes.value = nodes
+        }
+    }
+
+    /**
+     * Simple in-memory [FileStorage] for tests that need [PresetLibrary].
+     */
+    private class TestFileStorage : FileStorage {
+        private val files = mutableMapOf<String, String>()
+        override fun saveFile(path: String, content: String) { files[path] = content }
+        override fun readFile(path: String): String? = files[path]
+        override fun deleteFile(path: String): Boolean = files.remove(path) != null
+        override fun listFiles(directory: String): List<String> =
+            files.keys.filter { it.startsWith(directory) }.map { it.substringAfterLast("/") }
+        override fun exists(path: String): Boolean = files.containsKey(path)
+        override fun mkdirs(directory: String) {}
+    }
+
     // -- Test helpers --
+
+    /**
+     * Create a [PreGenerationService] backed by an in-memory [PresetLibrary].
+     */
+    private fun createPreGenService(): PreGenerationService {
+        val library = PresetLibrary(TestFileStorage(), EffectRegistry(), EffectStack())
+        return PreGenerationService(library)
+    }
 
     /**
      * Create a ViewModel with an UnconfinedTestDispatcher-based scope so
@@ -146,12 +209,16 @@ class SetupViewModelTest {
         discovery: FakeFixtureDiscovery = FakeFixtureDiscovery(),
         fixtureStore: FakeFixtureStore = FakeFixtureStore(),
         settingsStore: FakeSettingsStore = FakeSettingsStore(),
+        networkStateStore: FakeNetworkStateStore? = null,
+        preGenerationService: PreGenerationService? = null,
         scope: CoroutineScope,
     ): SetupViewModel {
         return SetupViewModel(
             fixtureDiscovery = discovery,
             fixtureStore = fixtureStore,
             settingsStore = settingsStore,
+            networkStateRepository = networkStateStore,
+            preGenerationService = preGenerationService,
             scope = scope,
         )
     }
@@ -370,6 +437,33 @@ class SetupViewModelTest {
         assertTrue(settingsStore.isSimulationValue)
     }
 
+    @Test
+    fun persistSetupCompleteSavesNodeTopology() = runTest {
+        val discovery = FakeFixtureDiscovery()
+        val networkStore = FakeNetworkStateStore()
+        val nodes = listOf(
+            DmxNode(ipAddress = "192.168.1.10", shortName = "Par1"),
+        )
+        discovery.nodesToEmit = nodes
+
+        val vm = createVm(
+            discovery = discovery,
+            networkStateStore = networkStore,
+            scope = unconfinedScope(testScheduler),
+        )
+
+        // Navigate through to COMPLETE
+        vm.onEvent(SetupEvent.Advance) // -> NETWORK_DISCOVERY
+        vm.onEvent(SetupEvent.Advance) // -> FIXTURE_SCAN
+        vm.onEvent(SetupEvent.Advance) // -> VIBE_CHECK
+        vm.onEvent(SetupEvent.Advance) // -> STAGE_PREVIEW
+        vm.onEvent(SetupEvent.Advance) // -> COMPLETE (triggers persistSetupComplete)
+
+        // Node topology should have been saved for next launch
+        assertEquals(1, networkStore.savedNodes.size)
+        assertEquals("192.168.1.10", networkStore.savedNodes[0].ipAddress)
+    }
+
     // -- Scenario 5: retry scan restarts discovery --
 
     @Test
@@ -525,6 +619,147 @@ class SetupViewModelTest {
         assertTrue(vm.state.value.repeatLaunchCheckComplete)
     }
 
+    @Test
+    fun repeatLaunchCheckDetectsNewNodes() = runTest {
+        val discovery = FakeFixtureDiscovery()
+        val networkStore = FakeNetworkStateStore()
+        // No known nodes from previous launch
+
+        // Current scan finds nodes
+        val nodes = listOf(DmxNode(ipAddress = "192.168.1.10", shortName = "Par1"))
+        discovery.nodesToEmit = nodes
+
+        val scope = CoroutineScope(StandardTestDispatcher(testScheduler) + SupervisorJob())
+        val vm = createVm(
+            discovery = discovery,
+            networkStateStore = networkStore,
+            scope = scope,
+        )
+        testScheduler.runCurrent()
+
+        vm.onEvent(SetupEvent.PerformRepeatLaunchCheck)
+        testScheduler.advanceTimeBy(SetupViewModel.REPEAT_SCAN_DURATION_MS + 1)
+        testScheduler.runCurrent()
+
+        assertTrue(vm.state.value.repeatLaunchCheckComplete)
+        assertTrue(vm.state.value.networkChangedSinceLastLaunch)
+        assertEquals(1, vm.state.value.addedNodeCount)
+        assertEquals(0, vm.state.value.removedNodeCount)
+    }
+
+    @Test
+    fun repeatLaunchCheckDetectsLostNodes() = runTest {
+        val discovery = FakeFixtureDiscovery()
+        val networkStore = FakeNetworkStateStore()
+        // Previous launch had nodes
+        networkStore.setKnownNodes(listOf(
+            KnownNode(
+                nodeKey = "192.168.1.10",
+                ipAddress = "192.168.1.10",
+                shortName = "Par1",
+                longName = "Par1",
+                lastSeenMs = 1000L,
+            ),
+        ))
+        // Current scan finds no nodes
+        discovery.nodesToEmit = emptyList()
+
+        val scope = CoroutineScope(StandardTestDispatcher(testScheduler) + SupervisorJob())
+        val vm = createVm(
+            discovery = discovery,
+            networkStateStore = networkStore,
+            scope = scope,
+        )
+        testScheduler.runCurrent()
+
+        vm.onEvent(SetupEvent.PerformRepeatLaunchCheck)
+        testScheduler.advanceTimeBy(SetupViewModel.REPEAT_SCAN_DURATION_MS + 1)
+        testScheduler.runCurrent()
+
+        assertTrue(vm.state.value.repeatLaunchCheckComplete)
+        assertTrue(vm.state.value.networkChangedSinceLastLaunch)
+        assertEquals(0, vm.state.value.addedNodeCount)
+        assertEquals(1, vm.state.value.removedNodeCount)
+    }
+
+    @Test
+    fun repeatLaunchCheckNoChangeWhenTopologyMatches() = runTest {
+        val discovery = FakeFixtureDiscovery()
+        val networkStore = FakeNetworkStateStore()
+        // Same node in both previous and current
+        networkStore.setKnownNodes(listOf(
+            KnownNode(
+                nodeKey = "192.168.1.10",
+                ipAddress = "192.168.1.10",
+                shortName = "Par1",
+                longName = "Par1",
+                lastSeenMs = 1000L,
+            ),
+        ))
+        val nodes = listOf(DmxNode(ipAddress = "192.168.1.10", shortName = "Par1"))
+        discovery.nodesToEmit = nodes
+
+        val scope = CoroutineScope(StandardTestDispatcher(testScheduler) + SupervisorJob())
+        val vm = createVm(
+            discovery = discovery,
+            networkStateStore = networkStore,
+            scope = scope,
+        )
+        testScheduler.runCurrent()
+
+        vm.onEvent(SetupEvent.PerformRepeatLaunchCheck)
+        testScheduler.advanceTimeBy(SetupViewModel.REPEAT_SCAN_DURATION_MS + 1)
+        testScheduler.runCurrent()
+
+        assertTrue(vm.state.value.repeatLaunchCheckComplete)
+        assertFalse(vm.state.value.networkChangedSinceLastLaunch)
+        assertEquals(0, vm.state.value.addedNodeCount)
+        assertEquals(0, vm.state.value.removedNodeCount)
+    }
+
+    @Test
+    fun repeatLaunchCheckSavesCurrentTopology() = runTest {
+        val discovery = FakeFixtureDiscovery()
+        val networkStore = FakeNetworkStateStore()
+        val nodes = listOf(
+            DmxNode(ipAddress = "192.168.1.10", shortName = "Par1"),
+            DmxNode(ipAddress = "192.168.1.11", shortName = "Par2"),
+        )
+        discovery.nodesToEmit = nodes
+
+        val scope = CoroutineScope(StandardTestDispatcher(testScheduler) + SupervisorJob())
+        val vm = createVm(
+            discovery = discovery,
+            networkStateStore = networkStore,
+            scope = scope,
+        )
+        testScheduler.runCurrent()
+
+        vm.onEvent(SetupEvent.PerformRepeatLaunchCheck)
+        testScheduler.advanceTimeBy(SetupViewModel.REPEAT_SCAN_DURATION_MS + 1)
+        testScheduler.runCurrent()
+
+        // Should have saved the current nodes for next launch comparison
+        assertEquals(2, networkStore.savedNodes.size)
+        assertEquals("192.168.1.10", networkStore.savedNodes[0].ipAddress)
+        assertEquals("192.168.1.11", networkStore.savedNodes[1].ipAddress)
+    }
+
+    @Test
+    fun repeatLaunchCheckCompletesWithoutNetworkStore() = runTest {
+        // No network state store — should still complete without error
+        val discovery = FakeFixtureDiscovery()
+        val nodes = listOf(DmxNode(ipAddress = "10.0.0.1", shortName = "Node1"))
+        discovery.nodesToEmit = nodes
+
+        val vm = createVm(discovery = discovery, scope = unconfinedScope(testScheduler))
+
+        vm.onEvent(SetupEvent.PerformRepeatLaunchCheck)
+
+        assertTrue(vm.state.value.repeatLaunchCheckComplete)
+        assertFalse(vm.state.value.networkChangedSinceLastLaunch)
+    }
+
     // -- Scan timeout --
 
     @Test
@@ -589,5 +824,98 @@ class SetupViewModelTest {
         testScheduler.advanceTimeBy(SetupViewModel.SCAN_DURATION_MS + 1)
         testScheduler.runCurrent()
         assertFalse(vm.state.value.isScanning)
+    }
+
+    // -- Genre generation wiring --
+
+    @Test
+    fun confirmGenreTriggersPresetGeneration() = runTest {
+        val preGenService = createPreGenService()
+        val vm = createVm(
+            preGenerationService = preGenService,
+            scope = unconfinedScope(testScheduler),
+        )
+
+        // Navigate to VIBE_CHECK
+        vm.onEvent(SetupEvent.Advance) // -> NETWORK_DISCOVERY
+        vm.onEvent(SetupEvent.Advance) // -> FIXTURE_SCAN
+        vm.onEvent(SetupEvent.Advance) // -> VIBE_CHECK
+
+        val genre = GenreOption("techno", "Techno", 0xFFFF0040, Genre.TECHNO)
+        vm.onEvent(SetupEvent.SelectGenre(genre))
+        vm.onEvent(SetupEvent.ConfirmGenre)
+
+        // Should have advanced to STAGE_PREVIEW
+        assertEquals(SetupStep.STAGE_PREVIEW, vm.state.value.currentStep)
+
+        // Generation should have completed (synchronous in unconfined dispatcher)
+        assertFalse(vm.state.value.isGenerating)
+        assertEquals(1f, vm.state.value.generationProgress)
+        assertEquals(SetupViewModel.GENRE_PRESET_COUNT, vm.state.value.matchingPresetCount)
+    }
+
+    @Test
+    fun confirmGenreWithoutServiceStillAdvances() = runTest {
+        // No preGenerationService — should not crash
+        val vm = createVm(scope = unconfinedScope(testScheduler))
+
+        // Navigate to VIBE_CHECK
+        vm.onEvent(SetupEvent.Advance) // -> NETWORK_DISCOVERY
+        vm.onEvent(SetupEvent.Advance) // -> FIXTURE_SCAN
+        vm.onEvent(SetupEvent.Advance) // -> VIBE_CHECK
+
+        val genre = GenreOption("techno", "Techno", 0xFFFF0040, Genre.TECHNO)
+        vm.onEvent(SetupEvent.SelectGenre(genre))
+        vm.onEvent(SetupEvent.ConfirmGenre)
+
+        // Should still advance to STAGE_PREVIEW
+        assertEquals(SetupStep.STAGE_PREVIEW, vm.state.value.currentStep)
+        // No generation progress since service is null
+        assertFalse(vm.state.value.isGenerating)
+        assertEquals(0f, vm.state.value.generationProgress)
+    }
+
+    @Test
+    fun confirmGenreWithoutSelectionSkipsGeneration() = runTest {
+        val preGenService = createPreGenService()
+        val vm = createVm(
+            preGenerationService = preGenService,
+            scope = unconfinedScope(testScheduler),
+        )
+
+        // Navigate to VIBE_CHECK without selecting a genre
+        vm.onEvent(SetupEvent.Advance) // -> NETWORK_DISCOVERY
+        vm.onEvent(SetupEvent.Advance) // -> FIXTURE_SCAN
+        vm.onEvent(SetupEvent.Advance) // -> VIBE_CHECK
+
+        vm.onEvent(SetupEvent.ConfirmGenre)
+
+        // Should advance but no generation
+        assertEquals(SetupStep.STAGE_PREVIEW, vm.state.value.currentStep)
+        assertEquals(0f, vm.state.value.generationProgress)
+    }
+
+    @Test
+    fun generationProgressMapsToUiState() = runTest {
+        val preGenService = createPreGenService()
+        val vm = createVm(
+            preGenerationService = preGenService,
+            scope = unconfinedScope(testScheduler),
+        )
+
+        // Navigate to VIBE_CHECK
+        vm.onEvent(SetupEvent.Advance) // -> NETWORK_DISCOVERY
+        vm.onEvent(SetupEvent.Advance) // -> FIXTURE_SCAN
+        vm.onEvent(SetupEvent.Advance) // -> VIBE_CHECK
+
+        val genre = GenreOption("ambient", "Ambient", 0xFF0044FF, Genre.AMBIENT)
+        vm.onEvent(SetupEvent.SelectGenre(genre))
+        vm.onEvent(SetupEvent.ConfirmGenre)
+
+        // After completion, progress should be 1.0 (4/4)
+        assertEquals(1f, vm.state.value.generationProgress)
+        assertEquals(SetupViewModel.GENRE_PRESET_COUNT, vm.state.value.matchingPresetCount)
+        assertFalse(vm.state.value.isGenerating)
+        assertNull(vm.state.value.generationError)
     }
 }

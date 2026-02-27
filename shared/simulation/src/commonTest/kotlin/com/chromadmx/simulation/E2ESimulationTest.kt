@@ -97,28 +97,30 @@ class E2ESimulationTest {
         val scope = TestScope()
         val engine = EffectEngine(scope, rig.fixtures)
 
-        // Pulse centered at origin, expanding at 2 units/sec
+        // Pulse centered at origin in normalized space.
+        // EffectEngine normalizes fixture positions to [0, 1] per axis,
+        // so effect centers must also be in normalized coordinates.
         engine.effectStack.addLayer(
             EffectLayer(
                 effect = RadialPulse3DEffect(),
                 params = EffectParams()
                     .with("centerX", 0f)
-                    .with("centerY", 1f)    // matches rig depth
-                    .with("centerZ", 2.5f)  // matches rig height
-                    .with("speed", 2.0f)
+                    .with("centerY", 0f)
+                    .with("centerZ", 0f)
+                    .with("speed", 1.0f)
                     .with("width", 2.0f)    // wide shell so fixtures are inside
+                    .with("maxRadius", 5f)  // explicit to avoid wrap issues
                     .with("color", Color.WHITE),
                 blendMode = BlendMode.NORMAL,
                 opacity = 1.0f
             )
         )
 
-        // Evaluate at time=1.0 -> shell radius = 2.0
-        // Fixtures span from x=-3.5 to x=3.5, all at y=1, z=2.5
-        // Distance from center for each fixture is |x| (since center is at 0,1,2.5)
-        // Shell covers dist from 1.0 to 3.0 (radius=2, halfWidth=1.0)
-        // So fixtures at x=-2,-1,0,1,2 should be lit
-        val frame = engine.evaluateFrame(1.0f, BeatState.IDLE)
+        // Evaluate at time=0.5 -> shell radius = 0.5
+        // Normalized fixtures span x from 0 to 1, y=0, z=0 (degenerate axes)
+        // Shell covers dist 0 to 1.5 (|dist - 0.5| < 1.0)
+        // All fixtures within range
+        val frame = engine.evaluateFrame(0.5f, BeatState.IDLE)
 
         // At least some fixtures should be non-black
         val litCount = frame.count { it.isNonBlack() }

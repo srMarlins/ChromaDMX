@@ -25,6 +25,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.chromadmx.core.model.BuiltInProfiles
+import com.chromadmx.core.model.Channel
+import com.chromadmx.core.model.ChannelType
+import com.chromadmx.core.model.FixtureProfile
+import com.chromadmx.core.model.FixtureType
 import com.chromadmx.simulation.fixtures.RigPreset
 import com.chromadmx.ui.components.PixelBadge
 import com.chromadmx.ui.components.PixelBadgeVariant
@@ -40,6 +45,7 @@ import com.chromadmx.ui.components.PixelSlider
 import com.chromadmx.ui.components.PixelSwitch
 import com.chromadmx.ui.components.PixelTextField
 import com.chromadmx.ui.state.AgentStatus
+import com.chromadmx.ui.state.DataTransferStatus
 import com.chromadmx.ui.state.ProtocolType
 import com.chromadmx.ui.state.SettingsEvent
 import com.chromadmx.ui.state.SettingsUiState
@@ -91,12 +97,20 @@ fun SettingsScreen(
             item { NetworkSection(state, viewModel::onEvent) }
             // Simulation section
             item { SimulationSection(state, viewModel::onEvent) }
+            // Fixture Profiles section
+            item { FixtureProfilesSection(state, viewModel::onEvent) }
             // Agent section
             item { AgentSection(state, viewModel::onEvent) }
             // Hardware section
             item { HardwareSection(onProvisioning) }
             // App section (destructive)
-            item { AppSection(viewModel::onEvent, onShowResetDialog = { showResetDialog = true }) }
+            item {
+                AppSection(
+                    state = state,
+                    onEvent = viewModel::onEvent,
+                    onShowResetDialog = { showResetDialog = true },
+                )
+            }
             // Version footer
             item { VersionFooter() }
         }
@@ -283,6 +297,316 @@ private fun SimulationSection(
     }
 }
 
+// ── Fixture Profiles Section ───────────────────────────────────────────
+
+/** Set of built-in profile IDs that cannot be deleted. */
+private val builtInProfileIds: Set<String> = BuiltInProfiles.all().map { it.profileId }.toSet()
+
+@Composable
+private fun FixtureProfilesSection(
+    state: SettingsUiState,
+    onEvent: (SettingsEvent) -> Unit,
+) {
+    var showAddDialog by remember { mutableStateOf(false) }
+    var editingProfile by remember { mutableStateOf<FixtureProfile?>(null) }
+    var showDeleteConfirm by remember { mutableStateOf<String?>(null) }
+
+    PixelCard(
+        title = { PixelSectionTitle(title = "Fixture Profiles") },
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(PixelDesign.spacing.small),
+        ) {
+            if (state.fixtureProfiles.isEmpty()) {
+                Text(
+                    text = "No profiles loaded.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = PixelDesign.colors.onSurfaceVariant,
+                )
+            } else {
+                state.fixtureProfiles.forEach { profile ->
+                    val isBuiltIn = profile.profileId in builtInProfileIds
+                    FixtureProfileRow(
+                        profile = profile,
+                        isBuiltIn = isBuiltIn,
+                        onEdit = { editingProfile = profile },
+                        onDelete = { showDeleteConfirm = profile.profileId },
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(PixelDesign.spacing.small))
+
+            // Add Profile button
+            PixelButton(
+                onClick = { showAddDialog = true },
+                variant = PixelButtonVariant.Secondary,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("+ Add Profile")
+            }
+        }
+    }
+
+    // Add profile dialog
+    if (showAddDialog) {
+        FixtureProfileDialog(
+            existingProfile = null,
+            onSave = { profile ->
+                onEvent(SettingsEvent.AddFixtureProfile(profile))
+                showAddDialog = false
+            },
+            onDismiss = { showAddDialog = false },
+        )
+    }
+
+    // Edit profile dialog
+    editingProfile?.let { profile ->
+        FixtureProfileDialog(
+            existingProfile = profile,
+            onSave = { updated ->
+                onEvent(SettingsEvent.UpdateFixtureProfile(updated))
+                editingProfile = null
+            },
+            onDismiss = { editingProfile = null },
+        )
+    }
+
+    // Delete confirmation dialog
+    showDeleteConfirm?.let { profileId ->
+        PixelDialog(
+            onDismissRequest = { showDeleteConfirm = null },
+            title = "Delete Profile?",
+            confirmButton = {
+                PixelButton(
+                    onClick = {
+                        onEvent(SettingsEvent.DeleteFixtureProfile(profileId))
+                        showDeleteConfirm = null
+                    },
+                    variant = PixelButtonVariant.Danger,
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                PixelButton(
+                    onClick = { showDeleteConfirm = null },
+                    variant = PixelButtonVariant.Secondary,
+                ) {
+                    Text("Cancel")
+                }
+            },
+        ) {
+            Text(
+                text = "This profile will be removed from your library.",
+                color = PixelDesign.colors.onSurface,
+            )
+        }
+    }
+}
+
+@Composable
+private fun FixtureProfileRow(
+    profile: FixtureProfile,
+    isBuiltIn: Boolean,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(PixelDesign.spacing.small),
+    ) {
+        // Lock icon for built-in profiles
+        if (isBuiltIn) {
+            Text(
+                text = "\uD83D\uDD12",
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+
+        // Profile name
+        Text(
+            text = profile.name,
+            style = MaterialTheme.typography.bodyLarge,
+            color = PixelDesign.colors.onSurface,
+            modifier = Modifier.weight(1f),
+        )
+
+        // Channel count badge
+        PixelBadge(
+            text = "${profile.channelCount}ch",
+            variant = PixelBadgeVariant.Info,
+        )
+
+        // Edit button
+        PixelIconButton(onClick = onEdit) {
+            Text(
+                text = "\u270E",
+                style = MaterialTheme.typography.bodySmall,
+                color = PixelDesign.colors.onSurface,
+            )
+        }
+
+        // Delete button (only for user-created profiles)
+        if (!isBuiltIn) {
+            PixelIconButton(onClick = onDelete) {
+                Text(
+                    text = "\u2716",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = PixelDesign.colors.error,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Dialog for adding or editing a fixture profile.
+ *
+ * When [existingProfile] is non-null the dialog operates in edit mode,
+ * pre-filling the fields. Otherwise it creates a new profile.
+ */
+@Composable
+private fun FixtureProfileDialog(
+    existingProfile: FixtureProfile?,
+    onSave: (FixtureProfile) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val isEdit = existingProfile != null
+    val fixtureTypes = FixtureType.entries
+    val fixtureTypeNames = fixtureTypes.map { it.name.replace('_', ' ') }
+
+    var name by remember { mutableStateOf(existingProfile?.name ?: "") }
+    var selectedTypeIndex by remember {
+        mutableStateOf(
+            existingProfile?.let { fixtureTypes.indexOf(it.type) } ?: 0
+        )
+    }
+    var channelCountText by remember {
+        mutableStateOf(existingProfile?.channelCount?.toString() ?: "3")
+    }
+
+    PixelDialog(
+        onDismissRequest = onDismiss,
+        title = if (isEdit) "Edit Profile" else "Add Profile",
+        confirmButton = {
+            PixelButton(
+                onClick = {
+                    val chCount = channelCountText.toIntOrNull() ?: 3
+                    val selectedType = fixtureTypes[selectedTypeIndex]
+                    val channels = buildDefaultChannels(selectedType, chCount)
+                    val profileId = existingProfile?.profileId
+                        ?: "user-${name.lowercase().replace(' ', '-')}-${chCount}ch"
+                    val profile = existingProfile?.copy(
+                        name = name,
+                        type = selectedType,
+                        channels = channels,
+                    ) ?: FixtureProfile(
+                        profileId = profileId,
+                        name = name,
+                        type = selectedType,
+                        channels = channels,
+                    )
+                    onSave(profile)
+                },
+                variant = PixelButtonVariant.Primary,
+                enabled = name.isNotBlank() && (channelCountText.toIntOrNull() ?: 0) > 0,
+            ) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            PixelButton(
+                onClick = onDismiss,
+                variant = PixelButtonVariant.Secondary,
+            ) {
+                Text("Cancel")
+            }
+        },
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(PixelDesign.spacing.medium),
+        ) {
+            // Name field
+            PixelTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = "Profile Name",
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            // Type dropdown
+            Text(
+                text = "Fixture Type",
+                style = MaterialTheme.typography.labelLarge,
+                color = PixelDesign.colors.onSurfaceVariant,
+            )
+            PixelDropdown(
+                items = fixtureTypeNames,
+                selectedIndex = selectedTypeIndex,
+                onItemSelected = { selectedTypeIndex = it },
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            // Channel count
+            PixelTextField(
+                value = channelCountText,
+                onValueChange = { channelCountText = it },
+                label = "Channel Count",
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            )
+        }
+    }
+}
+
+/**
+ * Generates a default channel list for a given fixture type and channel count.
+ * Provides sensible defaults so users get a working profile out of the box.
+ */
+private fun buildDefaultChannels(type: FixtureType, count: Int): List<Channel> {
+    val base = when (type) {
+        FixtureType.PAR, FixtureType.WASH -> listOf(
+            Channel("Red", ChannelType.RED, 0),
+            Channel("Green", ChannelType.GREEN, 1),
+            Channel("Blue", ChannelType.BLUE, 2),
+        )
+        FixtureType.MOVING_HEAD -> listOf(
+            Channel("Pan", ChannelType.PAN, 0),
+            Channel("Tilt", ChannelType.TILT, 1),
+            Channel("Dimmer", ChannelType.DIMMER, 2),
+            Channel("Red", ChannelType.RED, 3),
+            Channel("Green", ChannelType.GREEN, 4),
+            Channel("Blue", ChannelType.BLUE, 5),
+        )
+        FixtureType.PIXEL_BAR -> {
+            val pixelCount = (count / 3).coerceAtLeast(1)
+            return (0 until pixelCount).flatMap { px ->
+                listOf(
+                    Channel("Px${px}_R", ChannelType.RED, px * 3),
+                    Channel("Px${px}_G", ChannelType.GREEN, px * 3 + 1),
+                    Channel("Px${px}_B", ChannelType.BLUE, px * 3 + 2),
+                )
+            }
+        }
+        FixtureType.STROBE -> listOf(
+            Channel("Dimmer", ChannelType.DIMMER, 0),
+            Channel("Strobe", ChannelType.STROBE, 1),
+        )
+        else -> listOf(
+            Channel("Dimmer", ChannelType.DIMMER, 0),
+        )
+    }
+    // Pad with generic channels if the user asked for more than the template provides
+    val extra = (base.size until count).map { offset ->
+        Channel("Ch${offset + 1}", ChannelType.GENERIC, offset)
+    }
+    return base.take(count) + extra
+}
+
 // ── Agent Section ──────────────────────────────────────────────────────
 
 @Composable
@@ -417,9 +741,15 @@ private fun HardwareSection(onProvisioning: () -> Unit) {
 
 @Composable
 private fun AppSection(
+    state: SettingsUiState,
     onEvent: (SettingsEvent) -> Unit,
     onShowResetDialog: () -> Unit,
 ) {
+    var showImportDialog by remember { mutableStateOf(false) }
+    var importText by remember { mutableStateOf("") }
+
+    val isTransferring = state.dataTransferStatus is DataTransferStatus.InProgress
+
     PixelCard(
         title = { PixelSectionTitle(title = "App") },
     ) {
@@ -435,26 +765,103 @@ private fun AppSection(
                 Text("Reset Onboarding")
             }
 
-            // Export / Import (disabled TODO)
+            // Export / Import
             Row(
                 horizontalArrangement = Arrangement.spacedBy(PixelDesign.spacing.small),
             ) {
                 PixelButton(
                     onClick = { onEvent(SettingsEvent.ExportAppData) },
                     variant = PixelButtonVariant.Secondary,
-                    enabled = false,
+                    enabled = !isTransferring,
                     modifier = Modifier.weight(1f),
                 ) {
-                    Text("Export Data")
+                    Text(if (isTransferring) "Exporting..." else "Export Data")
                 }
                 PixelButton(
-                    onClick = { onEvent(SettingsEvent.ImportAppData) },
+                    onClick = { showImportDialog = true },
                     variant = PixelButtonVariant.Secondary,
-                    enabled = false,
+                    enabled = !isTransferring,
                     modifier = Modifier.weight(1f),
                 ) {
-                    Text("Import Data")
+                    Text(if (isTransferring) "Importing..." else "Import Data")
                 }
+            }
+
+            // Status messages
+            when (val status = state.dataTransferStatus) {
+                is DataTransferStatus.ExportReady -> {
+                    Text(
+                        text = "Export ready (${status.json.length} chars)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = PixelDesign.colors.success,
+                    )
+                }
+                is DataTransferStatus.ImportSuccess -> {
+                    Text(
+                        text = "Import successful!",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = PixelDesign.colors.success,
+                    )
+                }
+                is DataTransferStatus.Error -> {
+                    Text(
+                        text = status.message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = PixelDesign.colors.error,
+                    )
+                }
+                else -> {} // Idle or InProgress — no extra text
+            }
+        }
+    }
+
+    // Import dialog
+    if (showImportDialog) {
+        PixelDialog(
+            onDismissRequest = {
+                showImportDialog = false
+                importText = ""
+            },
+            title = "Import Data",
+            confirmButton = {
+                PixelButton(
+                    onClick = {
+                        if (importText.isNotBlank()) {
+                            onEvent(SettingsEvent.ImportAppData(importText))
+                        }
+                        showImportDialog = false
+                        importText = ""
+                    },
+                    variant = PixelButtonVariant.Primary,
+                ) {
+                    Text("Import")
+                }
+            },
+            dismissButton = {
+                PixelButton(
+                    onClick = {
+                        showImportDialog = false
+                        importText = ""
+                    },
+                    variant = PixelButtonVariant.Secondary,
+                ) {
+                    Text("Cancel")
+                }
+            },
+        ) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(PixelDesign.spacing.small),
+            ) {
+                Text(
+                    text = "Paste your exported JSON data below:",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                PixelTextField(
+                    value = importText,
+                    onValueChange = { importText = it },
+                    label = "JSON Data",
+                    modifier = Modifier.fillMaxWidth().height(160.dp),
+                )
             }
         }
     }

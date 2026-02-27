@@ -60,6 +60,12 @@ class MascotViewModelV2(
     /** Simple counter for generating chat message IDs. */
     private var messageCounter = 0L
 
+    /**
+     * Optional callback invoked when the user taps "RESCAN" on a topology alert.
+     * Set this from the app layer to wire up the rescan action.
+     */
+    var onRescanRequested: (() -> Unit)? = null
+
     companion object {
         /** How long (ms) the mascot must be idle before showing a proactive tip. */
         internal const val IDLE_TIMEOUT_MS = 30_000L
@@ -281,6 +287,12 @@ class MascotViewModelV2(
                 triggerThinking()
                 showBubble(SpeechBubble(text = "Analyzing network...", autoDismissMs = 2000))
             }
+            "rescan_topology" -> {
+                triggerThinking()
+                showBubble(SpeechBubble(text = "Starting rescan...", autoDismissMs = 2000))
+                onRescanRequested?.invoke()
+            }
+            "dismiss_topology" -> dismissBubble()
             else -> dismissBubble()
         }
     }
@@ -321,6 +333,34 @@ class MascotViewModelV2(
     private fun setAnimState(animState: MascotAnimState) {
         _state.update { it.copy(animState = animState) }
         animationController.transitionTo(animState.toMascotState())
+    }
+
+    /**
+     * Show a topology-change alert bubble with rescan and dismiss actions.
+     * Called externally (e.g. from [ChromaDmxApp]) when the repeat-launch
+     * topology comparison detects added or removed nodes.
+     *
+     * @param addedCount Number of new nodes since last launch.
+     * @param removedCount Number of lost nodes since last launch.
+     */
+    fun showTopologyAlert(addedCount: Int, removedCount: Int) {
+        setAnimState(MascotAnimState.ALERT)
+        val message = buildString {
+            append("Hey! I noticed some fixtures changed since last time.")
+            if (addedCount > 0) append(" $addedCount new")
+            if (addedCount > 0 && removedCount > 0) append(",")
+            if (removedCount > 0) append(" $removedCount missing")
+            append(". Want to rescan?")
+        }
+        showBubble(
+            SpeechBubble(
+                text = message,
+                type = BubbleType.ACTION,
+                actionLabel = "RESCAN",
+                actionId = "rescan_topology",
+                autoDismissMs = 0L, // Don't auto-dismiss — wait for user action
+            )
+        )
     }
 
     fun onCleared() {

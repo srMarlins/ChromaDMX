@@ -4,28 +4,6 @@ import kotlin.test.Test
 import kotlin.test.assertIs
 
 class AppStateTest {
-    // ---- Legacy AppState tests (still valid while AppState.kt exists) ----
-
-    @Test
-    fun onboardingIsInitialStateForFirstLaunch() {
-        val state: AppState = AppState.Onboarding
-        assertIs<AppState.Onboarding>(state)
-    }
-
-    @Test
-    fun stagePreviewIsDefaultState() {
-        val state: AppState = AppState.StagePreview
-        assertIs<AppState.StagePreview>(state)
-    }
-
-    @Test
-    fun settingsIsOverlayState() {
-        val state: AppState = AppState.Settings
-        assertIs<AppState.Settings>(state)
-    }
-
-    // ---- New AppScreen tests ----
-
     @Test
     fun appScreenSetupExists() {
         val screen: AppScreen = AppScreen.Setup

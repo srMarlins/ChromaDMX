@@ -44,7 +44,7 @@ class RadialPulse3DEffect : SpatialEffect {
         val speed = params.getFloat("speed", 2.0f)
         val color = params.getColor("color", Color.WHITE)
         val width = params.getFloat("width", 0.3f).coerceAtLeast(0.001f)
-        val maxRadius = params.getFloat("maxRadius", 10f).coerceAtLeast(0.1f)
+        val maxRadius = params.getFloat("maxRadius", 2f).coerceAtLeast(0.1f)
 
         // Scale animation time by BPM ratio (1.0x at 120 BPM baseline)
         val beatTime = if (beat.bpm > 0f) time * (beat.bpm / 120f) else time

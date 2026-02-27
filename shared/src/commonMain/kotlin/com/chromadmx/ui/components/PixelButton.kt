@@ -23,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.unit.dp
 import com.chromadmx.ui.theme.ChromaAnimations
 import com.chromadmx.ui.theme.PixelDesign
@@ -101,7 +100,7 @@ fun PixelButton(
 
         // Face / Top Layer — uses glowing border when enabled, standard when disabled
         val faceModifier = Modifier
-            .fillMaxWidth()
+            .matchParentSize()
             .offset { IntOffset(0, (currentOffset - pressDepth).roundToPx()) }
             .let { mod ->
                 if (enabled) {
