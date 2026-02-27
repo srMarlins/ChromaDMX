@@ -101,7 +101,7 @@ val chromaDiModule = module {
         }
     }
     single {
-        EffectEngine(scope = get(), fixtures = emptyList()).apply {
+        EffectEngine(scope = get()).apply {
             beatStateProvider = { get<BeatClock>().beatState.value }
             start()
         }
@@ -118,7 +118,7 @@ val chromaDiModule = module {
         val bridge = get<DmxBridge>()
         val router = get<DmxTransportRouter>()
         DmxOutputBridge(
-            colorOutput = engine.colorOutput,
+            colorOutputProvider = { engine.colorOutput },
             dmxBridge = bridge,
             onFrame = { frame -> router.updateFrame(frame) },
             scope = get()

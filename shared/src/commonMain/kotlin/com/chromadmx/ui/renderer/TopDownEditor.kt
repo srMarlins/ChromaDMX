@@ -25,8 +25,14 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.pointerInput
 import com.chromadmx.core.model.BuiltInProfiles
 import com.chromadmx.core.model.Fixture3D
+import com.chromadmx.core.model.FixtureType
 import com.chromadmx.core.model.RenderHint
 import com.chromadmx.core.model.Vec3
+import com.chromadmx.ui.renderer.TopDownRenderer.drawBarFixture
+import com.chromadmx.ui.renderer.TopDownRenderer.drawBeamConeFixture
+import com.chromadmx.ui.renderer.TopDownRenderer.drawParFixture
+import com.chromadmx.ui.renderer.TopDownRenderer.drawStrobeFixture
+import com.chromadmx.ui.renderer.TopDownRenderer.drawWashFixture
 import com.chromadmx.core.model.Color as DmxColor
 import com.chromadmx.ui.components.toComposeColor
 
@@ -44,6 +50,7 @@ private val SelectionColor = Color(0xFF00FBFF)
 
 /** Highlight color for edit-mode drag crosshair. */
 private val EditDragColor = Color(0xFFFFFF00)
+
 
 /**
  * Canvas-based top-down fixture editor with profile-aware rendering.
@@ -254,8 +261,16 @@ fun TopDownEditor(
             if (f.position.y < minY) minY = f.position.y
             if (f.position.y > maxY) maxY = f.position.y
         }
-        val rangeX = (maxX - minX).coerceAtLeast(1f)
-        val rangeY = (maxY - minY).coerceAtLeast(1f)
+        val rawRangeX = maxX - minX
+        val rawRangeY = maxY - minY
+        val collapsedX = rawRangeX < 0.1f
+        val collapsedY = rawRangeY < 0.1f
+        val rangeX = if (collapsedX) 1f else rawRangeX
+        val rangeY = if (collapsedY) 1f else rawRangeY
+
+        // Scale fixture rendering sizes based on available space per fixture
+        val fixtureScale = ((canvasW / fixtures.size.coerceAtLeast(1).toFloat()) / 40f)
+            .coerceIn(0.8f, 3f)
 
         // Reusable Path to avoid allocations inside the fixture loop
         val reusablePath = Path()
@@ -268,8 +283,8 @@ fun TopDownEditor(
             val positions = mutableListOf<Offset>()
 
             for ((index, fixture) in fixtures.withIndex()) {
-                val normX = (fixture.position.x - minX) / rangeX
-                val normY = (fixture.position.y - minY) / rangeY
+                val normX = if (collapsedX) 0.5f else (fixture.position.x - minX) / rangeX
+                val normY = if (collapsedY) 0.5f else (fixture.position.y - minY) / rangeY
                 val cx = padding + normX * canvasW
                 val cy = padding + (1f - normY) * canvasH // Flip Y for top-down
 
@@ -283,13 +298,20 @@ fun TopDownEditor(
                 val renderHint = profile?.renderHint ?: RenderHint.POINT
 
                 when (renderHint) {
-                    RenderHint.POINT -> drawPointFixture(cx, cy, composeColor, isSelected)
+                    RenderHint.POINT -> {
+                        val fixtureType = profile?.type ?: FixtureType.PAR
+                        when (fixtureType) {
+                            FixtureType.STROBE -> drawStrobeFixture(cx, cy, composeColor, isSelected, SelectionColor, fixtureScale)
+                            FixtureType.WASH -> drawWashFixture(cx, cy, composeColor, isSelected, SelectionColor, fixtureScale)
+                            else -> drawParFixture(cx, cy, composeColor, isSelected, SelectionColor, fixtureScale)
+                        }
+                    }
                     RenderHint.BAR -> {
                         val pixelCount = profile?.physical?.pixelCount ?: 8
-                        drawBarFixture(cx, cy, composeColor, pixelCount, isSelected)
+                        drawBarFixture(cx, cy, composeColor, pixelCount, isSelected, SelectionColor, fixtureScale)
                     }
                     RenderHint.BEAM_CONE -> drawBeamConeFixture(
-                        cx, cy, composeColor, isSelected, reusablePath,
+                        cx, cy, composeColor, isSelected, reusablePath, SelectionColor, fixtureScale,
                     )
                 }
             }
@@ -318,155 +340,8 @@ fun TopDownEditor(
 }
 
 // ---------------------------------------------------------------------------
-// Drawing helpers — top-level private functions to avoid DrawScope allocations
+// Drawing helpers
 // ---------------------------------------------------------------------------
-
-/**
- * Draw a POINT fixture (Par, Wash, Strobe): outer glow + inner filled circle.
- */
-private fun DrawScope.drawPointFixture(
-    cx: Float,
-    cy: Float,
-    color: Color,
-    isSelected: Boolean,
-) {
-    // Outer glow halo
-    drawCircle(
-        color = color.copy(alpha = 0.25f),
-        radius = 22f,
-        center = Offset(cx, cy),
-    )
-    // Mid glow
-    drawCircle(
-        color = color.copy(alpha = 0.5f),
-        radius = 14f,
-        center = Offset(cx, cy),
-    )
-    // Inner bright core
-    drawCircle(
-        color = color,
-        radius = 10f,
-        center = Offset(cx, cy),
-    )
-
-    if (isSelected) {
-        drawSelectionBorder(cx, cy, 16f)
-    }
-}
-
-/**
- * Draw a BAR fixture (Pixel Bar): horizontal row of colored segments.
- */
-private fun DrawScope.drawBarFixture(
-    cx: Float,
-    cy: Float,
-    color: Color,
-    pixelCount: Int,
-    isSelected: Boolean,
-) {
-    val segmentW = 8f
-    val segmentH = 12f
-    val gap = 2f
-    val totalW = pixelCount * segmentW + (pixelCount - 1) * gap
-    val startX = cx - totalW / 2f
-    val startY = cy - segmentH / 2f
-
-    // Bar housing background
-    drawRect(
-        color = Color(0xFF1A1A2E),
-        topLeft = Offset(startX - 3f, startY - 3f),
-        size = Size(totalW + 6f, segmentH + 6f),
-    )
-
-    // Individual pixel segments — all the same color since we have one color per fixture
-    for (i in 0 until pixelCount) {
-        val segX = startX + i * (segmentW + gap)
-        // Slight brightness variation per segment for visual interest
-        val brightness = 0.8f + 0.2f * ((i % 3).toFloat() / 2f)
-        drawRect(
-            color = color.copy(alpha = brightness),
-            topLeft = Offset(segX, startY),
-            size = Size(segmentW, segmentH),
-        )
-    }
-
-    // Glow beneath the bar
-    drawRect(
-        color = color.copy(alpha = 0.15f),
-        topLeft = Offset(startX - 4f, cy + segmentH / 2f + 2f),
-        size = Size(totalW + 8f, 8f),
-    )
-
-    if (isSelected) {
-        val selRadius = (totalW / 2f).coerceAtLeast(16f)
-        drawSelectionBorder(cx, cy, selRadius)
-    }
-}
-
-/**
- * Draw a BEAM_CONE fixture (Moving Head): circle with a directional indicator line.
- */
-private fun DrawScope.drawBeamConeFixture(
-    cx: Float,
-    cy: Float,
-    color: Color,
-    isSelected: Boolean,
-    reusablePath: Path,
-) {
-    // Beam cone (downward triangle-like glow)
-    val beamLength = 30f
-    val beamHalfWidth = 12f
-    reusablePath.reset()
-    reusablePath.moveTo(cx, cy)
-    reusablePath.lineTo(cx - beamHalfWidth, cy + beamLength)
-    reusablePath.lineTo(cx + beamHalfWidth, cy + beamLength)
-    reusablePath.close()
-    drawPath(
-        path = reusablePath,
-        color = color.copy(alpha = 0.2f),
-    )
-
-    // Outer ring (fixture body)
-    drawCircle(
-        color = Color(0xFF2A2A3E),
-        radius = 12f,
-        center = Offset(cx, cy),
-    )
-    // Inner color
-    drawCircle(
-        color = color,
-        radius = 8f,
-        center = Offset(cx, cy),
-    )
-    // Directional indicator (short line pointing down = default tilt direction)
-    drawLine(
-        color = color.copy(alpha = 0.7f),
-        start = Offset(cx, cy + 8f),
-        end = Offset(cx, cy + 18f),
-        strokeWidth = 2f,
-    )
-
-    if (isSelected) {
-        drawSelectionBorder(cx, cy, 16f)
-    }
-}
-
-/**
- * Draw a pixelated selection border around a fixture.
- */
-private fun DrawScope.drawSelectionBorder(cx: Float, cy: Float, radius: Float) {
-    val r = radius + 4f
-    val pixel = 3f
-
-    // Top edge
-    drawRect(SelectionColor, Offset(cx - r, cy - r), Size(2 * r, pixel))
-    // Bottom edge
-    drawRect(SelectionColor, Offset(cx - r, cy + r - pixel), Size(2 * r, pixel))
-    // Left edge
-    drawRect(SelectionColor, Offset(cx - r, cy - r), Size(pixel, 2 * r))
-    // Right edge
-    drawRect(SelectionColor, Offset(cx + r - pixel, cy - r), Size(pixel, 2 * r))
-}
 
 /**
  * Draw subtle LED matrix grid lines on the canvas background.

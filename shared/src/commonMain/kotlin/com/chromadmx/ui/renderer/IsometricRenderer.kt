@@ -20,19 +20,19 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.pointerInput
 import com.chromadmx.core.model.BuiltInProfiles
+import com.chromadmx.core.model.FixtureType
 import com.chromadmx.core.model.RenderHint
-import com.chromadmx.ui.components.toComposeColor
 import com.chromadmx.ui.renderer.BeamRenderer.drawBeamCone
 import com.chromadmx.ui.renderer.BeamRenderer.drawFloorGlow
 import com.chromadmx.ui.renderer.FixtureRenderer.drawMovingHead
 import com.chromadmx.ui.renderer.FixtureRenderer.drawPar
 import com.chromadmx.ui.renderer.FixtureRenderer.drawPixelBar
 import com.chromadmx.ui.renderer.FixtureRenderer.drawSelection
+import com.chromadmx.ui.renderer.FixtureRenderer.drawStrobe
+import com.chromadmx.ui.renderer.FixtureRenderer.drawWash
 import com.chromadmx.ui.state.FixtureState
 import com.chromadmx.ui.state.IsoAngle
 import com.chromadmx.ui.state.ViewState
-import com.chromadmx.core.model.Color as DmxColor
-
 /** Background color matching VenueCanvas dark aesthetic. */
 private val CanvasBackground = Color(0xFF060612)
 
@@ -169,9 +169,8 @@ fun IsometricRenderer(
 
                 screenPositions.add(originalIndex to screenPos)
 
-                val dmxColor = fixtureState.fixtureColors.getOrNull(originalIndex) ?: DmxColor.BLACK
-                val composeColor = dmxColor.toComposeColor()
-                val displayColor = fixtureColors.getOrNull(originalIndex) ?: composeColor
+                // Use fixtureColors parameter (always populated), not fixtureState.fixtureColors (may be empty)
+                val displayColor = fixtureColors.getOrNull(originalIndex) ?: Color.DarkGray
                 val isSelected = selectedFixtureIndex == originalIndex
 
                 val profile = BuiltInProfiles.findById(fixture.fixture.profileId)
@@ -179,7 +178,12 @@ fun IsometricRenderer(
 
                 when (renderHint) {
                     RenderHint.POINT -> {
-                        drawPar(screenPos, displayColor)
+                        val fixtureType = profile?.type ?: FixtureType.PAR
+                        when (fixtureType) {
+                            FixtureType.STROBE -> drawStrobe(screenPos, displayColor)
+                            FixtureType.WASH -> drawWash(screenPos, displayColor)
+                            else -> drawPar(screenPos, displayColor)
+                        }
                     }
                     RenderHint.BAR -> {
                         val pixelCount = profile?.physical?.pixelCount ?: 8

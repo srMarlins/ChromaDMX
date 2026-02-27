@@ -44,8 +44,10 @@ class RadialPulse3DEffect : SpatialEffect {
         val speed = params.getFloat("speed", 2.0f)
         val color = params.getColor("color", Color.WHITE)
         val width = params.getFloat("width", 0.3f).coerceAtLeast(0.001f)
+        val maxRadius = params.getFloat("maxRadius", 10f).coerceAtLeast(0.1f)
 
-        val radius = time * speed
+        // Wrap so the pulse repeats after expanding to maxRadius
+        val radius = MathUtils.wrap(time * speed, maxRadius)
         val halfWidth = width * 0.5f
 
         return Context(center, radius, halfWidth, color)

@@ -151,6 +151,7 @@ class StageViewModelV2(
         scope.launch {
             repo.allFixtures().collect { dbFixtures ->
                 _fixtureState.update { it.copy(fixtures = dbFixtures) }
+                engine.updateFixtures(dbFixtures)
             }
         }
     }
