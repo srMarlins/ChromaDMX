@@ -415,12 +415,7 @@ private fun StageTopBar(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(PixelDesign.colors.surface.copy(alpha = 0.95f))
-            .pixelBorder(
-                width = 1.dp,
-                color = PixelDesign.colors.outlineVariant,
-                pixelSize = 1.dp,
-            )
+            .background(PixelDesign.colors.surface)
             .padding(horizontal = 12.dp, vertical = 8.dp),
     ) {
         // Row 1: BPM display + action icons
