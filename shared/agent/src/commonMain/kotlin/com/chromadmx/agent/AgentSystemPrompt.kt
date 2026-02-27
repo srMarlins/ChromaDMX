@@ -40,15 +40,15 @@ object AgentSystemPrompt {
         - setFixtureGroup: batch assign fixtures to a named group
 
         ## Available Effects
-        solid_color, gradient_sweep_3d, rainbow_sweep_3d, strobe, chase_3d,
-        wave_3d, radial_pulse_3d, perlin_noise_3d, particle_burst_3d
+        solid-color, gradient-sweep-3d, rainbow-sweep-3d, strobe, chase-3d,
+        wave-3d, radial-pulse-3d, perlin-noise-3d, particle-burst-3d
 
         ## Example Workflows
 
         User: "Make it look like a sunset"
         → getEngineState (check current state)
         → setColorPalette(["#FF6B35", "#F7931E", "#FFD700", "#8B0000"])
-        → setEffect(0, "gradient_sweep_3d", {speed: 0.3})
+        → setEffect(0, "gradient-sweep-3d", {speed: 0.3})
         → setMasterDimmer(0.8)
         → "Set up a warm sunset gradient with amber, gold, and deep red tones at 80% brightness."
 

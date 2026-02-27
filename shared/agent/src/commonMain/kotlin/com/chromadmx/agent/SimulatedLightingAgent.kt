@@ -8,6 +8,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Keyword-matching agent that executes REAL tool calls without an LLM.
@@ -29,6 +31,7 @@ class SimulatedLightingAgent(
 ) : LightingAgentInterface {
 
     private val conversationStore = ConversationStore()
+    private val sendMutex = Mutex()
 
     override val conversationHistory: StateFlow<List<ChatMessage>>
         get() = conversationStore.messages
@@ -39,11 +42,11 @@ class SimulatedLightingAgent(
     /** Always available — no API key required. */
     override val isAvailable: Boolean = true
 
-    override suspend fun send(userMessage: String): String {
+    override suspend fun send(userMessage: String): String = sendMutex.withLock {
         _isProcessing.value = true
         conversationStore.addUserMessage(userMessage)
 
-        return try {
+        try {
             // Simulate a brief processing delay for UX
             delay(SIMULATED_DELAY_MS)
 
@@ -105,11 +108,11 @@ class SimulatedLightingAgent(
             lower.containsAny("underwater", "deep sea", "aqua") -> handleCreativeScene("underwater")
 
             // Direct effect requests (keywords chosen to avoid overlap with preset matches above)
-            lower.containsAny("gradient", "sweep") -> handleEffectDirect("gradient_sweep_3d", "Gradient Sweep")
-            lower.containsAny("chase") -> handleEffectDirect("chase_3d", "Chase")
-            lower.containsAny("radial") -> handleEffectDirect("radial_pulse_3d", "Radial Pulse")
-            lower.containsAny("noise", "perlin", "organic") -> handleEffectDirect("perlin_noise_3d", "Perlin Noise")
-            lower.containsAny("burst", "particle", "explosion") -> handleEffectDirect("particle_burst_3d", "Particle Burst")
+            lower.containsAny("gradient", "sweep") -> handleEffectDirect("gradient-sweep-3d", "Gradient Sweep")
+            lower.containsAny("chase") -> handleEffectDirect("chase-3d", "Chase")
+            lower.containsAny("radial") -> handleEffectDirect("radial-pulse-3d", "Radial Pulse")
+            lower.containsAny("noise", "perlin", "organic") -> handleEffectDirect("perlin-noise-3d", "Perlin Noise")
+            lower.containsAny("burst", "particle", "explosion") -> handleEffectDirect("particle-burst-3d", "Particle Burst")
 
             // Save/create preset
             lower.containsAny("save", "create preset", "store", "remember this") -> handleCreatePreset(lower)
@@ -231,27 +234,27 @@ class SimulatedLightingAgent(
         val config = when (mood) {
             "sunset" -> SceneConfig(
                 listOf("#FF6B35", "#F7931E", "#FFD700", "#8B0000"),
-                "gradient_sweep_3d", mapOf("speed" to 0.3f), 0.8f,
+                "gradient-sweep-3d", mapOf("speed" to 0.3f), 0.8f,
                 "Warm sunset gradient with amber, gold, and deep red"
             )
             "energetic" -> SceneConfig(
                 listOf("#FF00FF", "#00FFFF", "#FFFF00", "#FF0000"),
-                "chase_3d", mapOf("speed" to 3.0f), 1.0f,
+                "chase-3d", mapOf("speed" to 3.0f), 1.0f,
                 "High-energy chase with neon colors at full brightness"
             )
             "calm" -> SceneConfig(
                 listOf("#4169E1", "#6A5ACD", "#483D8B", "#191970"),
-                "wave_3d", mapOf("speed" to 0.5f), 0.5f,
+                "wave-3d", mapOf("speed" to 0.5f), 0.5f,
                 "Calm blue waves at 50% brightness"
             )
             "spooky" -> SceneConfig(
                 listOf("#8B0000", "#FF4500", "#800080", "#000000"),
-                "perlin_noise_3d", mapOf("speed" to 0.8f), 0.6f,
+                "perlin-noise-3d", mapOf("speed" to 0.8f), 0.6f,
                 "Eerie noise pattern in dark reds and purples"
             )
             "underwater" -> SceneConfig(
                 listOf("#006994", "#00CED1", "#20B2AA", "#008B8B"),
-                "wave_3d", mapOf("speed" to 0.7f), 0.7f,
+                "wave-3d", mapOf("speed" to 0.7f), 0.7f,
                 "Deep sea waves in teal and cyan"
             )
             else -> return "I don't know that mood. Try: sunset, energetic, calm, spooky, or underwater."
