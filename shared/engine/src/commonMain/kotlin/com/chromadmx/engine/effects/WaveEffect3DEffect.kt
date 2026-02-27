@@ -40,7 +40,9 @@ class WaveEffect3DEffect : SpatialEffect {
         val colorA = colors.getOrElse(0) { Color.BLACK }
         val colorB = colors.getOrElse(1) { Color.WHITE }
 
-        val timeOffset = time * speed
+        // Scale animation time by BPM ratio (1.0x at 120 BPM baseline)
+        val beatTime = if (beat.bpm > 0f) time * (beat.bpm / 120f) else time
+        val timeOffset = beatTime * speed
 
         return Context(axis, wavelength, timeOffset, colorA, colorB)
     }

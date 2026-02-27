@@ -6,6 +6,8 @@ import com.chromadmx.core.model.DmxNode
 import com.chromadmx.core.model.FixtureProfile
 import com.chromadmx.core.model.FixtureType
 import com.chromadmx.core.model.Channel
+import com.chromadmx.core.model.Fixture3D
+import com.chromadmx.core.persistence.FixtureStore
 import com.chromadmx.core.persistence.SettingsStore
 import com.chromadmx.networking.ConnectionState
 import com.chromadmx.networking.DmxTransport
@@ -79,6 +81,30 @@ private class FakeFixtureDiscovery : FixtureDiscovery {
 }
 
 /**
+ * Fake [FixtureStore] backed by an in-memory list for testing.
+ */
+private class FakeFixtureStore : FixtureStore {
+    private val _fixtures = MutableStateFlow<List<Fixture3D>>(emptyList())
+    val savedFixtures: List<Fixture3D> get() = _fixtures.value
+    var deleteAllCount = 0; private set
+
+    override fun allFixtures(): Flow<List<Fixture3D>> = _fixtures
+    override fun saveFixture(fixture: Fixture3D) {
+        _fixtures.value = _fixtures.value + fixture
+    }
+    override fun saveAll(fixtures: List<Fixture3D>) {
+        _fixtures.value = _fixtures.value + fixtures
+    }
+    override fun deleteFixture(fixtureId: String) {
+        _fixtures.value = _fixtures.value.filter { it.fixture.fixtureId != fixtureId }
+    }
+    override fun deleteAll() {
+        deleteAllCount++
+        _fixtures.value = emptyList()
+    }
+}
+
+/**
  * Fake [SettingsStore] backed by MutableStateFlows for in-memory testing.
  */
 private class FakeSettingsStore : SettingsStore {
@@ -128,6 +154,7 @@ class SettingsViewModelV2Test {
         settingsStore: FakeSettingsStore = createSettingsStore(),
         transportRouter: DmxTransportRouter? = null,
         fixtureDiscovery: FakeFixtureDiscovery = FakeFixtureDiscovery(),
+        fixtureStore: FakeFixtureStore? = null,
         scope: CoroutineScope,
     ): Triple<SettingsViewModelV2, DmxTransportRouter, FakeFixtureDiscovery> {
         val router = transportRouter ?: createRouter(scope)
@@ -136,6 +163,7 @@ class SettingsViewModelV2Test {
             transportRouter = router,
             fixtureDiscovery = fixtureDiscovery,
             scope = scope,
+            fixtureStore = fixtureStore,
         )
         return Triple(vm, router, fixtureDiscovery)
     }
@@ -450,6 +478,20 @@ class SettingsViewModelV2Test {
         val (vm, _, _) = createVm(scope = scope)
 
         vm.onEvent(SettingsEvent.SetRigPreset(RigPreset.FESTIVAL_STAGE))
+        assertEquals(RigPreset.FESTIVAL_STAGE, vm.state.value.selectedRigPreset)
+    }
+
+    @Test
+    fun setRigPresetPersistsFixtures() = runTest {
+        val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler) + SupervisorJob())
+        val store = FakeFixtureStore()
+        val (vm, _, _) = createVm(fixtureStore = store, scope = scope)
+
+        vm.onEvent(SettingsEvent.SetRigPreset(RigPreset.FESTIVAL_STAGE))
+        advanceUntilIdle()
+
+        assertEquals(1, store.deleteAllCount)
+        assertTrue(store.savedFixtures.isNotEmpty())
         assertEquals(RigPreset.FESTIVAL_STAGE, vm.state.value.selectedRigPreset)
     }
 

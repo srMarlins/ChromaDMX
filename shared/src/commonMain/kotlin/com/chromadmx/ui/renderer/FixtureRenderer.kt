@@ -8,7 +8,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 
 /**
  * Canvas drawing functions for rendering individual fixture types in
- * the isometric stage preview.
+ * the stage preview.
  *
  * Each function draws a fixture at the given screen position using the
  * pixel-art aesthetic (glow halos, solid blocks, CRT-style colors)

@@ -203,6 +203,36 @@ class BeatSyncedEffectsTest {
     }
 
     @Test
+    fun higherBpmSpeedsUpGradientSweep() {
+        val effect = GradientSweep3DEffect()
+        val params = EffectParams()
+            .with("axis", "x")
+            .with("speed", 1.0f)
+            .with("palette", listOf(Color.RED, Color.GREEN, Color.BLUE))
+
+        val pos = Vec3(0.3f, 0f, 0f)
+        val time = 0.7f
+
+        // At 120 BPM (baseline), beatTime = 0.7 * 1.0 = 0.7
+        val beat120 = BeatState(bpm = 120f, beatPhase = 0f, barPhase = 0f, elapsed = 0f)
+        val c120 = effect.compute(pos, time, beat120, params)
+
+        // At 240 BPM, beatTime = 0.7 * 2.0 = 1.4 (double speed)
+        val beat240 = BeatState(bpm = 240f, beatPhase = 0f, barPhase = 0f, elapsed = 0f)
+        val c240 = effect.compute(pos, time, beat240, params)
+
+        // At 60 BPM, beatTime = 0.7 * 0.5 = 0.35 (half speed)
+        val beat60 = BeatState(bpm = 60f, beatPhase = 0f, barPhase = 0f, elapsed = 0f)
+        val c60 = effect.compute(pos, time, beat60, params)
+
+        // All three should differ (different effective time offsets → different palette positions)
+        val diff120vs240 = abs(c120.r - c240.r) + abs(c120.g - c240.g) + abs(c120.b - c240.b)
+        val diff120vs60 = abs(c120.r - c60.r) + abs(c120.g - c60.g) + abs(c120.b - c60.b)
+        assertTrue(diff120vs240 > 0.01f, "240 BPM should produce different color than 120 BPM")
+        assertTrue(diff120vs60 > 0.01f, "60 BPM should produce different color than 120 BPM")
+    }
+
+    @Test
     fun waveSpeedShiftsPhase() {
         val effect = WaveEffect3DEffect()
         val params = EffectParams()

@@ -32,8 +32,9 @@ class RainbowSweep3DEffect : SpatialEffect {
         val speed = params.getFloat("speed", 1.0f)
         val spread = params.getFloat("spread", 1.0f)
 
-        // Pre-calculate time offset: time * speed
-        val timeOffset = time * speed
+        // Scale animation time by BPM ratio (1.0x at 120 BPM baseline)
+        val beatTime = if (beat.bpm > 0f) time * (beat.bpm / 120f) else time
+        val timeOffset = beatTime * speed
 
         return Context(axis, spread, timeOffset)
     }

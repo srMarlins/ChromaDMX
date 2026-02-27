@@ -36,10 +36,9 @@ class PerlinNoise3DEffect : SpatialEffect {
         val speed = params.getFloat("speed", 0.5f)
         val palette = params.getColorList("palette", DEFAULT_PALETTE)
 
-        // The time component is constant for the frame, so we pre-calculate it as a Z offset
-        // Note: The original formula was (pos.z * scale + time * speed).
-        // Here we pre-calculate (time * speed) as zOffset.
-        val zOffset = time * speed
+        // Scale animation time by BPM ratio (1.0x at 120 BPM baseline)
+        val beatTime = if (beat.bpm > 0f) time * (beat.bpm / 120f) else time
+        val zOffset = beatTime * speed
 
         return Context(scale, zOffset, palette)
     }

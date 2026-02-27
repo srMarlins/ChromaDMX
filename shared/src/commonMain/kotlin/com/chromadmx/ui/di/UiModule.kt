@@ -3,6 +3,7 @@ package com.chromadmx.ui.di
 import com.chromadmx.agent.LightingAgent
 import com.chromadmx.agent.controller.FixtureController
 import com.chromadmx.core.persistence.FixtureRepository
+import com.chromadmx.core.persistence.FixtureStore
 import com.chromadmx.core.persistence.NetworkStateRepository
 import com.chromadmx.networking.ble.BleProvisioningService
 import com.chromadmx.ui.navigation.AppStateManager
@@ -90,6 +91,7 @@ val uiModule = module {
             transportRouter = get(),
             fixtureDiscovery = get(),
             scope = vmScope,
+            fixtureStore = getOrNull<FixtureStore>(),
         )
     }
 
