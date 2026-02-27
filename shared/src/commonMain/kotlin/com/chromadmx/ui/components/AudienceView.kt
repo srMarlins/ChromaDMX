@@ -103,6 +103,11 @@ fun AudienceView(
         val maxZ = fixtures.maxOf { it.position.z }
         val rangeZ = maxZ - minZ
 
+        // Compute Y bounds for depth scaling (once, outside the fixture loop)
+        val minY = fixtures.minOf { it.position.y }
+        val maxY = fixtures.maxOf { it.position.y }
+        val rangeY = (maxY - minY).coerceAtLeast(1f)
+
         val padding = 60f
         val availableW = size.width - 2 * padding
         val stageH = stageBottom - stageTop
@@ -115,12 +120,10 @@ fun AudienceView(
         val trussY1 = stageTop + stageH * 0.15f // upper truss
         val trussY2 = stageTop + stageH * 0.45f // lower truss
 
-        // Collect distinct Z levels for truss drawing
-        val zLevels = mutableSetOf<Float>()
-        for (f in fixtures) {
-            // Round to nearest 0.1 to group nearby fixtures
-            zLevels.add((f.position.z * 10f).let { kotlin.math.round(it) } / 10f)
-        }
+        // Collect distinct Z levels for truss drawing (rounded to nearest 0.1)
+        val zLevels = fixtures
+            .map { (it.position.z * 10f).let { z -> kotlin.math.round(z) } / 10f }
+            .toSet()
 
         // Draw truss bars through actual fixture heights
         if (rangeZ < 0.1f) {
@@ -161,9 +164,6 @@ fun AudienceView(
 
             // Subtle depth scaling: further from audience (higher Y) = slightly smaller
             val depthScale = if (fixtures.size > 1) {
-                val minY = fixtures.minOf { it.position.y }
-                val maxY = fixtures.maxOf { it.position.y }
-                val rangeY = (maxY - minY).coerceAtLeast(1f)
                 val normY = ((fixture.position.y - minY) / rangeY).coerceIn(0f, 1f)
                 1f - normY * 0.15f // 0.85x to 1x scale
             } else 1f

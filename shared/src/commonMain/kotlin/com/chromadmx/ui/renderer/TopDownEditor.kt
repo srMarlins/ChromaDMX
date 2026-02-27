@@ -16,7 +16,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
@@ -29,6 +28,11 @@ import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.core.model.FixtureType
 import com.chromadmx.core.model.RenderHint
 import com.chromadmx.core.model.Vec3
+import com.chromadmx.ui.renderer.TopDownRenderer.drawBarFixture
+import com.chromadmx.ui.renderer.TopDownRenderer.drawBeamConeFixture
+import com.chromadmx.ui.renderer.TopDownRenderer.drawParFixture
+import com.chromadmx.ui.renderer.TopDownRenderer.drawStrobeFixture
+import com.chromadmx.ui.renderer.TopDownRenderer.drawWashFixture
 import com.chromadmx.core.model.Color as DmxColor
 import com.chromadmx.ui.components.toComposeColor
 
@@ -47,11 +51,6 @@ private val SelectionColor = Color(0xFF00FBFF)
 /** Highlight color for edit-mode drag crosshair. */
 private val EditDragColor = Color(0xFFFFFF00)
 
-/** Standardized dark fixture housing color. */
-private val HousingColor = Color(0xFF1A1A2E)
-
-/** Lighter border for fixture housing. */
-private val HousingBorderColor = Color(0xFF2A2A3E)
 
 /**
  * Canvas-based top-down fixture editor with profile-aware rendering.
@@ -302,17 +301,17 @@ fun TopDownEditor(
                     RenderHint.POINT -> {
                         val fixtureType = profile?.type ?: FixtureType.PAR
                         when (fixtureType) {
-                            FixtureType.STROBE -> drawStrobeFixture(cx, cy, composeColor, isSelected, fixtureScale)
-                            FixtureType.WASH -> drawWashFixture(cx, cy, composeColor, isSelected, fixtureScale)
-                            else -> drawParFixture(cx, cy, composeColor, isSelected, fixtureScale)
+                            FixtureType.STROBE -> drawStrobeFixture(cx, cy, composeColor, isSelected, SelectionColor, fixtureScale)
+                            FixtureType.WASH -> drawWashFixture(cx, cy, composeColor, isSelected, SelectionColor, fixtureScale)
+                            else -> drawParFixture(cx, cy, composeColor, isSelected, SelectionColor, fixtureScale)
                         }
                     }
                     RenderHint.BAR -> {
                         val pixelCount = profile?.physical?.pixelCount ?: 8
-                        drawBarFixture(cx, cy, composeColor, pixelCount, isSelected, fixtureScale)
+                        drawBarFixture(cx, cy, composeColor, pixelCount, isSelected, SelectionColor, fixtureScale)
                     }
                     RenderHint.BEAM_CONE -> drawBeamConeFixture(
-                        cx, cy, composeColor, isSelected, reusablePath, fixtureScale,
+                        cx, cy, composeColor, isSelected, reusablePath, SelectionColor, fixtureScale,
                     )
                 }
             }
@@ -341,238 +340,8 @@ fun TopDownEditor(
 }
 
 // ---------------------------------------------------------------------------
-// Drawing helpers — top-level private functions to avoid DrawScope allocations
+// Drawing helpers
 // ---------------------------------------------------------------------------
-
-/**
- * Draw a PAR fixture: square housing with colored lens and radial glow.
- */
-private fun DrawScope.drawParFixture(
-    cx: Float,
-    cy: Float,
-    color: Color,
-    isSelected: Boolean,
-    scale: Float = 1f,
-) {
-    val housingSize = 16f * scale
-    val half = housingSize / 2f
-    val lensInset = 2f * scale
-    val lensSize = housingSize - 2 * lensInset
-
-    // Radial glow
-    val glowRadius = 24f * scale
-    drawCircle(
-        brush = Brush.radialGradient(
-            colors = listOf(color.copy(alpha = 0.35f), Color.Transparent),
-            center = Offset(cx, cy),
-            radius = glowRadius,
-        ),
-        radius = glowRadius,
-        center = Offset(cx, cy),
-    )
-    // Housing
-    drawRect(HousingBorderColor, Offset(cx - half - 1f, cy - half - 1f), Size(housingSize + 2f, housingSize + 2f))
-    drawRect(HousingColor, Offset(cx - half, cy - half), Size(housingSize, housingSize))
-    // Lens
-    drawRect(color, Offset(cx - half + lensInset, cy - half + lensInset), Size(lensSize, lensSize))
-    // Mount brackets
-    drawRect(HousingBorderColor, Offset(cx - 4f * scale, cy - half - 3f * scale), Size(2f * scale, 3f * scale))
-    drawRect(HousingBorderColor, Offset(cx + 2f * scale, cy - half - 3f * scale), Size(2f * scale, 3f * scale))
-
-    if (isSelected) drawSelectionBorder(cx, cy, half + 2f)
-}
-
-/**
- * Draw a STROBE fixture: wide rectangular flash panel.
- */
-private fun DrawScope.drawStrobeFixture(
-    cx: Float,
-    cy: Float,
-    color: Color,
-    isSelected: Boolean,
-    scale: Float = 1f,
-) {
-    val width = 22f * scale
-    val height = 10f * scale
-    val halfW = width / 2f
-    val halfH = height / 2f
-
-    // Sharp flash glow
-    val glowRadius = 28f * scale
-    drawCircle(
-        brush = Brush.radialGradient(
-            colors = listOf(Color.White.copy(alpha = 0.3f), Color.Transparent),
-            center = Offset(cx, cy),
-            radius = glowRadius,
-        ),
-        radius = glowRadius,
-        center = Offset(cx, cy),
-    )
-    // Housing
-    drawRect(HousingBorderColor, Offset(cx - halfW - 1f, cy - halfH - 1f), Size(width + 2f, height + 2f))
-    drawRect(HousingColor, Offset(cx - halfW, cy - halfH), Size(width, height))
-    // Flash panel
-    val flashColor = Color(
-        red = (color.red + 1f) / 2f,
-        green = (color.green + 1f) / 2f,
-        blue = (color.blue + 1f) / 2f,
-    )
-    drawRect(flashColor, Offset(cx - halfW + 2f * scale, cy - halfH + 2f * scale), Size(width - 4f * scale, height - 4f * scale))
-
-    if (isSelected) drawSelectionBorder(cx, cy, halfW + 2f)
-}
-
-/**
- * Draw a WASH fixture: larger housing with wide soft glow.
- */
-private fun DrawScope.drawWashFixture(
-    cx: Float,
-    cy: Float,
-    color: Color,
-    isSelected: Boolean,
-    scale: Float = 1f,
-) {
-    val housingSize = 20f * scale
-    val half = housingSize / 2f
-    val lensRadius = 7f * scale
-
-    // Wide soft glow
-    val glowRadius = 36f * scale
-    drawCircle(
-        brush = Brush.radialGradient(
-            colors = listOf(color.copy(alpha = 0.25f), Color.Transparent),
-            center = Offset(cx, cy),
-            radius = glowRadius,
-        ),
-        radius = glowRadius,
-        center = Offset(cx, cy),
-    )
-    // Housing
-    drawRect(HousingBorderColor, Offset(cx - half - 1f, cy - half - 1f), Size(housingSize + 2f, housingSize + 2f))
-    drawRect(HousingColor, Offset(cx - half, cy - half), Size(housingSize, housingSize))
-    // Round lens
-    drawCircle(color, radius = lensRadius, center = Offset(cx, cy))
-    // Mount brackets
-    drawRect(HousingBorderColor, Offset(cx - 5f * scale, cy - half - 3f * scale), Size(2f * scale, 3f * scale))
-    drawRect(HousingBorderColor, Offset(cx + 3f * scale, cy - half - 3f * scale), Size(2f * scale, 3f * scale))
-
-    if (isSelected) drawSelectionBorder(cx, cy, half + 2f)
-}
-
-/**
- * Draw a BAR fixture (Pixel Bar): horizontal row of colored segments.
- */
-private fun DrawScope.drawBarFixture(
-    cx: Float,
-    cy: Float,
-    color: Color,
-    pixelCount: Int,
-    isSelected: Boolean,
-    scale: Float = 1f,
-) {
-    val segmentW = 8f * scale
-    val segmentH = 12f * scale
-    val gap = 2f * scale
-    val totalW = pixelCount * segmentW + (pixelCount - 1) * gap
-    val startX = cx - totalW / 2f
-    val startY = cy - segmentH / 2f
-
-    // Radial glow around entire bar (omnidirectional)
-    drawCircle(
-        brush = Brush.radialGradient(
-            colors = listOf(color.copy(alpha = 0.15f), Color.Transparent),
-            center = Offset(cx, cy),
-            radius = totalW / 2f + 12f,
-        ),
-        radius = totalW / 2f + 12f,
-        center = Offset(cx, cy),
-    )
-
-    // Bar housing background
-    drawRect(
-        color = HousingColor,
-        topLeft = Offset(startX - 3f, startY - 3f),
-        size = Size(totalW + 6f, segmentH + 6f),
-    )
-
-    // Individual pixel segments
-    for (i in 0 until pixelCount) {
-        val segX = startX + i * (segmentW + gap)
-        val brightness = 0.8f + 0.2f * ((i % 3).toFloat() / 2f)
-        drawRect(
-            color = color.copy(alpha = brightness),
-            topLeft = Offset(segX, startY),
-            size = Size(segmentW, segmentH),
-        )
-    }
-
-    if (isSelected) {
-        val selRadius = (totalW / 2f).coerceAtLeast(16f)
-        drawSelectionBorder(cx, cy, selRadius)
-    }
-}
-
-/**
- * Draw a BEAM_CONE fixture (Moving Head): circle with a directional indicator line.
- */
-private fun DrawScope.drawBeamConeFixture(
-    cx: Float,
-    cy: Float,
-    color: Color,
-    isSelected: Boolean,
-    reusablePath: Path,
-    scale: Float = 1f,
-) {
-    // Beam cone (downward triangle-like glow)
-    val beamLength = 30f * scale
-    val beamHalfWidth = 12f * scale
-    reusablePath.reset()
-    reusablePath.moveTo(cx, cy)
-    reusablePath.lineTo(cx - beamHalfWidth, cy + beamLength)
-    reusablePath.lineTo(cx + beamHalfWidth, cy + beamLength)
-    reusablePath.close()
-    drawPath(
-        path = reusablePath,
-        color = color.copy(alpha = 0.2f),
-    )
-
-    // Square housing (schematic style)
-    val housingSize = 14f * scale
-    val hh = housingSize / 2f
-    drawRect(HousingBorderColor, Offset(cx - hh - 1f, cy - hh - 1f), Size(housingSize + 2f, housingSize + 2f))
-    drawRect(HousingColor, Offset(cx - hh, cy - hh), Size(housingSize, housingSize))
-    // Inner color lens
-    val lensInset = 2f * scale
-    drawRect(color, Offset(cx - hh + lensInset, cy - hh + lensInset), Size(housingSize - 2 * lensInset, housingSize - 2 * lensInset))
-    // Directional indicator
-    drawLine(
-        color = color.copy(alpha = 0.7f),
-        start = Offset(cx, cy + hh),
-        end = Offset(cx, cy + hh + 8f * scale),
-        strokeWidth = 2f,
-    )
-
-    if (isSelected) {
-        drawSelectionBorder(cx, cy, hh + 2f)
-    }
-}
-
-/**
- * Draw a pixelated selection border around a fixture.
- */
-private fun DrawScope.drawSelectionBorder(cx: Float, cy: Float, radius: Float) {
-    val r = radius + 4f
-    val pixel = 3f
-
-    // Top edge
-    drawRect(SelectionColor, Offset(cx - r, cy - r), Size(2 * r, pixel))
-    // Bottom edge
-    drawRect(SelectionColor, Offset(cx - r, cy + r - pixel), Size(2 * r, pixel))
-    // Left edge
-    drawRect(SelectionColor, Offset(cx - r, cy - r), Size(pixel, 2 * r))
-    // Right edge
-    drawRect(SelectionColor, Offset(cx + r - pixel, cy - r), Size(pixel, 2 * r))
-}
 
 /**
  * Draw subtle LED matrix grid lines on the canvas background.
