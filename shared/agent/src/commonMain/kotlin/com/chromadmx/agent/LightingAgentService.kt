@@ -18,6 +18,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 
 /**
@@ -37,6 +39,9 @@ class LightingAgentService(
 ) : LightingAgentInterface {
 
     private val conversationStore = ConversationStore()
+
+    /** Serializes [send] calls so concurrent requests are queued, not interleaved. */
+    private val sendMutex = Mutex()
 
     override val conversationHistory: StateFlow<List<ChatMessage>>
         get() = conversationStore.messages
@@ -97,27 +102,29 @@ class LightingAgentService(
             return "Agent unavailable - no API key configured. Set GOOGLE_API_KEY or ANTHROPIC_API_KEY."
         }
 
-        _isProcessing.value = true
-        conversationStore.addUserMessage(userMessage)
+        return sendMutex.withLock {
+            _isProcessing.value = true
+            conversationStore.addUserMessage(userMessage)
 
-        return try {
-            val contextPrompt = buildContextualPrompt(userMessage)
-            val response = withTimeout(TIMEOUT_MS) {
-                agentService.createAgentAndRun(contextPrompt)
+            try {
+                val contextPrompt = buildContextualPrompt(userMessage)
+                val response = withTimeout(TIMEOUT_MS) {
+                    agentService.createAgentAndRun(contextPrompt)
+                }
+                conversationStore.addAssistantMessage(response)
+                response
+            } catch (e: Exception) {
+                val error = "Error: ${e.message}"
+                conversationStore.addSystemMessage(error)
+                error
+            } finally {
+                _isProcessing.value = false
+                _toolCallsInFlight.value = emptyList()
             }
-            conversationStore.addAssistantMessage(response)
-            response
-        } catch (e: Exception) {
-            val error = "Error: ${e.message}"
-            conversationStore.addAssistantMessage(error)
-            error
-        } finally {
-            _isProcessing.value = false
-            _toolCallsInFlight.value = emptyList()
         }
     }
 
-    fun clearHistory() {
+    internal fun clearHistory() {
         conversationStore.clear()
     }
 

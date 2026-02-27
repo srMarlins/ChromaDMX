@@ -64,7 +64,5 @@ val agentModule: Module = module {
         }
     }
 
-    // Keep LightingAgent available for direct tool dispatch (e.g. PreGenerationService).
-    single { LightingAgent(get(), get()) }
     single { PreGenerationService(get()) }
 }
