@@ -12,6 +12,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,7 +27,9 @@ import com.chromadmx.ui.screen.stage.StageScreen
 import com.chromadmx.ui.state.MascotEvent
 import com.chromadmx.ui.state.SetupEvent
 import com.chromadmx.ui.state.StageEvent
+import com.chromadmx.core.persistence.SettingsStore
 import com.chromadmx.ui.theme.ChromaDmxTheme
+import com.chromadmx.ui.theme.PixelColorTheme
 import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.viewmodel.MascotViewModelV2
 import com.chromadmx.ui.viewmodel.ProvisioningViewModel
@@ -49,7 +52,15 @@ import org.koin.compose.getKoin
  */
 @Composable
 fun ChromaDmxApp() {
-    ChromaDmxTheme {
+    val settingsStore = resolveOrNull<SettingsStore>()
+    val themeName by settingsStore?.themePreference?.collectAsState(initial = PixelColorTheme.MatchaDark.name)
+        ?: remember { mutableStateOf(PixelColorTheme.MatchaDark.name) }
+    val currentTheme = remember(themeName) {
+        PixelColorTheme.entries.firstOrNull { it.name == themeName }
+            ?: PixelColorTheme.MatchaDark
+    }
+
+    ChromaDmxTheme(colorTheme = currentTheme) {
         val appStateManager = resolveOrNull<AppStateManager>()
         val fallbackScreen = remember { MutableStateFlow(AppScreen.Setup) }
         val currentScreenFlow = appStateManager?.currentScreen ?: fallbackScreen

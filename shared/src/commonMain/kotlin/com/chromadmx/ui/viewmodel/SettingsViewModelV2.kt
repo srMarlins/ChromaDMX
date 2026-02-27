@@ -10,6 +10,7 @@ import com.chromadmx.service.DataExportService
 import com.chromadmx.service.ImportResult
 import com.chromadmx.simulation.fixtures.SimulatedFixtureRig
 import com.chromadmx.ui.state.AgentStatus
+import com.chromadmx.ui.theme.PixelColorTheme
 import com.chromadmx.ui.state.DataTransferStatus
 import com.chromadmx.ui.state.SettingsEvent
 import com.chromadmx.ui.state.SettingsUiState
@@ -52,6 +53,15 @@ class SettingsViewModelV2(
         scope.launch {
             settingsRepository.isSimulation.collect { sim ->
                 _state.update { it.copy(simulationEnabled = sim) }
+            }
+        }
+
+        // Derive theme preference from the persisted repository value.
+        scope.launch {
+            settingsRepository.themePreference.collect { name ->
+                val theme = PixelColorTheme.entries.firstOrNull { it.name == name }
+                    ?: PixelColorTheme.MatchaDark
+                _state.update { it.copy(themePreference = theme) }
             }
         }
     }
@@ -119,6 +129,9 @@ class SettingsViewModelV2(
             is SettingsEvent.ImportAppData -> handleImport(event.json)
             is SettingsEvent.DismissDataTransferStatus ->
                 _state.update { it.copy(dataTransferStatus = DataTransferStatus.Idle) }
+
+            is SettingsEvent.SetThemePreference ->
+                setThemePreference(event.theme)
         }
     }
 
@@ -169,6 +182,13 @@ class SettingsViewModelV2(
     private fun resetOnboarding() {
         scope.launch {
             settingsRepository.setSetupCompleted(false)
+        }
+    }
+
+    private fun setThemePreference(theme: PixelColorTheme) {
+        _state.update { it.copy(themePreference = theme) }
+        scope.launch {
+            settingsRepository.setThemePreference(theme.name)
         }
     }
 
