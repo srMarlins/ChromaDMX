@@ -66,6 +66,16 @@ data class PixelColors(
     val outline: Color = MatchaPrimary.copy(alpha = 0.6f),
     val outlineVariant: Color = MatchaPrimary.copy(alpha = 0.3f),
     val glow: Color = MatchaPrimary,
+    // Stage infrastructure colors
+    val stageBackground: Color = Color(0xFF060612),
+    val stageFloor: Color = Color(0xFF0A0A14),
+    val stageHorizon: Color = Color(0xFF1A1A30),
+    val trussColor: Color = Color(0xFF2A2A3E),
+    val trussBorder: Color = Color(0xFF3A3A52),
+    val fixtureHousing: Color = Color(0xFF1A1A2E),
+    val fixtureHousingBorder: Color = Color(0xFF2A2A3E),
+    val scanlineColor: Color = Color.White.copy(alpha = 0.02f),
+    val gridLineColor: Color = Color.White.copy(alpha = 0.05f),
 )
 
 // ── Pre-defined Theme Palettes ──────────────────────────────────────
@@ -99,6 +109,15 @@ val MatchaLightColors = PixelColors(
     outline = Color(0xFF8D9D85),             // Muted green (solid, no glow)
     outlineVariant = Color(0xFF8D9D85).copy(alpha = 0.5f),
     glow = Color(0xFF558B2F),
+    stageBackground = Color(0xFFE8E8E0),
+    stageFloor = Color(0xFFD8D8D0),
+    stageHorizon = Color(0xFFC8C8C0),
+    trussColor = Color(0xFFB0B0A8),
+    trussBorder = Color(0xFFC0C0B8),
+    fixtureHousing = Color(0xFFA0A098),
+    fixtureHousingBorder = Color(0xFFB8B8B0),
+    scanlineColor = Color.Black.copy(alpha = 0.02f),
+    gridLineColor = Color.Black.copy(alpha = 0.04f),
 )
 
 /** High-contrast accessibility palette — pure black/white, no glow. */
@@ -127,6 +146,15 @@ val HighContrastColors = PixelColors(
     outline = Color(0xFFFFFFFF),             // Full-opacity borders
     outlineVariant = Color(0xFFFFFFFF).copy(alpha = 0.7f),
     glow = Color(0xFFFFFF00),
+    stageBackground = Color(0xFF000000),
+    stageFloor = Color(0xFF0A0A0A),
+    stageHorizon = Color(0xFFFFFFFF),
+    trussColor = Color(0xFFCCCCCC),
+    trussBorder = Color(0xFFFFFFFF),
+    fixtureHousing = Color(0xFF333333),
+    fixtureHousingBorder = Color(0xFFFFFFFF),
+    scanlineColor = Color.White.copy(alpha = 0.05f),
+    gridLineColor = Color.White.copy(alpha = 0.1f),
 )
 
 /**
