@@ -45,6 +45,7 @@ DerivedData/
 
 # KMP
 *.klib
+.kotlin/
 
 # Environment
 .env
