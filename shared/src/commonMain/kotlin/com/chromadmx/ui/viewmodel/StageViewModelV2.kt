@@ -23,6 +23,8 @@ import com.chromadmx.tempo.tap.TapTempoClock
 import com.chromadmx.core.model.Color as DmxColor
 import com.chromadmx.ui.state.*
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -34,6 +36,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Stage screen ViewModel with 5 sliced StateFlows.
@@ -353,7 +356,9 @@ class StageViewModelV2(
     private fun handlePersistFixturePosition(index: Int) {
         val fixture = _fixtureState.value.fixtures.getOrNull(index) ?: return
         scope.launch {
-            fixtureRepository?.updatePosition(fixture.fixture.fixtureId, fixture.position)
+            withContext(Dispatchers.IO) {
+                fixtureRepository?.updatePosition(fixture.fixture.fixtureId, fixture.position)
+            }
         }
     }
 
@@ -361,7 +366,7 @@ class StageViewModelV2(
         _fixtureState.update { state ->
             state.copy(fixtures = state.fixtures + fixture)
         }
-        fixtureRepository?.saveFixture(fixture)
+        scope.launch { withContext(Dispatchers.IO) { fixtureRepository?.saveFixture(fixture) } }
     }
 
     private fun handleRemoveFixture(index: Int) {
@@ -377,7 +382,7 @@ class StageViewModelV2(
                 state
             }
         }
-        removedFixtureId?.let { fixtureRepository?.deleteFixture(it) }
+        removedFixtureId?.let { id -> scope.launch { withContext(Dispatchers.IO) { fixtureRepository?.deleteFixture(id) } } }
     }
 
     private fun handleUpdateZHeight(index: Int, z: Float) {
@@ -399,7 +404,7 @@ class StageViewModelV2(
         val id = updatedFixtureId
         val pos = updatedPosition
         if (id != null && pos != null) {
-            scope.launch { fixtureRepository?.updatePosition(id, pos) }
+            scope.launch { withContext(Dispatchers.IO) { fixtureRepository?.updatePosition(id, pos) } }
         }
     }
 
@@ -418,7 +423,7 @@ class StageViewModelV2(
                 state
             }
         }
-        assignedFixtureId?.let { fixtureRepository?.updateGroup(it, assignedGroupId) }
+        assignedFixtureId?.let { id -> scope.launch { withContext(Dispatchers.IO) { fixtureRepository?.updateGroup(id, assignedGroupId) } } }
     }
 
     private fun handleCreateGroup(name: String, color: Long) {
@@ -427,14 +432,14 @@ class StageViewModelV2(
         _fixtureState.update { state ->
             state.copy(groups = state.groups + group)
         }
-        fixtureRepository?.saveGroup(group)
+        scope.launch { withContext(Dispatchers.IO) { fixtureRepository?.saveGroup(group) } }
     }
 
     private fun handleDeleteGroup(groupId: String) {
         _fixtureState.update { state ->
             state.copy(groups = state.groups.filter { it.groupId != groupId })
         }
-        fixtureRepository?.deleteGroup(groupId)
+        scope.launch { withContext(Dispatchers.IO) { fixtureRepository?.deleteGroup(groupId) } }
     }
 
     private fun handleTestFireFixture(index: Int) {
@@ -582,19 +587,17 @@ class StageViewModelV2(
     // ── Sync helpers ───────────────────────────────────────────────────
 
     private fun syncFromEngine() {
-        _performanceState.update { state ->
-            state.copy(
-                masterDimmer = effectStack.masterDimmer,
-                layers = effectStack.layers,
-            )
-        }
-        val presets = presetLibrary.listPresets()
-        val favorites = presetLibrary.getFavorites()
-        _presetState.update { state ->
-            state.copy(
-                allPresets = presets,
-                favoriteIds = favorites,
-                allScenes = presets.map { preset ->
+        scope.launch {
+            _performanceState.update { state ->
+                state.copy(
+                    masterDimmer = effectStack.masterDimmer,
+                    layers = effectStack.layers,
+                )
+            }
+            val (presets, favorites, scenes) = withContext(Dispatchers.Default) {
+                val p = presetLibrary.listPresets()
+                val f = presetLibrary.getFavorites()
+                val s = p.map { preset ->
                     Scene(
                         name = preset.name,
                         layers = preset.layers.map { config ->
@@ -616,9 +619,17 @@ class StageViewModelV2(
                         },
                         masterDimmer = preset.masterDimmer,
                     )
-                },
-                availableEffects = effectRegistry.ids(),
-            )
+                }
+                Triple(p, f, s)
+            }
+            _presetState.update { state ->
+                state.copy(
+                    allPresets = presets,
+                    favoriteIds = favorites,
+                    allScenes = scenes,
+                    availableEffects = effectRegistry.ids(),
+                )
+            }
         }
     }
 
