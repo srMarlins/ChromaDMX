@@ -40,7 +40,7 @@ class WaveEffect3DEffect : SpatialEffect {
         val colorA = colors.getOrElse(0) { Color.BLACK }
         val colorB = colors.getOrElse(1) { Color.WHITE }
 
-        // Use beat-synced time when BPM is active, fall back to raw time
+        // Scale animation time by BPM ratio (1.0x at 120 BPM baseline)
         val beatTime = if (beat.bpm > 0f) time * (beat.bpm / 120f) else time
         val timeOffset = beatTime * speed
 

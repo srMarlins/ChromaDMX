@@ -71,7 +71,7 @@ import com.chromadmx.ui.theme.PixelFontFamily
 import com.chromadmx.ui.viewmodel.StageViewModelV2
 
 // ============================================================================
-// StageScreen — Main stage view with isometric/top-down/audience view modes,
+// StageScreen — Main stage view with top-down/audience view modes,
 // sliced state consumption, and the pixel design system.
 //
 // Each UI region subscribes to ONLY its needed state slice to minimize
@@ -79,7 +79,7 @@ import com.chromadmx.ui.viewmodel.StageViewModelV2
 // ============================================================================
 
 /**
- * Main Stage screen with isometric/top-down/audience view modes and sliced state.
+ * Main Stage screen with top-down/audience view modes and sliced state.
  *
  * @param viewModel The V2 view model exposing sliced state flows.
  * @param onSettings Callback to navigate to the settings screen.

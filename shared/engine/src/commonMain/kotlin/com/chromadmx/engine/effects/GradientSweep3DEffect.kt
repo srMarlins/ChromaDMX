@@ -30,7 +30,7 @@ class GradientSweep3DEffect : SpatialEffect {
     )
 
     override fun prepare(params: EffectParams, time: Float, beat: BeatState): Any {
-        // Use beat-synced time when BPM is active, fall back to raw time
+        // Scale animation time by BPM ratio (1.0x at 120 BPM baseline)
         val beatTime = if (beat.bpm > 0f) time * (beat.bpm / 120f) else time
         return Context(
             axis = params.getString("axis", "x"),

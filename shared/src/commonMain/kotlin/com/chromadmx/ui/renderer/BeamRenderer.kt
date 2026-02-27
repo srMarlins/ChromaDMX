@@ -6,7 +6,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 
 /**
- * Beam cone rendering for the isometric stage preview.
+ * Beam cone rendering for the stage preview.
  *
  * Draws translucent light cones from fixture positions to the floor,
  * plus floor glow circles where beams impact the stage surface.

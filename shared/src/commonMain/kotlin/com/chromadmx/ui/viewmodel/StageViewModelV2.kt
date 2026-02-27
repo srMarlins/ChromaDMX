@@ -43,7 +43,7 @@ import kotlinx.coroutines.launch
  * - [fixtureState] — fixture list, selection, groups, edit mode
  * - [presetState] — available presets/effects/genres
  * - [networkState] — discovered nodes, node list visibility
- * - [viewState] — view mode, iso angle, simulation mode
+ * - [viewState] — view mode, simulation mode
  *
  * High-frequency data (fixture colors, beat phase) is emitted via
  * [SharedFlow]s to avoid backpressure on the state slices.
