@@ -35,12 +35,6 @@ import com.chromadmx.ui.renderer.TopDownRenderer.drawWashFixture
 import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.core.model.Color as DmxColor
 
-/** Dark stage backdrop — near-black with a slight cool tint (dark themes). */
-private val DarkStageBackdrop = Color(0xFF0C0E14)
-
-/** Light stage backdrop — warm light gray (light themes). */
-private val LightStageBackdrop = Color(0xFFE0E0DC)
-
 /** Horizontal padding as fraction of canvas width (left/right). */
 private const val PAD_H_FRACTION = 0.07f
 
@@ -49,9 +43,6 @@ private const val PAD_TOP_FRACTION = 0.10f
 
 /** Bottom padding as fraction of canvas height. */
 private const val PAD_BOTTOM_FRACTION = 0.06f
-
-/** Truss structure color. */
-private val TrussColor = Color(0xFF2A2A3E)
 
 /**
  * Canvas-based top-down venue visualization with profile-aware rendering.
@@ -93,9 +84,12 @@ fun VenueCanvas(
     // Edit mode drag tracking
     var dragTargetIndex by remember { mutableIntStateOf(-1) }
 
-    val canvasBg = if (PixelDesign.isDarkTheme) DarkStageBackdrop else LightStageBackdrop
+    val canvasBg = PixelDesign.colors.stageBackground
     val selectionColor = PixelDesign.colors.primary
     val editDragColor = PixelDesign.colors.warning
+    val trussColor = PixelDesign.colors.trussColor
+    val housingColor = PixelDesign.colors.fixtureHousing
+    val housingBorderColor = PixelDesign.colors.fixtureHousingBorder
 
     Canvas(
         modifier = modifier
@@ -278,16 +272,16 @@ fun VenueCanvas(
                     RenderHint.POINT -> {
                         val fixtureType = profile?.type ?: FixtureType.PAR
                         when (fixtureType) {
-                            FixtureType.STROBE -> drawStrobeFixture(cx, cy, composeColor, isSelected, selectionColor, fixtureScale)
-                            FixtureType.WASH -> drawWashFixture(cx, cy, composeColor, isSelected, selectionColor, fixtureScale)
-                            else -> drawParFixture(cx, cy, composeColor, isSelected, selectionColor, fixtureScale)
+                            FixtureType.STROBE -> drawStrobeFixture(cx, cy, composeColor, isSelected, selectionColor, fixtureScale, housingColor, housingBorderColor)
+                            FixtureType.WASH -> drawWashFixture(cx, cy, composeColor, isSelected, selectionColor, fixtureScale, housingColor, housingBorderColor)
+                            else -> drawParFixture(cx, cy, composeColor, isSelected, selectionColor, fixtureScale, housingColor, housingBorderColor)
                         }
                     }
                     RenderHint.BAR -> {
                         val pixelCount = profile?.physical?.pixelCount ?: 8
-                        drawBarFixture(cx, cy, composeColor, pixelCount, isSelected, selectionColor, fixtureScale)
+                        drawBarFixture(cx, cy, composeColor, pixelCount, isSelected, selectionColor, fixtureScale, housingColor, housingBorderColor)
                     }
-                    RenderHint.BEAM_CONE -> drawBeamConeFixture(cx, cy, composeColor, isSelected, reusablePath, selectionColor, fixtureScale)
+                    RenderHint.BEAM_CONE -> drawBeamConeFixture(cx, cy, composeColor, isSelected, reusablePath, selectionColor, fixtureScale, housingColor, housingBorderColor)
                 }
             }
 
