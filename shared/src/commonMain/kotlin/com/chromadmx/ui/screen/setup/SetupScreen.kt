@@ -51,10 +51,6 @@ import com.chromadmx.ui.state.GenreOption
 import com.chromadmx.ui.state.SetupEvent
 import com.chromadmx.ui.state.SetupStep
 import com.chromadmx.ui.state.SetupUiState
-import com.chromadmx.ui.theme.NeonCyan
-import com.chromadmx.ui.theme.NeonGreen
-import com.chromadmx.ui.theme.NeonMagenta
-import com.chromadmx.ui.theme.NeonYellow
 import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.theme.PixelFontFamily
 import com.chromadmx.ui.util.presetDisplayName
@@ -150,7 +146,7 @@ private fun SetupTopBar(
         ) {
             steps.forEachIndexed { index, _ ->
                 val dotColor = when {
-                    index < currentIndex -> NeonGreen
+                    index < currentIndex -> PixelDesign.colors.success
                     index == currentIndex -> PixelDesign.colors.primary
                     else -> PixelDesign.colors.onSurfaceVariant.copy(alpha = 0.4f)
                 }
@@ -203,7 +199,7 @@ private fun ScanningContent(
     ) {
         PixelLoadingSpinner(
             spinnerSize = SpinnerSize.Large,
-            color = NeonCyan,
+            color = PixelDesign.colors.info,
         )
 
         Spacer(modifier = Modifier.height(PixelDesign.spacing.medium))
@@ -211,7 +207,7 @@ private fun ScanningContent(
         Text(
             text = "Scanning for lights...",
             style = MaterialTheme.typography.headlineSmall.copy(fontFamily = PixelFontFamily),
-            color = NeonCyan,
+            color = PixelDesign.colors.info,
         )
 
         Spacer(modifier = Modifier.height(PixelDesign.spacing.medium))
@@ -220,7 +216,7 @@ private fun ScanningContent(
             progress = 0f,
             indeterminate = true,
             modifier = Modifier.fillMaxWidth(0.7f),
-            progressColor = NeonCyan,
+            progressColor = PixelDesign.colors.info,
         )
     }
 }
@@ -238,7 +234,7 @@ private fun NodesFoundContent(
         Text(
             text = "${nodes.size} node${if (nodes.size != 1) "s" else ""} found!",
             style = MaterialTheme.typography.headlineSmall.copy(fontFamily = PixelFontFamily),
-            color = NeonGreen,
+            color = PixelDesign.colors.success,
         )
 
         Spacer(modifier = Modifier.height(PixelDesign.spacing.medium))
@@ -279,13 +275,13 @@ private fun NoNodesContent(
         Text(
             text = "No lights found",
             style = MaterialTheme.typography.headlineSmall.copy(fontFamily = PixelFontFamily),
-            color = NeonYellow,
+            color = PixelDesign.colors.warning,
         )
 
         Spacer(modifier = Modifier.height(PixelDesign.spacing.medium))
 
         PixelCard(
-            borderColor = NeonMagenta.copy(alpha = 0.8f),
+            borderColor = PixelDesign.colors.secondary.copy(alpha = 0.8f),
         ) {
             Text(
                 text = "No Art-Net nodes detected on the network. Try again or launch a virtual stage instead.",
@@ -373,7 +369,7 @@ private fun FixtureScanContent(
                 fontFamily = PixelFontFamily,
                 letterSpacing = 2.sp,
             ),
-            color = NeonCyan,
+            color = PixelDesign.colors.info,
         )
 
         Spacer(modifier = Modifier.height(PixelDesign.spacing.small))
@@ -387,7 +383,7 @@ private fun FixtureScanContent(
         Spacer(modifier = Modifier.height(PixelDesign.spacing.large))
 
         // Stage preview — V-formation for PIXEL_BAR_V, generic grid otherwise
-        PixelCard(borderColor = NeonCyan.copy(alpha = 0.4f)) {
+        PixelCard(borderColor = PixelDesign.colors.info.copy(alpha = 0.4f)) {
             if (state.selectedRigPreset == RigPreset.PIXEL_BAR_V) {
                 VFormationCanvas(
                     activeFixtures = state.scanActiveFixtures,
@@ -459,7 +455,7 @@ private fun VibeCheckContent(
                 fontFamily = PixelFontFamily,
                 letterSpacing = 2.sp,
             ),
-            color = NeonMagenta,
+            color = PixelDesign.colors.secondary,
         )
 
         Spacer(modifier = Modifier.height(PixelDesign.spacing.small))
@@ -536,12 +532,12 @@ private fun StagePreviewContent(
                 fontFamily = PixelFontFamily,
                 letterSpacing = 2.sp,
             ),
-            color = NeonCyan,
+            color = PixelDesign.colors.info,
         )
 
         Spacer(modifier = Modifier.height(PixelDesign.spacing.large))
 
-        PixelCard(borderColor = NeonCyan.copy(alpha = 0.4f)) {
+        PixelCard(borderColor = PixelDesign.colors.info.copy(alpha = 0.4f)) {
             if (state.selectedRigPreset == RigPreset.PIXEL_BAR_V) {
                 VFormationCanvas(
                     modifier = Modifier
@@ -572,7 +568,7 @@ private fun StagePreviewContent(
             Text(
                 text = statusText,
                 style = MaterialTheme.typography.bodyMedium.copy(fontFamily = PixelFontFamily),
-                color = if (state.isGenerating) NeonMagenta else NeonGreen,
+                color = if (state.isGenerating) PixelDesign.colors.secondary else PixelDesign.colors.success,
             )
 
             Spacer(modifier = Modifier.height(PixelDesign.spacing.small))
@@ -581,7 +577,7 @@ private fun StagePreviewContent(
                 progress = state.generationProgress,
                 indeterminate = false,
                 modifier = Modifier.fillMaxWidth(0.7f),
-                progressColor = if (state.isGenerating) NeonMagenta else NeonGreen,
+                progressColor = if (state.isGenerating) PixelDesign.colors.secondary else PixelDesign.colors.success,
             )
 
             Spacer(modifier = Modifier.height(PixelDesign.spacing.small))
@@ -600,7 +596,7 @@ private fun StagePreviewContent(
             Text(
                 text = state.generationError,
                 style = MaterialTheme.typography.bodySmall.copy(fontFamily = PixelFontFamily),
-                color = NeonYellow,
+                color = PixelDesign.colors.warning,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -635,6 +631,11 @@ private fun VFormationCanvas(
     val barPositions = remember {
         PixelBarVRig.createFixtures().map { it.fixture.fixtureId to it.position.x }
     }
+
+    // Capture theme colors for use inside Canvas DrawScope (non-composable)
+    val infoColor = PixelDesign.colors.info
+    val secondaryColor = PixelDesign.colors.secondary
+    val successColor = PixelDesign.colors.success
 
     Canvas(
         modifier = modifier.background(PixelDesign.colors.background.copy(alpha = 0.8f)),
@@ -677,9 +678,9 @@ private fun VFormationCanvas(
                 val screenY = pad + (1f - zFrac) * canvasH
 
                 val baseColor = when (px % 3) {
-                    0 -> Color(0xFF00FBFF)
-                    1 -> Color(0xFFFF00FF)
-                    else -> Color(0xFF00FF00)
+                    0 -> infoColor
+                    1 -> secondaryColor
+                    else -> successColor
                 }
 
                 val alpha = if (isActive) 0.95f else 0.25f
@@ -711,14 +712,14 @@ private fun NodeCard(
 ) {
     PixelCard(
         modifier = modifier.fillMaxWidth(),
-        borderColor = NeonGreen.copy(alpha = 0.4f),
+        borderColor = PixelDesign.colors.success.copy(alpha = 0.4f),
         glowing = true,
     ) {
         Column {
             Text(
                 text = node.shortName.ifBlank { node.ipAddress },
                 style = MaterialTheme.typography.titleSmall.copy(fontFamily = PixelFontFamily),
-                color = NeonCyan,
+                color = PixelDesign.colors.info,
             )
             Row(
                 horizontalArrangement = Arrangement.spacedBy(PixelDesign.spacing.medium),
@@ -732,7 +733,7 @@ private fun NodeCard(
                     Text(
                         text = "U${node.universes.joinToString(",")}",
                         style = MaterialTheme.typography.bodySmall.copy(fontFamily = PixelFontFamily),
-                        color = NeonMagenta.copy(alpha = 0.8f),
+                        color = PixelDesign.colors.secondary.copy(alpha = 0.8f),
                     )
                 }
             }
@@ -789,6 +790,11 @@ private fun FixturePreviewCanvas(
     fixtureCount: Int,
     modifier: Modifier = Modifier,
 ) {
+    // Capture theme colors for use inside Canvas DrawScope (non-composable)
+    val infoColor = PixelDesign.colors.info
+    val secondaryColor = PixelDesign.colors.secondary
+    val successColor = PixelDesign.colors.success
+
     Canvas(
         modifier = modifier.background(PixelDesign.colors.background.copy(alpha = 0.8f)),
     ) {
@@ -824,9 +830,9 @@ private fun FixturePreviewCanvas(
             val cy = pad + (row + 0.5f) * canvasH / rows.coerceAtLeast(1)
 
             val fixtureColor = when (i % 3) {
-                0 -> Color(0xFF00FBFF)
-                1 -> Color(0xFFFF00FF)
-                else -> Color(0xFF00FF00)
+                0 -> infoColor
+                1 -> secondaryColor
+                else -> successColor
             }
 
             drawCircle(
