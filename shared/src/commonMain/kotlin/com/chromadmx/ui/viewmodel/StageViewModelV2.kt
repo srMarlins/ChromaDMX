@@ -538,10 +538,30 @@ class StageViewModelV2(
         }
     }
 
+    /**
+     * Read the latest color frame from the engine's triple buffer and
+     * emit it to the UI.
+     *
+     * Only emits when the engine has published new data (swapRead returns true)
+     * or when the buffer reference has changed (after updateFixtures), which
+     * avoids flooding the SharedFlow with stale BLACK frames that overwrite
+     * the last good colors.
+     */
+    private var lastColorBuffer: Any? = null  // identity tracking for buffer replacement
+
     private fun syncColorsFromEngine() {
         val buffer = engine.colorOutput
-        buffer.swapRead()
-        val colors = buffer.readSlot()
-        _fixtureColors.tryEmit(colors.toList())
+        val bufferChanged = buffer !== lastColorBuffer
+        lastColorBuffer = buffer
+
+        val hasNewData = buffer.swapRead()
+
+        // Emit when the engine has published a new frame, or when the buffer
+        // reference changed (e.g. after updateFixtures) so the UI gets the
+        // correct count even if the engine hasn't ticked yet.
+        if (hasNewData || bufferChanged) {
+            val colors = buffer.readSlot()
+            _fixtureColors.tryEmit(colors.toList())
+        }
     }
 }
