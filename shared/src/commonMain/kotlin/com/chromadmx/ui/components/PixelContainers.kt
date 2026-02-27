@@ -3,8 +3,8 @@ package com.chromadmx.ui.components
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -426,19 +426,19 @@ fun PixelBottomSheet(
     ) {
         AnimatedVisibility(
             visible = visible,
-            enter = slideInVertically(
+            enter = expandVertically(
                 animationSpec = spring(
                     dampingRatio = panelSpring.dampingRatio,
                     stiffness = panelSpring.stiffness,
                 ),
-                initialOffsetY = { it }, // Start from below
+                expandFrom = Alignment.Top, // Expand downward from preset bar
             ),
-            exit = slideOutVertically(
+            exit = shrinkVertically(
                 animationSpec = spring(
                     dampingRatio = panelSpring.dampingRatio,
                     stiffness = panelSpring.stiffness,
                 ),
-                targetOffsetY = { it }, // Slide down to exit
+                shrinkTowards = Alignment.Top, // Collapse upward toward preset bar
             ),
         ) {
             val chamferPx = with(androidx.compose.ui.platform.LocalDensity.current) { 9.dp.toPx() }
