@@ -6,12 +6,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.chromadmx.agent.ChatMessage
@@ -54,7 +52,7 @@ private fun UserBubble(
         val colors = PixelDesign.colors
         Column(
             modifier = Modifier
-                .widthIn(max = 280.dp)
+                .fillMaxWidth(0.80f)
                 .pixelBorder(color = colors.primary.copy(alpha = 0.8f), pixelSize = 3.dp)
                 .background(colors.primary.copy(alpha = 0.15f))
                 .padding(3.dp) // border padding
@@ -81,7 +79,7 @@ private fun AssistantBubble(
         val colors = PixelDesign.colors
         Column(
             modifier = Modifier
-                .widthIn(max = 280.dp)
+                .fillMaxWidth(0.85f)
                 .pixelBorder(color = colors.success.copy(alpha = 0.8f), pixelSize = 3.dp)
                 .background(colors.success.copy(alpha = 0.1f))
                 .padding(3.dp)
@@ -111,7 +109,7 @@ private fun SystemBubble(
             color = PixelDesign.colors.onSurfaceDim,
             textAlign = TextAlign.Center,
             modifier = Modifier
-                .widthIn(max = 240.dp)
+                .fillMaxWidth(0.70f)
                 .padding(horizontal = 16.dp, vertical = 4.dp),
         )
     }
@@ -129,7 +127,7 @@ private fun ToolBubble(
         val colors = PixelDesign.colors
         Column(
             modifier = Modifier
-                .widthIn(max = 280.dp)
+                .fillMaxWidth(0.80f)
                 .pixelBorder(color = colors.info.copy(alpha = 0.6f), pixelSize = 2.dp)
                 .background(colors.info.copy(alpha = 0.08f))
                 .padding(2.dp)

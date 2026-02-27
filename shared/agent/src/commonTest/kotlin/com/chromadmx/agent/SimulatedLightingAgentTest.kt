@@ -275,13 +275,70 @@ class SimulatedLightingAgentTest {
         assertContains(response, "Sunset Sweep")
     }
 
+    // ── Creative scene commands ─────────────────────────────────────────
+
+    @Test
+    fun sunsetScene() {
+        val agent = createAgent()
+        val response = agent.processMessage("create a sunset")
+        assertContains(response, "sunset")
+        assertEquals("gradient-sweep-3d", engine.lastSetEffectId)
+        assertEquals(0.8f, engine.lastMasterDimmer)
+    }
+
+    @Test
+    fun energeticScene() {
+        val agent = createAgent()
+        val response = agent.processMessage("something energetic")
+        assertContains(response, "chase")
+        assertEquals("chase-3d", engine.lastSetEffectId)
+        assertEquals(1.0f, engine.lastMasterDimmer)
+    }
+
+    @Test
+    fun calmScene() {
+        val agent = createAgent()
+        val response = agent.processMessage("make it calm and peaceful")
+        assertContains(response, "wave")
+        assertEquals("wave-3d", engine.lastSetEffectId)
+        assertEquals(0.5f, engine.lastMasterDimmer)
+    }
+
+    // ── Direct effect commands ───────────────────────────────────────────
+
+    @Test
+    fun gradientEffect() {
+        val agent = createAgent()
+        val response = agent.processMessage("apply gradient effect")
+        assertContains(response, "Gradient Sweep")
+        assertEquals("gradient-sweep-3d", engine.lastSetEffectId)
+    }
+
+    @Test
+    fun chaseEffect() {
+        val agent = createAgent()
+        val response = agent.processMessage("start a chase")
+        assertContains(response, "Chase")
+        assertEquals("chase-3d", engine.lastSetEffectId)
+    }
+
+    // ── Save/create preset ───────────────────────────────────────────────
+
+    @Test
+    fun createPreset() {
+        val agent = createAgent()
+        val response = agent.processMessage("save as my cool scene")
+        assertContains(response, "Saved")
+        assertContains(response, "my_cool_scene")
+    }
+
     // ── Unknown commands ────────────────────────────────────────────────
 
     @Test
     fun unknownCommand() {
         val agent = createAgent()
         val response = agent.processMessage("xyzzy plugh")
-        assertContains(response, "didn't understand")
+        assertContains(response, "didn't quite get")
         assertContains(response, "help")
     }
 

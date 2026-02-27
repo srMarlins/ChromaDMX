@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -62,6 +63,7 @@ fun PixelTextField(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier
+                .fillMaxWidth()
                 .padding(top = if (label != null) 20.dp else 0.dp)
                 .clip(PixelShape.Small)
                 .background(backgroundColor, PixelShape.Small)

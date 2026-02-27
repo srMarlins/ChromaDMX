@@ -98,23 +98,28 @@ fun PixelButton(
                 .background(Color.Black.copy(alpha = 0.3f), PixelShape.Large)
         )
 
-        // Face / Top Layer — uses glowing border when enabled, standard when disabled
-        val faceModifier = Modifier
-            .matchParentSize()
-            .offset { IntOffset(0, (currentOffset - pressDepth).roundToPx()) }
-            .let { mod ->
-                if (enabled) {
-                    mod.pixelBorderGlowing(color = currentBorderColor, chamfer = 9.dp)
-                } else {
-                    mod.pixelBorder(color = currentBorderColor, chamfer = 9.dp)
-                }
-            }
-            .clip(PixelShape.Large)
-            .background(currentBgColor, PixelShape.Large)
-            .padding(contentPadding)
-
+        // Face background — fills parent, animated offset for 3D press effect
         Box(
-            modifier = faceModifier,
+            modifier = Modifier
+                .matchParentSize()
+                .offset { IntOffset(0, (currentOffset - pressDepth).roundToPx()) }
+                .let { mod ->
+                    if (enabled) {
+                        mod.pixelBorderGlowing(color = currentBorderColor, chamfer = 9.dp)
+                    } else {
+                        mod.pixelBorder(color = currentBorderColor, chamfer = 9.dp)
+                    }
+                }
+                .clip(PixelShape.Large)
+                .background(currentBgColor, PixelShape.Large)
+        )
+
+        // Content — determines the Box's intrinsic size (NOT matchParentSize),
+        // rendered on top with the same offset animation as the face background.
+        Box(
+            modifier = Modifier
+                .offset { IntOffset(0, (currentOffset - pressDepth).roundToPx()) }
+                .padding(contentPadding),
             contentAlignment = Alignment.Center
         ) {
             CompositionLocalProvider(LocalContentColor provides currentContentColor) {
