@@ -13,6 +13,7 @@ import com.chromadmx.networking.ConnectionState
 import com.chromadmx.networking.DmxTransport
 import com.chromadmx.networking.DmxTransportRouter
 import com.chromadmx.networking.FixtureDiscovery
+import com.chromadmx.networking.FixtureDiscoveryRouter
 import com.chromadmx.networking.TransportMode
 import com.chromadmx.simulation.fixtures.RigPreset
 import com.chromadmx.ui.state.AgentStatus
@@ -145,6 +146,14 @@ class SettingsViewModelV2Test {
         )
     }
 
+    private fun createDiscoveryRouter(scope: CoroutineScope): FixtureDiscoveryRouter {
+        return FixtureDiscoveryRouter(
+            real = FakeFixtureDiscovery(),
+            simulated = FakeFixtureDiscovery(),
+            scope = scope,
+        )
+    }
+
     /**
      * Helper to create VM + router + discovery triple.
      * Uses [UnconfinedTestDispatcher] by default so that launched
@@ -153,14 +162,17 @@ class SettingsViewModelV2Test {
     private fun createVm(
         settingsStore: FakeSettingsStore = createSettingsStore(),
         transportRouter: DmxTransportRouter? = null,
+        discoveryRouter: FixtureDiscoveryRouter? = null,
         fixtureDiscovery: FakeFixtureDiscovery = FakeFixtureDiscovery(),
         fixtureStore: FakeFixtureStore? = null,
         scope: CoroutineScope,
     ): Triple<SettingsViewModelV2, DmxTransportRouter, FakeFixtureDiscovery> {
         val router = transportRouter ?: createRouter(scope)
+        val discRouter = discoveryRouter ?: createDiscoveryRouter(scope)
         val vm = SettingsViewModelV2(
             settingsRepository = settingsStore,
             transportRouter = router,
+            discoveryRouter = discRouter,
             fixtureDiscovery = fixtureDiscovery,
             scope = scope,
             fixtureStore = fixtureStore,

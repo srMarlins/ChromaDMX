@@ -5,6 +5,7 @@ import com.chromadmx.core.persistence.FixtureStore
 import com.chromadmx.core.persistence.SettingsStore
 import com.chromadmx.networking.DmxTransportRouter
 import com.chromadmx.networking.FixtureDiscovery
+import com.chromadmx.networking.FixtureDiscoveryRouter
 import com.chromadmx.networking.TransportMode
 import com.chromadmx.service.DataExportService
 import com.chromadmx.service.ImportResult
@@ -36,12 +37,14 @@ import kotlinx.coroutines.withContext
  *
  * Dependencies:
  * - [SettingsStore] for persisting settings (simulation, onboarding)
- * - [DmxTransportRouter] for switching transport modes at runtime
+ * - [DmxTransportRouter] for switching DMX output transport modes at runtime
+ * - [FixtureDiscoveryRouter] for switching node discovery modes at runtime
  * - [FixtureDiscovery] for triggering network rescans
  */
 class SettingsViewModelV2(
     private val settingsRepository: SettingsStore,
     private val transportRouter: DmxTransportRouter,
+    private val discoveryRouter: FixtureDiscoveryRouter,
     private val fixtureDiscovery: FixtureDiscovery,
     private val scope: CoroutineScope,
     private val fixtureStore: FixtureStore? = null,
@@ -54,10 +57,17 @@ class SettingsViewModelV2(
         // Seed the built-in fixture profiles so they appear immediately.
         _state.update { it.copy(fixtureProfiles = BuiltInProfiles.all().toImmutableList()) }
 
-        // Derive simulation state from the persisted repository value.
+        // Derive simulation state from the persisted repository value
+        // and sync the routers so they match on startup.
         scope.launch {
             settingsRepository.isSimulation.collect { sim ->
                 _state.update { it.copy(simulationEnabled = sim) }
+                val mode = if (sim) TransportMode.Simulated else TransportMode.Real
+                transportRouter.switchTo(mode)
+                discoveryRouter.switchTo(mode)
+                if (sim) {
+                    discoveryRouter.startScan()
+                }
             }
         }
 
@@ -163,6 +173,10 @@ class SettingsViewModelV2(
         }
         val mode = if (enabled) TransportMode.Simulated else TransportMode.Real
         transportRouter.switchTo(mode)
+        discoveryRouter.switchTo(mode)
+        if (enabled) {
+            discoveryRouter.startScan()
+        }
     }
 
     private fun resetSimulation() {
@@ -171,6 +185,7 @@ class SettingsViewModelV2(
             withContext(Dispatchers.IO) { settingsRepository.setIsSimulation(false) }
         }
         transportRouter.switchTo(TransportMode.Real)
+        discoveryRouter.switchTo(TransportMode.Real)
     }
 
     private fun testAgentConnection() {

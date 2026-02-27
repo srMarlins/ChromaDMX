@@ -6,6 +6,7 @@ import com.chromadmx.agent.pregen.PreGenerationService
 import com.chromadmx.core.persistence.FixtureRepository
 import com.chromadmx.core.persistence.FixtureStore
 import com.chromadmx.core.persistence.NetworkStateStore
+import com.chromadmx.networking.FixtureDiscoveryRouter
 import com.chromadmx.networking.ble.BleProvisioningService
 import com.chromadmx.ui.navigation.AppStateManager
 import com.chromadmx.ui.viewmodel.MascotViewModelV2
@@ -92,6 +93,7 @@ val uiModule = module {
         SettingsViewModelV2(
             settingsRepository = get(),
             transportRouter = get(),
+            discoveryRouter = get(),
             fixtureDiscovery = get(),
             scope = vmScope,
             fixtureStore = getOrNull<FixtureStore>(),

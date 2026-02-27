@@ -3,7 +3,7 @@ package com.chromadmx.agent.controller
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.engine.effect.EffectStack
 import com.chromadmx.engine.pipeline.EffectEngine
-import com.chromadmx.networking.discovery.NodeDiscovery
+import com.chromadmx.networking.FixtureDiscovery
 import com.chromadmx.networking.output.DmxOutputService
 import com.chromadmx.tempo.clock.BeatClock
 import com.chromadmx.tempo.tap.TapTempoClock
@@ -11,12 +11,13 @@ import com.chromadmx.tempo.tap.TapTempoClock
 /**
  * Real [StateController] bridging to the engine, tempo, and networking modules.
  *
- * Provides read-only snapshots of the current system state.
+ * Reads node state from [FixtureDiscovery] (the router), so it reflects
+ * whichever transport mode is active (real, simulated, or mixed).
  */
 class RealStateController(
     private val effectEngine: EffectEngine,
     private val beatClock: BeatClock,
-    private val nodeDiscovery: NodeDiscovery,
+    private val fixtureDiscovery: FixtureDiscovery,
     private val dmxOutputService: DmxOutputService,
     private val fixturesProvider: () -> List<Fixture3D> = { emptyList() },
 ) : StateController {
@@ -50,7 +51,7 @@ class RealStateController(
     }
 
     override fun getNetworkState(): NetworkStateSnapshot {
-        val nodes = nodeDiscovery.nodeList
+        val nodes = fixtureDiscovery.discoveredNodes.value
         val totalUniverses = nodes.flatMap { it.universes }.distinct().size
         return NetworkStateSnapshot(
             nodeCount = nodes.size,
