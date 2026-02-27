@@ -136,7 +136,7 @@ fun StageScreen(
                     presetState = presetState,
                     performanceState = perfState,
                     onEvent = viewModel::onEvent,
-                    onOpenBrowser = { showPresetBrowser = true },
+                    onOpenBrowser = { showPresetBrowser = !showPresetBrowser },
                 )
             }
         },
