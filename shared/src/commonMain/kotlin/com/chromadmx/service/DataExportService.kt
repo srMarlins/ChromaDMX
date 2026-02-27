@@ -50,6 +50,15 @@ class DataExportService(
     private val presetLibrary: PresetLibrary,
     private val settingsStore: SettingsStore,
 ) {
+    private companion object {
+        const val KEY_MASTER_DIMMER = "masterDimmer"
+        const val KEY_THEME_PREFERENCE = "themePreference"
+        const val KEY_IS_SIMULATION = "isSimulation"
+        const val KEY_TRANSPORT_MODE = "transportMode"
+        const val KEY_SETUP_COMPLETED = "setupCompleted"
+        const val KEY_ACTIVE_PRESET_ID = "activePresetId"
+    }
+
     private val json = Json {
         prettyPrint = true
         ignoreUnknownKeys = true
@@ -124,35 +133,35 @@ class DataExportService(
 
     private suspend fun collectSettings(): Map<String, String> {
         val map = mutableMapOf<String, String>()
-        map["masterDimmer"] = settingsStore.masterDimmer.first().toString()
-        map["themePreference"] = settingsStore.themePreference.first()
-        map["isSimulation"] = settingsStore.isSimulation.first().toString()
-        map["transportMode"] = settingsStore.transportMode.first()
-        map["setupCompleted"] = settingsStore.setupCompleted.first().toString()
+        map[KEY_MASTER_DIMMER] = settingsStore.masterDimmer.first().toString()
+        map[KEY_THEME_PREFERENCE] = settingsStore.themePreference.first()
+        map[KEY_IS_SIMULATION] = settingsStore.isSimulation.first().toString()
+        map[KEY_TRANSPORT_MODE] = settingsStore.transportMode.first()
+        map[KEY_SETUP_COMPLETED] = settingsStore.setupCompleted.first().toString()
         val activePreset = settingsStore.activePresetId.first()
         if (activePreset != null) {
-            map["activePresetId"] = activePreset
+            map[KEY_ACTIVE_PRESET_ID] = activePreset
         }
         return map
     }
 
     private suspend fun applySettings(settings: Map<String, String>) {
-        settings["masterDimmer"]?.toFloatOrNull()?.let {
+        settings[KEY_MASTER_DIMMER]?.toFloatOrNull()?.let {
             settingsStore.setMasterDimmer(it)
         }
-        settings["themePreference"]?.let {
+        settings[KEY_THEME_PREFERENCE]?.let {
             settingsStore.setThemePreference(it)
         }
-        settings["isSimulation"]?.toBooleanStrictOrNull()?.let {
+        settings[KEY_IS_SIMULATION]?.toBooleanStrictOrNull()?.let {
             settingsStore.setIsSimulation(it)
         }
-        settings["transportMode"]?.let {
+        settings[KEY_TRANSPORT_MODE]?.let {
             settingsStore.setTransportMode(it)
         }
-        settings["activePresetId"]?.let {
+        settings[KEY_ACTIVE_PRESET_ID]?.let {
             settingsStore.setActivePresetId(it)
         }
-        settings["setupCompleted"]?.toBooleanStrictOrNull()?.let {
+        settings[KEY_SETUP_COMPLETED]?.toBooleanStrictOrNull()?.let {
             settingsStore.setSetupCompleted(it)
         }
     }
