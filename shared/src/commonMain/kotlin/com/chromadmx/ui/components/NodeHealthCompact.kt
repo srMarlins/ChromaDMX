@@ -31,7 +31,8 @@ fun NodeHealthCompact(
     nodes: List<DmxNode>,
     currentTimeMs: Long,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isSimulationMode: Boolean = false,
 ) {
     Row(
         modifier = modifier
@@ -59,12 +60,17 @@ fun NodeHealthCompact(
         }
 
         if (nodes.isEmpty()) {
+            val (label, color) = if (isSimulationMode) {
+                "SIM" to PixelDesign.colors.info
+            } else {
+                "No Nodes" to PixelDesign.colors.warning
+            }
             Text(
-                text = "No Nodes",
+                text = label,
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontFamily = PixelFontFamily,
                 ),
-                color = PixelDesign.colors.warning
+                color = color,
             )
         }
     }

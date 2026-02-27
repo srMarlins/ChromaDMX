@@ -1,7 +1,5 @@
 package com.chromadmx.ui.components
 
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -11,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,7 +31,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import com.chromadmx.ui.theme.ChromaAnimations
 import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.theme.PixelFontFamily
 import com.chromadmx.ui.theme.PixelShape
@@ -52,28 +50,27 @@ fun PixelSlider(
     var width by remember { mutableStateOf(0) }
     val density = LocalDensity.current
 
-    // Use ChromaAnimations.dragReturn spring for snap animations
-    val dragSpring = ChromaAnimations.dragReturn
     val thumbSize = 20.dp
     val thumbSizePx = with(density) { thumbSize.toPx() }
+    val halfThumbPx = thumbSizePx / 2f
     val pixelSize = PixelDesign.spacing.pixelSize
 
     val progress = ((value - valueRange.start) / (valueRange.endInclusive - valueRange.start))
         .coerceIn(0f, 1f)
 
-    // Animate thumb position with dragReturn spring
-    val thumbOffsetTarget = if (width > 0) {
+    // Direct thumb offset in pixels — NO animation, stays perfectly in sync with track
+    val thumbOffsetPx = if (width > 0) {
         (progress * (width - thumbSizePx)).coerceAtLeast(0f)
     } else {
         0f
     }
-    val animatedThumbOffset by animateDpAsState(
-        targetValue = with(density) { thumbOffsetTarget.toInt().dp },
-        animationSpec = spring(
-            dampingRatio = dragSpring.dampingRatio,
-            stiffness = dragSpring.stiffness,
-        ),
-    )
+
+    // Active track width in pixels — ends at thumb center so they visually align
+    val activeTrackPx = if (width > 0) {
+        (thumbOffsetPx + halfThumbPx).coerceIn(0f, width.toFloat())
+    } else {
+        0f
+    }
 
     Column(modifier = modifier) {
         // Optional value label above the slider
@@ -84,7 +81,6 @@ fun PixelSlider(
                     .height(20.dp),
                 contentAlignment = Alignment.CenterStart,
             ) {
-                val labelOffsetPx = with(density) { animatedThumbOffset.toPx() }
                 Text(
                     text = valueLabelFormatter(value),
                     style = MaterialTheme.typography.labelSmall.copy(
@@ -92,10 +88,7 @@ fun PixelSlider(
                         color = PixelDesign.colors.onSurface,
                     ),
                     modifier = Modifier.offset {
-                        IntOffset(
-                            x = labelOffsetPx.roundToInt(),
-                            y = 0
-                        )
+                        IntOffset(x = thumbOffsetPx.roundToInt(), y = 0)
                     }
                 )
             }
@@ -143,7 +136,7 @@ fun PixelSlider(
                 },
             contentAlignment = Alignment.CenterStart
         ) {
-            // Track
+            // Track background
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -153,19 +146,19 @@ fun PixelSlider(
                     .pixelBorder(chamfer = 4.dp)
             )
 
-            // Active Track
+            // Active track — width computed in px to align with thumb center
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(progress)
+                    .width(with(density) { activeTrackPx.toDp() })
                     .height(pixelSize * 2)
                     .clip(PixelShape(4.dp))
                     .background(accentColor, PixelShape(4.dp))
             )
 
-            // Thumb (Square blocky, 20dp)
+            // Thumb — direct pixel offset, no animation
             Box(
                 modifier = Modifier
-                    .offset { IntOffset(animatedThumbOffset.roundToPx(), 0) }
+                    .offset { IntOffset(thumbOffsetPx.roundToInt(), 0) }
                     .size(thumbSize)
                     .clip(PixelShape(4.dp))
                     .pixelBorder(chamfer = 4.dp)

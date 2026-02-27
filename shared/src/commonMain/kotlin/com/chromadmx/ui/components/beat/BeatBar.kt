@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.unit.dp
 import com.chromadmx.core.model.BeatState
 
@@ -35,20 +36,20 @@ fun BeatBar(
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        // Left: BPM display (tappable)
+        // Left: BPM display (tappable) — clipToBounds prevents border glow overflow
         BpmDisplay(
             bpm = beatState.bpm,
             beatPhase = beatState.beatPhase,
             source = bpmSource,
             onTap = onTapTempo,
-            modifier = Modifier.width(120.dp),
+            modifier = Modifier.width(120.dp).clipToBounds(),
         )
 
-        // Right: stacked indicators
+        // Right: stacked indicators — clipToBounds prevents border glow overflow
         Column(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).clipToBounds(),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             // Beat phase progress bar

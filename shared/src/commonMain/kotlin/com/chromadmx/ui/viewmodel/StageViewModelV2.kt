@@ -476,6 +476,14 @@ class StageViewModelV2(
                 simulationFixtureCount = fixtureCount,
             )
         }
+        // Auto-load: prefer the named preset from onboarding, fall back to first available
+        val presets = presetLibrary.listPresets()
+        val preset = presets.find { it.name == presetName }
+            ?: presets.firstOrNull()
+            ?: return
+        presetLibrary.loadPreset(preset.id)
+        _performanceState.update { it.copy(activeSceneName = preset.name) }
+        syncFromEngine()
     }
 
     private fun handleDisableSimulation() {

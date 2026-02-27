@@ -1,16 +1,19 @@
 package com.chromadmx.ui.components
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.SubcomposeLayout
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalDensity
 
 /**
  * A layout structure that mimics the standard Scaffold but with pixel-art specific constraints.
  * It places the top bar and bottom bar, and fills the remaining space with content.
+ * Respects system bar insets (status bar at top, navigation bar at bottom).
  */
 @Composable
 fun PixelScaffold(
@@ -19,6 +22,10 @@ fun PixelScaffold(
     bottomBar: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
+    val density = LocalDensity.current
+    val statusBarTop = WindowInsets.statusBars.getTop(density)
+    val navBarBottom = WindowInsets.navigationBars.getBottom(density)
+
     PixelSurface(modifier = modifier.fillMaxSize()) {
         SubcomposeLayout { constraints ->
             val layoutWidth = constraints.maxWidth
@@ -38,24 +45,26 @@ fun PixelScaffold(
             }
             val bottomBarHeight = bottomBarPlaceables.maxOfOrNull { it.height } ?: 0
 
-            // Measure Content
-            // We pass full height constraints but provide padding values so content *knows* where to avoid.
-            // This mimics Scaffold behavior where content is placed at (0,0) usually.
+            // Total occupied height includes system bar insets
+            val topOccupied = statusBarTop + topBarHeight
+            val bottomOccupied = navBarBottom + bottomBarHeight
+
             val contentConstraints = constraints.copy(minHeight = 0)
 
             val contentPlaceables = subcompose(ScaffoldLayoutContent.MainContent) {
-                content(PaddingValues(top = topBarHeight.toDp(), bottom = bottomBarHeight.toDp()))
+                content(PaddingValues(top = topOccupied.toDp(), bottom = bottomOccupied.toDp()))
             }.map { it.measure(contentConstraints) }
 
             layout(layoutWidth, layoutHeight) {
-                // Place Content at (0,0) because it has internal padding applied via PaddingValues
                 contentPlaceables.forEach { it.place(0, 0) }
 
-                // Place Top Bar on top of content (z-order wise, though order here is draw order)
-                topBarPlaceables.forEach { it.place(0, 0) }
+                // Place Top Bar below the status bar
+                topBarPlaceables.forEach { it.place(0, statusBarTop) }
 
-                // Place Bottom Bar
-                bottomBarPlaceables.forEach { it.place(0, layoutHeight - bottomBarHeight) }
+                // Place Bottom Bar above the navigation bar
+                bottomBarPlaceables.forEach {
+                    it.place(0, layoutHeight - bottomBarHeight - navBarBottom)
+                }
             }
         }
     }
