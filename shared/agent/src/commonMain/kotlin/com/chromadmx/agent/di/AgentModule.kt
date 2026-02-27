@@ -1,9 +1,9 @@
 package com.chromadmx.agent.di
 
 import ai.koog.agents.core.tools.ToolRegistry
-import com.chromadmx.agent.LightingAgent
 import com.chromadmx.agent.LightingAgentInterface
 import com.chromadmx.agent.LightingAgentService
+import com.chromadmx.agent.SimulatedLightingAgent
 import com.chromadmx.agent.config.AgentConfig
 import com.chromadmx.agent.config.ApiKeyProvider
 import com.chromadmx.agent.controller.EngineController
@@ -17,6 +17,7 @@ import com.chromadmx.agent.controller.StateController
 import com.chromadmx.agent.pregen.PreGenerationService
 import com.chromadmx.agent.tools.buildToolRegistry
 import com.chromadmx.core.model.Fixture3D
+import com.chromadmx.engine.effect.EffectRegistry
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -53,14 +54,19 @@ val agentModule: Module = module {
     }
 
     // LightingAgentInterface — correct per-message lifecycle when API key is available.
-    // When no key is configured, falls back to the legacy LightingAgent (offline-capable
-    // with dispatchTool support). Task 4 will add SimulatedLightingAgent for this case.
+    // When no key is configured, provides SimulatedLightingAgent (keyword-matching,
+    // executes real controller operations without an LLM).
     single<LightingAgentInterface> {
         val config = get<AgentConfig>()
         if (config.isAvailable) {
             LightingAgentService(config, get())
         } else {
-            LightingAgent(config, get())
+            SimulatedLightingAgent(
+                engineController = get(),
+                stateController = get(),
+                presetLibrary = get(),
+                effectRegistry = get<EffectRegistry>(),
+            )
         }
     }
 
