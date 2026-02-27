@@ -636,6 +636,7 @@ private fun VFormationCanvas(
     val infoColor = PixelDesign.colors.info
     val secondaryColor = PixelDesign.colors.secondary
     val successColor = PixelDesign.colors.success
+    val scanlineColor = PixelDesign.colors.scanlineColor
 
     Canvas(
         modifier = modifier.background(PixelDesign.colors.background.copy(alpha = 0.8f)),
@@ -649,7 +650,7 @@ private fun VFormationCanvas(
         var scanY = 0f
         while (scanY < size.height) {
             drawLine(
-                color = Color.White.copy(alpha = 0.03f),
+                color = scanlineColor,
                 start = Offset(0f, scanY),
                 end = Offset(size.width, scanY),
                 strokeWidth = 1f,
@@ -794,6 +795,7 @@ private fun FixturePreviewCanvas(
     val infoColor = PixelDesign.colors.info
     val secondaryColor = PixelDesign.colors.secondary
     val successColor = PixelDesign.colors.success
+    val scanlineColor = PixelDesign.colors.scanlineColor
 
     Canvas(
         modifier = modifier.background(PixelDesign.colors.background.copy(alpha = 0.8f)),
@@ -807,7 +809,7 @@ private fun FixturePreviewCanvas(
         var y = 0f
         while (y < size.height) {
             drawLine(
-                color = Color.White.copy(alpha = 0.03f),
+                color = scanlineColor,
                 start = Offset(0f, y),
                 end = Offset(size.width, y),
                 strokeWidth = 1f,

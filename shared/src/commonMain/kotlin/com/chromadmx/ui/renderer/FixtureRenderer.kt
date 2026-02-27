@@ -200,12 +200,12 @@ object FixtureRenderer {
     }
 
     /**
-     * Draw a pixelated selection border around a fixture (cyan rectangle).
+     * Draw a pixelated selection border around a fixture.
      */
     fun DrawScope.drawSelection(
         position: Offset,
         size: Float = 20f,
-        selectionColor: Color = Color(0xFF00FBFF),
+        selectionColor: Color,
     ) {
         val r = size / 2f + 3f
         val pixel = 3f

@@ -17,10 +17,10 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 object TopDownRenderer {
 
     /** Standardized dark fixture housing color. */
-    val HousingColor = Color(0xFF222236)
+    val HousingColor = Color(0xFF1A1A2E)
 
     /** Lighter border for fixture housing — bright enough to contrast against dark backdrops. */
-    val HousingBorderColor = Color(0xFF484868)
+    val HousingBorderColor = Color(0xFF2A2A3E)
 
     /**
      * Draw a PAR fixture: square housing with colored lens, radial glow, mount brackets.
