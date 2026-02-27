@@ -7,13 +7,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.chromadmx.ui.components.pixelBorder
 import com.chromadmx.ui.theme.LocalPixelTheme
 import com.chromadmx.ui.theme.PixelDesign
 
@@ -43,24 +43,22 @@ fun BarPhaseIndicator(
     pixelSize: Dp = LocalPixelTheme.current.pixelSize,
 ) {
     val currentBeat = (barPhase * beatsPerBar).toInt().coerceIn(0, beatsPerBar - 1)
+    val shape = RoundedCornerShape(2.dp)
 
     Row(
         modifier = modifier
             .fillMaxWidth()
             .height(pixelSize * 4),
-        horizontalArrangement = Arrangement.spacedBy(pixelSize),
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
     ) {
         for (i in 0 until beatsPerBar) {
+            val isActive = i == currentBeat
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .pixelBorder(
-                        color = if (i == currentBeat) activeColor.copy(alpha = 0.6f) else inactiveColor.copy(alpha = 0.3f),
-                        pixelSize = pixelSize,
-                    )
-                    .background(if (i == currentBeat) activeColor else inactiveColor)
-                    .padding(pixelSize),
+                    .clip(shape)
+                    .background(if (isActive) activeColor else inactiveColor.copy(alpha = 0.4f)),
             )
         }
     }

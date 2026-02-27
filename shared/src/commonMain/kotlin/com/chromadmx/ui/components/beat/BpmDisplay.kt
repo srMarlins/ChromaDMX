@@ -1,6 +1,5 @@
 package com.chromadmx.ui.components.beat
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -13,10 +12,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.chromadmx.ui.components.pixelBorder
-import com.chromadmx.ui.theme.LocalPixelTheme
+import androidx.compose.ui.unit.sp
 import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.theme.PixelFontFamily
 
@@ -43,7 +40,6 @@ enum class BpmSource {
  * @param source     Where the BPM value originates (determines display color).
  * @param onTap      Called when the user taps this display (for tap-tempo).
  * @param modifier   Compose modifier.
- * @param pixelSize  Pixel unit for the border.
  */
 @Composable
 fun BpmDisplay(
@@ -52,7 +48,6 @@ fun BpmDisplay(
     source: BpmSource = BpmSource.TAP,
     onTap: () -> Unit = {},
     modifier: Modifier = Modifier,
-    pixelSize: Dp = LocalPixelTheme.current.pixelSize,
 ) {
     val colors = PixelDesign.colors
     val bpmColor: Color = when (source) {
@@ -82,16 +77,15 @@ fun BpmDisplay(
                 indication = null,
                 onClick = onTap,
             )
-            .pixelBorder(color = bpmColor.copy(alpha = 0.5f), pixelSize = pixelSize)
-            .background(colors.surface)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(horizontal = 4.dp, vertical = 4.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = "${bpm.toInt()} BPM",
-            style = MaterialTheme.typography.headlineSmall.copy(
+            text = "${bpm.toInt()}",
+            style = MaterialTheme.typography.headlineMedium.copy(
                 fontFamily = PixelFontFamily,
                 color = bpmColor,
+                fontSize = 28.sp,
             ),
             modifier = Modifier.alpha(pulseAlpha),
         )

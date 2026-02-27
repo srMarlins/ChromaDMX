@@ -9,12 +9,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.chromadmx.ui.components.pixelBorder
 import com.chromadmx.ui.theme.LocalPixelTheme
 import com.chromadmx.ui.theme.PixelDesign
 
@@ -41,13 +42,15 @@ fun BeatPhaseIndicator(
     segments: Int = 16,
     pixelSize: Dp = LocalPixelTheme.current.pixelSize,
 ) {
+    val shape = RoundedCornerShape(2.dp)
+
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(pixelSize * 3)
-            .pixelBorder(color = activeColor.copy(alpha = 0.3f), pixelSize = pixelSize)
-            .background(inactiveColor)
-            .padding(pixelSize),
+            .clip(shape)
+            .background(inactiveColor.copy(alpha = 0.4f))
+            .padding(1.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),

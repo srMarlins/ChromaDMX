@@ -38,10 +38,10 @@ private val FloorColor = Color(0xFF0A0A14)
 private val HorizonColor = Color(0xFF1A1A30)
 
 /** Standardized dark fixture housing color. */
-private val HousingColor = Color(0xFF1A1A2E)
+private val HousingColor = Color(0xFF222236)
 
-/** Lighter border for fixture housing. */
-private val HousingBorderColor = Color(0xFF2A2A3E)
+/** Lighter border for fixture housing — bright enough to contrast against dark backdrops. */
+private val HousingBorderColor = Color(0xFF484868)
 
 /** Dim grey idle glow for fixtures that have no active color. */
 private val IdleGlowColor = Color(0xFF333344)
