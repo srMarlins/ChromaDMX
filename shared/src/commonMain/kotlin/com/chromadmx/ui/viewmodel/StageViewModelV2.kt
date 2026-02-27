@@ -212,6 +212,7 @@ class StageViewModelV2(
             is StageEvent.ToggleEditMode -> handleToggleEditMode()
             is StageEvent.ToggleNodeList -> handleToggleNodeList()
             is StageEvent.DiagnoseNode -> handleDiagnoseNode(event.node)
+            is StageEvent.DismissDiagnostics -> handleDismissDiagnostics()
 
             // Preset management
             is StageEvent.SaveCurrentPreset -> handleSaveCurrentPreset(event.name, event.genre)
@@ -471,10 +472,31 @@ class StageViewModelV2(
         _networkState.update { it.copy(isNodeListOpen = !it.isNodeListOpen) }
     }
 
-    @Suppress("UNUSED_PARAMETER")
     private fun handleDiagnoseNode(node: com.chromadmx.core.model.DmxNode) {
-        // Close the node list overlay; agent integration is handled elsewhere
-        _networkState.update { it.copy(isNodeListOpen = false) }
+        val currentTime = currentTimeMillis()
+        val diagnostics = NodeDiagnostics(
+            nodeName = node.shortName.ifEmpty { node.longName.ifEmpty { "Unknown Node" } },
+            ipAddress = node.ipAddress,
+            macAddress = node.macAddress,
+            firmwareVersion = "v${node.firmwareVersion}",
+            latencyMs = node.latencyMs,
+            universes = node.universes,
+            numPorts = node.numPorts,
+            uptimeMs = if (node.firstSeenMs > 0) currentTime - node.firstSeenMs else 0L,
+            isAlive = node.isAlive(currentTime),
+            lastError = if (!node.isAlive(currentTime)) "Node not responding" else null,
+            frameCount = 0L,
+        )
+        _networkState.update {
+            it.copy(
+                isNodeListOpen = false,
+                diagnosticsResult = diagnostics,
+            )
+        }
+    }
+
+    private fun handleDismissDiagnostics() {
+        _networkState.update { it.copy(diagnosticsResult = null) }
     }
 
     // ── Simulation control handlers ────────────────────────────────────

@@ -62,6 +62,7 @@ import com.chromadmx.ui.components.SimulationBadge
 import com.chromadmx.ui.components.VenueCanvas
 import com.chromadmx.ui.components.beat.BeatBar
 import com.chromadmx.ui.components.pixelBorder
+import com.chromadmx.ui.screen.network.NodeDiagnosticsOverlay
 import com.chromadmx.ui.screen.network.NodeListOverlay
 import com.chromadmx.ui.state.FixtureState
 import com.chromadmx.ui.state.NetworkState
@@ -372,6 +373,14 @@ fun StageScreen(
                     currentTimeMs = networkState.currentTimeMs,
                     onDiagnose = { viewModel.onEvent(StageEvent.DiagnoseNode(it)) },
                     onClose = { viewModel.onEvent(StageEvent.ToggleNodeList) },
+                )
+            }
+
+            // Network diagnostics overlay
+            networkState.diagnosticsResult?.let { diagnostics ->
+                NodeDiagnosticsOverlay(
+                    diagnostics = diagnostics,
+                    onDismiss = { viewModel.onEvent(StageEvent.DismissDiagnostics) },
                 )
             }
 

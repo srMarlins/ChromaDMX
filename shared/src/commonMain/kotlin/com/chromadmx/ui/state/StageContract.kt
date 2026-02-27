@@ -57,7 +57,29 @@ data class PresetState(
 data class NetworkState(
     val nodes: List<DmxNode> = emptyList(),
     val currentTimeMs: Long = 0,
-    val isNodeListOpen: Boolean = false
+    val isNodeListOpen: Boolean = false,
+    val diagnosticsResult: NodeDiagnostics? = null
+)
+
+/**
+ * Diagnostic snapshot of a single DMX node for the overlay.
+ *
+ * Gathered from the discovered [DmxNode] data and, when available, a
+ * network ping measurement.
+ */
+@Immutable
+data class NodeDiagnostics(
+    val nodeName: String,
+    val ipAddress: String,
+    val macAddress: String,
+    val firmwareVersion: String,
+    val latencyMs: Long,
+    val universes: List<Int>,
+    val numPorts: Int,
+    val uptimeMs: Long,
+    val isAlive: Boolean,
+    val lastError: String? = null,
+    val frameCount: Long = 0L,
 )
 
 /**
@@ -114,6 +136,7 @@ sealed interface StageEvent {
     data object ToggleEditMode : StageEvent
     data object ToggleNodeList : StageEvent
     data class DiagnoseNode(val node: DmxNode) : StageEvent
+    data object DismissDiagnostics : StageEvent
 
     // Preset management
     data class SaveCurrentPreset(val name: String, val genre: String) : StageEvent
