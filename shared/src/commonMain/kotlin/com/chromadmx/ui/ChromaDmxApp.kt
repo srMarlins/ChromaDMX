@@ -68,6 +68,7 @@ fun ChromaDmxApp() {
         val setupVm = resolveOrNull<SetupViewModel>()
         val stageVm = resolveOrNull<StageViewModelV2>()
         val settingsVm = resolveOrNull<SettingsViewModelV2>()
+        val provisioningVm = resolveOrNull<ProvisioningViewModel>()
         val mascotVm = resolveOrNull<MascotViewModelV2>()
 
         Surface(
@@ -158,7 +159,6 @@ fun ChromaDmxApp() {
                         }
                     }
                     AppScreen.Provisioning -> {
-                        val provisioningVm = resolveOrNull<ProvisioningViewModel>()
                         if (provisioningVm != null) {
                             ProvisioningScreen(
                                 viewModel = provisioningVm,
