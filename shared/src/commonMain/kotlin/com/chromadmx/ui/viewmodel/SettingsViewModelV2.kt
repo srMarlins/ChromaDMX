@@ -1,5 +1,6 @@
 package com.chromadmx.ui.viewmodel
 
+import com.chromadmx.core.model.BuiltInProfiles
 import com.chromadmx.core.persistence.FixtureStore
 import com.chromadmx.core.persistence.SettingsStore
 import com.chromadmx.networking.DmxTransportRouter
@@ -40,6 +41,9 @@ class SettingsViewModelV2(
     val state: StateFlow<SettingsUiState> = _state.asStateFlow()
 
     init {
+        // Seed the built-in fixture profiles so they appear immediately.
+        _state.update { it.copy(fixtureProfiles = BuiltInProfiles.all()) }
+
         // Derive simulation state from the persisted repository value.
         scope.launch {
             settingsRepository.isSimulation.collect { sim ->
@@ -74,6 +78,15 @@ class SettingsViewModelV2(
 
             is SettingsEvent.AddFixtureProfile ->
                 _state.update { it.copy(fixtureProfiles = it.fixtureProfiles + event.profile) }
+
+            is SettingsEvent.UpdateFixtureProfile ->
+                _state.update { st ->
+                    st.copy(
+                        fixtureProfiles = st.fixtureProfiles.map { p ->
+                            if (p.profileId == event.profile.profileId) event.profile else p
+                        }
+                    )
+                }
 
             is SettingsEvent.DeleteFixtureProfile ->
                 _state.update {

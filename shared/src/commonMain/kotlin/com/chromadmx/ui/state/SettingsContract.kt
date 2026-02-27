@@ -59,6 +59,7 @@ sealed interface SettingsEvent {
     data class SetManualStartAddress(val address: String) : SettingsEvent
     data object ForceRescan : SettingsEvent
     data class AddFixtureProfile(val profile: FixtureProfile) : SettingsEvent
+    data class UpdateFixtureProfile(val profile: FixtureProfile) : SettingsEvent
     data class DeleteFixtureProfile(val profileId: String) : SettingsEvent
     data class ToggleSimulation(val enabled: Boolean) : SettingsEvent
     data class SetRigPreset(val preset: RigPreset) : SettingsEvent
