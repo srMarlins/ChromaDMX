@@ -1,6 +1,6 @@
 package com.chromadmx.ui.di
 
-import com.chromadmx.agent.LightingAgent
+import com.chromadmx.agent.LightingAgentInterface
 import com.chromadmx.agent.controller.FixtureController
 import com.chromadmx.core.persistence.FixtureRepository
 import com.chromadmx.core.persistence.FixtureStore
@@ -35,7 +35,7 @@ import org.koin.dsl.module
  * - StageViewModelV2 requires: EffectEngine, EffectRegistry, PresetLibrary,
  *     BeatClock, FixtureDiscovery, NodeDiscovery (optional)
  * - SettingsViewModelV2 requires: SettingsStore, DmxTransportRouter, FixtureDiscovery
- * - MascotViewModelV2 requires: BeatClock, knownNodesFlow, LightingAgent (optional)
+ * - MascotViewModelV2 requires: BeatClock, knownNodesFlow, LightingAgentInterface (optional)
  * - ProvisioningViewModel requires: BleProvisioningService (optional)
  */
 val uiModule = module {
@@ -104,7 +104,7 @@ val uiModule = module {
         MascotViewModelV2(
             beatClock = get(),
             knownNodesFlow = networkStateRepo?.knownNodes() ?: flowOf(emptyList()),
-            lightingAgent = getOrNull<LightingAgent>(),
+            lightingAgent = getOrNull<LightingAgentInterface>(),
             scope = vmScope,
         )
     }

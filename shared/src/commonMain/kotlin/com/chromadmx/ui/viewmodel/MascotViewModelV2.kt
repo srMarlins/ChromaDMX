@@ -1,6 +1,6 @@
 package com.chromadmx.ui.viewmodel
 
-import com.chromadmx.agent.LightingAgent
+import com.chromadmx.agent.LightingAgentInterface
 import com.chromadmx.core.model.KnownNode
 import com.chromadmx.networking.discovery.currentTimeMillis
 import com.chromadmx.tempo.clock.BeatClock
@@ -40,7 +40,7 @@ import kotlinx.coroutines.launch
 class MascotViewModelV2(
     private val beatClock: BeatClock,
     private val knownNodesFlow: Flow<List<KnownNode>>,
-    private val lightingAgent: LightingAgent? = null,
+    private val lightingAgent: LightingAgentInterface? = null,
     private val scope: CoroutineScope,
 ) {
     internal val animationController = AnimationController(scope)

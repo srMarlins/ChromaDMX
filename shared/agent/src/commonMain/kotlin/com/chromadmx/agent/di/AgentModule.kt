@@ -2,6 +2,8 @@ package com.chromadmx.agent.di
 
 import ai.koog.agents.core.tools.ToolRegistry
 import com.chromadmx.agent.LightingAgent
+import com.chromadmx.agent.LightingAgentInterface
+import com.chromadmx.agent.LightingAgentService
 import com.chromadmx.agent.config.AgentConfig
 import com.chromadmx.agent.config.ApiKeyProvider
 import com.chromadmx.agent.controller.EngineController
@@ -49,6 +51,20 @@ val agentModule: Module = module {
             presetLibrary = get()
         )
     }
+
+    // LightingAgentInterface — correct per-message lifecycle when API key is available.
+    // When no key is configured, falls back to the legacy LightingAgent (offline-capable
+    // with dispatchTool support). Task 4 will add SimulatedLightingAgent for this case.
+    single<LightingAgentInterface> {
+        val config = get<AgentConfig>()
+        if (config.isAvailable) {
+            LightingAgentService(config, get())
+        } else {
+            LightingAgent(config, get())
+        }
+    }
+
+    // Keep LightingAgent available for direct tool dispatch (e.g. PreGenerationService).
     single { LightingAgent(get(), get()) }
     single { PreGenerationService(get()) }
 }
