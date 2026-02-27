@@ -13,7 +13,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.chromadmx.core.model.DmxNode
 import com.chromadmx.ui.screen.network.HealthLevel
 import com.chromadmx.ui.screen.network.healthLevel
@@ -66,9 +65,14 @@ fun NodeHealthCompact(
                 color = color,
             )
         } else {
-            val healthy = nodes.count { it.healthLevel(currentTimeMs) == HealthLevel.FULL }
-            val degraded = nodes.count { it.healthLevel(currentTimeMs) == HealthLevel.HALF }
-            val lost = nodes.count { it.healthLevel(currentTimeMs) == HealthLevel.EMPTY }
+            var healthy = 0; var degraded = 0; var lost = 0
+            for (node in nodes) {
+                when (node.healthLevel(currentTimeMs)) {
+                    HealthLevel.FULL -> healthy++
+                    HealthLevel.HALF -> degraded++
+                    HealthLevel.EMPTY -> lost++
+                }
+            }
 
             if (healthy > 0) {
                 NodeStatusSegment(count = healthy, color = colors.success)
@@ -102,7 +106,6 @@ private fun NodeStatusSegment(
             text = count.toString(),
             style = MaterialTheme.typography.labelSmall.copy(
                 fontFamily = PixelFontFamily,
-                fontSize = 11.sp,
             ),
             color = color,
         )
