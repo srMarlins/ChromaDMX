@@ -60,6 +60,7 @@ class AdvancedEffectsTest {
             .with("speed", 1.0f)
             .with("color", Color.WHITE)
             .with("width", 0.4f)
+            .with("maxRadius", 10f)
 
         // Fixture at distance 2 from center
         val pos = Vec3(2f, 0f, 0f)

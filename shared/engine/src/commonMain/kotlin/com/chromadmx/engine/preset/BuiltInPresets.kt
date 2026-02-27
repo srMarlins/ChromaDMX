@@ -60,8 +60,8 @@ private fun neonPulse() = createBuiltInPreset(
             effectId = RadialPulse3DEffect.ID,
             params = EffectParams()
                 .with("color", Color(0f, 1f, 1f))   // cyan
-                .with("speed", 2.5f)
-                .with("width", 0.4f),
+                .with("speed", 1.5f)
+                .with("width", 0.8f),
             blendMode = BlendMode.NORMAL,
             opacity = 1.0f
         ),
@@ -69,8 +69,8 @@ private fun neonPulse() = createBuiltInPreset(
             effectId = RadialPulse3DEffect.ID,
             params = EffectParams()
                 .with("color", Color(1f, 0f, 1f))   // magenta
-                .with("speed", 1.8f)
-                .with("width", 0.35f)
+                .with("speed", 1.2f)
+                .with("width", 0.7f)
                 .with("centerX", 0.5f),
             blendMode = BlendMode.ADDITIVE,
             opacity = 0.7f

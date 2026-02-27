@@ -644,8 +644,7 @@ class StageViewModelV2(
         // reference changed (e.g. after updateFixtures) so the UI gets the
         // correct count even if the engine hasn't ticked yet.
         if (hasNewData || bufferChanged) {
-            val colors = buffer.readSlot()
-            _fixtureColors.tryEmit(colors.toList())
+            _fixtureColors.tryEmit(buffer.readSlot().toList())
         }
     }
 }
