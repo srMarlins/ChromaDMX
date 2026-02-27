@@ -390,7 +390,7 @@ private fun StageTopBar(
     onSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
+    Column(
         modifier = modifier
             .fillMaxWidth()
             .background(PixelDesign.colors.surface.copy(alpha = 0.95f))
@@ -399,8 +399,9 @@ private fun StageTopBar(
                 color = PixelDesign.colors.outlineVariant,
                 pixelSize = 1.dp,
             )
-            .padding(horizontal = 8.dp, vertical = 8.dp),
+            .padding(horizontal = 12.dp, vertical = 8.dp),
     ) {
+        // Row 1: BPM display + action icons
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -413,28 +414,23 @@ private fun StageTopBar(
                 modifier = Modifier.weight(1f),
             )
 
-            // Master dimmer compact
-            MasterDimmerCompact(
-                value = perfState.masterDimmer,
-                onValueChange = { onEvent(StageEvent.SetMasterDimmer(it)) },
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 12.dp),
-            )
-
-            // Controls row
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            // Action icons row
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
                 // Node health
                 NodeHealthCompact(
                     nodes = networkState.nodes,
                     currentTimeMs = networkState.currentTimeMs,
                     onClick = { onEvent(StageEvent.ToggleNodeList) },
+                    isSimulationMode = viewState.isSimulationMode,
                 )
 
                 // Edit mode toggle
                 IconButton(
                     onClick = { onEvent(StageEvent.ToggleEditMode) },
-                    modifier = Modifier.size(36.dp),
+                    modifier = Modifier.size(40.dp),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Edit,
@@ -451,7 +447,7 @@ private fun StageTopBar(
                 // Settings button
                 IconButton(
                     onClick = onSettings,
-                    modifier = Modifier.size(36.dp),
+                    modifier = Modifier.size(40.dp),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Settings,
@@ -462,6 +458,15 @@ private fun StageTopBar(
                 }
             }
         }
+
+        Spacer(Modifier.height(6.dp))
+
+        // Row 2: Full-width master dimmer
+        MasterDimmerCompact(
+            value = perfState.masterDimmer,
+            onValueChange = { onEvent(StageEvent.SetMasterDimmer(it)) },
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
@@ -676,13 +681,13 @@ private fun MasterDimmerCompact(
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
             text = "DIM",
             style = MaterialTheme.typography.labelSmall.copy(
                 fontFamily = PixelFontFamily,
-                fontSize = 7.sp,
+                fontSize = 10.sp,
             ),
             color = PixelDesign.colors.secondary.copy(alpha = 0.8f),
         )
@@ -690,13 +695,13 @@ private fun MasterDimmerCompact(
             value = value,
             onValueChange = onValueChange,
             accentColor = PixelDesign.colors.secondary,
-            modifier = Modifier.weight(1f).height(24.dp),
+            modifier = Modifier.weight(1f).height(28.dp),
         )
         Text(
             text = "${(value * 100).toInt()}%",
             style = MaterialTheme.typography.labelSmall.copy(
                 fontFamily = PixelFontFamily,
-                fontSize = 8.sp,
+                fontSize = 11.sp,
             ),
             color = PixelDesign.colors.secondary,
         )

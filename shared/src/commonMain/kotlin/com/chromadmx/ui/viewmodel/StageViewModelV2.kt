@@ -476,6 +476,12 @@ class StageViewModelV2(
                 simulationFixtureCount = fixtureCount,
             )
         }
+        // Auto-load first available preset so effects actually run
+        val presets = presetLibrary.listPresets()
+        val preset = presets.firstOrNull() ?: return
+        presetLibrary.loadPreset(preset.id)
+        _performanceState.update { it.copy(activeSceneName = preset.name) }
+        syncFromEngine()
     }
 
     private fun handleDisableSimulation() {
