@@ -293,7 +293,7 @@ private fun DrawScope.drawPointFixture(
     cy: Float,
     color: Color,
     isSelected: Boolean,
-    selectionColor: Color = Color(0xFF9CCC65),
+    selectionColor: Color,
 ) {
     // Outer glow halo
     drawCircle(
@@ -328,7 +328,7 @@ private fun DrawScope.drawBarFixture(
     color: Color,
     pixelCount: Int,
     isSelected: Boolean,
-    selectionColor: Color = Color(0xFF9CCC65),
+    selectionColor: Color,
 ) {
     val segmentW = 8f
     val segmentH = 12f
@@ -378,7 +378,7 @@ private fun DrawScope.drawBeamConeFixture(
     color: Color,
     isSelected: Boolean,
     reusablePath: Path,
-    selectionColor: Color = Color(0xFF9CCC65),
+    selectionColor: Color,
 ) {
     // Beam cone (downward triangle-like glow)
     val beamLength = 30f
