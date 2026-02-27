@@ -41,6 +41,15 @@ private val DarkStageBackdrop = Color(0xFF0C0E14)
 /** Light stage backdrop — warm light gray (light themes). */
 private val LightStageBackdrop = Color(0xFFE0E0DC)
 
+/** Horizontal padding as fraction of canvas width (left/right). */
+private const val PAD_H_FRACTION = 0.07f
+
+/** Top padding as fraction of canvas height — extra clearance for camera controls overlay. */
+private const val PAD_TOP_FRACTION = 0.10f
+
+/** Bottom padding as fraction of canvas height. */
+private const val PAD_BOTTOM_FRACTION = 0.06f
+
 /** Truss structure color. */
 private val TrussColor = Color(0xFF2A2A3E)
 
@@ -135,9 +144,11 @@ fun VenueCanvas(
                                     val canvasX = (screenPos.x - panOffset.x - pivotX) / zoom + pivotX
                                     val canvasY = (screenPos.y - panOffset.y - pivotY) / zoom + pivotY
 
-                                    val padding = 80f
-                                    val canvasW = size.width - 2 * padding
-                                    val canvasH = size.height - 2 * padding
+                                    val padH = size.width * PAD_H_FRACTION
+                                    val padTop = size.height * PAD_TOP_FRACTION
+                                    val padBottom = size.height * PAD_BOTTOM_FRACTION
+                                    val canvasW = size.width - 2 * padH
+                                    val canvasH = size.height - padTop - padBottom
 
                                     if (canvasW > 0f && canvasH > 0f) {
                                         // Compute bounds from fixtures
@@ -153,8 +164,8 @@ fun VenueCanvas(
                                         val rangeY = (maxY - minY).coerceAtLeast(1f)
 
                                         // Reverse the normalization
-                                        val normX = ((canvasX - padding) / canvasW).coerceIn(0f, 1f)
-                                        val normY = (1f - (canvasY - padding) / canvasH).coerceIn(0f, 1f)
+                                        val normX = ((canvasX - padH) / canvasW).coerceIn(0f, 1f)
+                                        val normY = (1f - (canvasY - padTop) / canvasH).coerceIn(0f, 1f)
                                         val worldX = minX + normX * rangeX
                                         val worldY = minY + normY * rangeY
 
@@ -208,9 +219,11 @@ fun VenueCanvas(
     ) {
         if (fixtures.isEmpty()) return@Canvas
 
-        val padding = 80f
-        val canvasW = size.width - 2 * padding
-        val canvasH = size.height - 2 * padding
+        val padH = size.width * PAD_H_FRACTION
+        val padTop = size.height * PAD_TOP_FRACTION
+        val padBottom = size.height * PAD_BOTTOM_FRACTION
+        val canvasW = size.width - 2 * padH
+        val canvasH = size.height - padTop - padBottom
 
         if (canvasW <= 0f || canvasH <= 0f) return@Canvas
 
@@ -249,8 +262,8 @@ fun VenueCanvas(
             for ((index, fixture) in fixtures.withIndex()) {
                 val normX = if (collapsedX) 0.5f else (fixture.position.x - minX) / rangeX
                 val normY = if (collapsedY) 0.5f else (fixture.position.y - minY) / rangeY
-                val cx = padding + normX * canvasW
-                val cy = padding + (1f - normY) * canvasH // Flip Y for top-down
+                val cx = padH + normX * canvasW
+                val cy = padTop + (1f - normY) * canvasH // Flip Y for top-down
 
                 positions.add(Offset(cx, cy))
 

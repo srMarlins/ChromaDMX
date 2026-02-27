@@ -1,7 +1,6 @@
 package com.chromadmx.ui.components.beat
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -43,16 +42,15 @@ fun BeatPhaseIndicator(
     segments: Int = 16,
     pixelSize: Dp = LocalPixelTheme.current.pixelSize,
 ) {
-    val shape = RoundedCornerShape(3.dp)
+    val shape = RoundedCornerShape(2.dp)
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(pixelSize * 3)
             .clip(shape)
-            .border(1.dp, activeColor.copy(alpha = 0.3f), shape)
-            .background(inactiveColor)
-            .padding(pixelSize),
+            .background(inactiveColor.copy(alpha = 0.4f))
+            .padding(1.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
