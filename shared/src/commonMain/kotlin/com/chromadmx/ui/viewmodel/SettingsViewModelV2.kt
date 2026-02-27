@@ -15,12 +15,15 @@ import com.chromadmx.ui.state.DataTransferStatus
 import com.chromadmx.ui.state.SettingsEvent
 import com.chromadmx.ui.state.SettingsUiState
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Settings view model following the Unidirectional Data Flow (UDF) pattern.
@@ -143,16 +146,18 @@ class SettingsViewModelV2(
         _state.update { it.copy(selectedRigPreset = preset) }
         val store = fixtureStore ?: return
         scope.launch {
-            val rig = SimulatedFixtureRig(preset)
-            store.deleteAll()
-            store.saveAll(rig.fixtures)
+            withContext(Dispatchers.IO) {
+                val rig = SimulatedFixtureRig(preset)
+                store.deleteAll()
+                store.saveAll(rig.fixtures)
+            }
         }
     }
 
     private fun toggleSimulation(enabled: Boolean) {
         _state.update { it.copy(simulationEnabled = enabled) }
         scope.launch {
-            settingsRepository.setIsSimulation(enabled)
+            withContext(Dispatchers.IO) { settingsRepository.setIsSimulation(enabled) }
         }
         val mode = if (enabled) TransportMode.Simulated else TransportMode.Real
         transportRouter.switchTo(mode)
@@ -161,7 +166,7 @@ class SettingsViewModelV2(
     private fun resetSimulation() {
         _state.update { it.copy(simulationEnabled = false) }
         scope.launch {
-            settingsRepository.setIsSimulation(false)
+            withContext(Dispatchers.IO) { settingsRepository.setIsSimulation(false) }
         }
         transportRouter.switchTo(TransportMode.Real)
     }
@@ -181,7 +186,7 @@ class SettingsViewModelV2(
 
     private fun resetOnboarding() {
         scope.launch {
-            settingsRepository.setSetupCompleted(false)
+            withContext(Dispatchers.IO) { settingsRepository.setSetupCompleted(false) }
         }
     }
 

@@ -16,6 +16,8 @@ import com.chromadmx.ui.state.SetupEvent
 import com.chromadmx.ui.state.SetupStep
 import com.chromadmx.ui.state.SetupUiState
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +26,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * ViewModel managing the setup/onboarding flow using the
@@ -313,21 +316,23 @@ class SetupViewModel(
      */
     private fun persistSetupComplete() {
         scope.launch {
-            settingsStore.setSetupCompleted(true)
+            withContext(Dispatchers.IO) {
+                settingsStore.setSetupCompleted(true)
 
-            if (_state.value.isSimulationMode) {
-                settingsStore.setIsSimulation(true)
+                if (_state.value.isSimulationMode) {
+                    settingsStore.setIsSimulation(true)
 
-                // Save simulated fixtures
-                val rig = SimulatedFixtureRig(_state.value.selectedRigPreset)
-                fixtureStore.saveAll(rig.fixtures)
-            }
+                    // Save simulated fixtures
+                    val rig = SimulatedFixtureRig(_state.value.selectedRigPreset)
+                    fixtureStore.saveAll(rig.fixtures)
+                }
 
-            // Persist the current node topology for comparison on next launch
-            val currentNodes = _state.value.discoveredNodes
-            if (networkStateRepository != null && currentNodes.isNotEmpty()) {
-                val knownNodes = currentNodes.take(MAX_PERSISTED_NODES).map { it.toKnownNode() }
-                networkStateRepository.saveKnownNodes(knownNodes)
+                // Persist the current node topology for comparison on next launch
+                val currentNodes = _state.value.discoveredNodes
+                if (networkStateRepository != null && currentNodes.isNotEmpty()) {
+                    val knownNodes = currentNodes.take(MAX_PERSISTED_NODES).map { it.toKnownNode() }
+                    networkStateRepository.saveKnownNodes(knownNodes)
+                }
             }
         }
     }
