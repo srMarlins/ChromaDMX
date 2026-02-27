@@ -17,16 +17,24 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 
 /**
- * Performance-related UI state (tempo, master, layers).
+ * Performance-related UI state (master dimmer, layers, active scene).
  */
 @Immutable
 data class PerformanceState(
+    val masterDimmer: Float = 1f,
+    val layers: ImmutableList<EffectLayer> = persistentListOf(),
+    val activeSceneName: String? = null,
+)
+
+/**
+ * Beat/tempo UI state — separated from [PerformanceState] so that
+ * high-frequency beat updates don't recompose the layer panel or dimmer.
+ */
+@Immutable
+data class BeatUiState(
     val beatState: BeatState = BeatState.IDLE,
     val bpm: Float = 120f,
     val isRunning: Boolean = false,
-    val masterDimmer: Float = 1f,
-    val layers: ImmutableList<EffectLayer> = persistentListOf(),
-    val activeSceneName: String? = null
 )
 
 /**

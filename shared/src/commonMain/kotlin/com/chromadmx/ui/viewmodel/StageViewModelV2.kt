@@ -96,6 +96,9 @@ class StageViewModelV2(
     private val _viewState = MutableStateFlow(ViewState())
     val viewState: StateFlow<ViewState> = _viewState.asStateFlow()
 
+    private val _beatUiState = MutableStateFlow(BeatUiState())
+    val beatUiState: StateFlow<BeatUiState> = _beatUiState.asStateFlow()
+
     // ── High-frequency shared flows ────────────────────────────────────
 
     private val _fixtureColors = MutableSharedFlow<List<DmxColor>>(replay = 1)
@@ -115,7 +118,11 @@ class StageViewModelV2(
     private val syncJob: Job = scope.launch {
         while (isActive) {
             syncFromEngine()
-            _networkState.update { it.copy(currentTimeMs = currentTimeMillis()) }
+            // Only tick currentTimeMs when the node list overlay is visible,
+            // avoiding a full-screen recomposition every 500ms.
+            if (_networkState.value.isNodeListOpen) {
+                _networkState.update { it.copy(currentTimeMs = currentTimeMillis()) }
+            }
             delay(500L)
         }
     }
@@ -128,17 +135,17 @@ class StageViewModelV2(
         }
     }
 
-    /** Collect beat state from beat clock into performance state. */
+    /** Collect beat state from beat clock into beat UI state. */
     private val beatSyncJob: Job = scope.launch {
         beatClock.beatState.collect { beat ->
-            _performanceState.update { it.copy(beatState = beat, bpm = beat.bpm) }
+            _beatUiState.update { it.copy(beatState = beat, bpm = beat.bpm) }
         }
     }
 
-    /** Collect running state from beat clock. */
+    /** Collect running state from beat clock into beat UI state. */
     private val runningSyncJob: Job = scope.launch {
         beatClock.isRunning.collect { running ->
-            _performanceState.update { it.copy(isRunning = running) }
+            _beatUiState.update { it.copy(isRunning = running) }
         }
     }
 
