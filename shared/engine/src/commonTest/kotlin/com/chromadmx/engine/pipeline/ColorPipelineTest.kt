@@ -19,7 +19,7 @@ import com.chromadmx.engine.effects.WaveEffect3DEffect
 import com.chromadmx.engine.preset.PresetLibrary
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
+
 import kotlin.test.assertTrue
 import kotlinx.coroutines.test.TestScope
 
