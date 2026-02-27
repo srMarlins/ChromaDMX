@@ -32,5 +32,13 @@ enum class RigPreset(val networkProfile: NetworkProfile = NetworkProfile.Stable)
      * Large outdoor stage with ground bars, mid trusses, and high trusses.
      * Total: 108 fixtures, mix of PAR, pixel bar, moving head, and strobe.
      */
-    FESTIVAL_STAGE
+    FESTIVAL_STAGE,
+
+    /**
+     * Pixel Bar V: 8 vertical 24-pixel RGB bars in a V-formation.
+     * Performer at the tip, 4 bars per side fanning out.
+     * DMX addresses scrambled to test vision-based position mapping.
+     * Total: 8 fixtures (192 pixels), 576 DMX channels, 2 universes.
+     */
+    PIXEL_BAR_V
 }

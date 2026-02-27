@@ -7,6 +7,7 @@ kotlin {
         commonMain.dependencies {
             api(project(":shared:core"))
             api(project(":shared:networking"))
+            api(project(":shared:vision"))
         }
         commonTest.dependencies {
             implementation(project(":shared:engine"))
