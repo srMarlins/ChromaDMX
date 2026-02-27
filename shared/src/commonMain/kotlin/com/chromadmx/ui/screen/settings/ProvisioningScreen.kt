@@ -17,7 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
@@ -143,7 +143,7 @@ private fun ProvisioningHeader(
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (selectedNode != null) {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back to scan")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back to scan")
                 }
             }
             Text(
