@@ -27,24 +27,50 @@ import kotlin.time.TimeSource
  */
 class EffectEngine(
     private val scope: CoroutineScope,
-    val fixtures: List<Fixture3D>
+    initialFixtures: List<Fixture3D> = emptyList()
 ) {
     /** The compositing effect stack evaluated each frame. */
     val effectStack: EffectStack = EffectStack()
 
+    /** Current fixture list. Updated via [updateFixtures]. */
+    var fixtures: List<Fixture3D> = initialFixtures
+        private set
+
     /** Triple-buffered color output: one [Color] per fixture. */
-    val colorOutput: TripleBuffer<Array<Color>> = TripleBuffer(
+    var colorOutput: TripleBuffer<Array<Color>> = TripleBuffer(
         initialA = Array(fixtures.size) { Color.BLACK },
         initialB = Array(fixtures.size) { Color.BLACK },
         initialC = Array(fixtures.size) { Color.BLACK }
     )
+        private set
 
     /** Triple-buffered fixture output: one [FixtureOutput] per fixture (includes movement data). */
-    val fixtureOutputBuffer: TripleBuffer<Array<FixtureOutput>> = TripleBuffer(
+    var fixtureOutputBuffer: TripleBuffer<Array<FixtureOutput>> = TripleBuffer(
         initialA = Array(fixtures.size) { FixtureOutput.DEFAULT },
         initialB = Array(fixtures.size) { FixtureOutput.DEFAULT },
         initialC = Array(fixtures.size) { FixtureOutput.DEFAULT }
     )
+        private set
+
+    /**
+     * Replace the fixture list and reinitialize triple buffers to match the new size.
+     * Safe to call while the engine is running — the next tick will use the new fixtures.
+     */
+    fun updateFixtures(newFixtures: List<Fixture3D>) {
+        // Order matters: resize buffers BEFORE updating fixtures so that a
+        // concurrent tick() never sees more fixtures than buffer slots.
+        colorOutput = TripleBuffer(
+            initialA = Array(newFixtures.size) { Color.BLACK },
+            initialB = Array(newFixtures.size) { Color.BLACK },
+            initialC = Array(newFixtures.size) { Color.BLACK }
+        )
+        fixtureOutputBuffer = TripleBuffer(
+            initialA = Array(newFixtures.size) { FixtureOutput.DEFAULT },
+            initialB = Array(newFixtures.size) { FixtureOutput.DEFAULT },
+            initialC = Array(newFixtures.size) { FixtureOutput.DEFAULT }
+        )
+        fixtures = newFixtures
+    }
 
     /** Provider for the current beat state. Defaults to [BeatState.IDLE]. */
     var beatStateProvider: () -> BeatState = { BeatState.IDLE }
@@ -96,28 +122,34 @@ class EffectEngine(
         val time = mark.elapsedNow().inWholeMilliseconds / 1000f
         val beat = beatStateProvider()
 
+        // Snapshot mutable state so a concurrent updateFixtures() can't cause
+        // a size mismatch between the fixture list and the buffer arrays.
+        val curFixtures = fixtures
+        val curColorOutput = colorOutput
+        val curFixtureOutput = fixtureOutputBuffer
+
+        if (curFixtures.isEmpty()) return
+
         // Prepare frame once (O(Layers * Params))
         val evaluator = effectStack.buildFrame(time, beat)
 
-        val colorSlot = colorOutput.writeSlot()
+        val colorSlot = curColorOutput.writeSlot()
         val hasMovement = evaluator.hasMovementLayers
 
         if (hasMovement) {
-            val fixtureSlot = fixtureOutputBuffer.writeSlot()
-            // Evaluate per fixture (O(Pixels * Layers)) — full output path
-            for (i in fixtures.indices) {
-                val output = evaluator.evaluateFixtureOutput(fixtures[i].position)
+            val fixtureSlot = curFixtureOutput.writeSlot()
+            for (i in curFixtures.indices) {
+                val output = evaluator.evaluateFixtureOutput(curFixtures[i].position)
                 colorSlot[i] = output.color
                 fixtureSlot[i] = output
             }
-            fixtureOutputBuffer.swapWrite()
+            curFixtureOutput.swapWrite()
         } else {
-            // Evaluate per fixture (O(Pixels * Layers)) — color-only fast path
-            for (i in fixtures.indices) {
-                colorSlot[i] = evaluator.evaluate(fixtures[i].position)
+            for (i in curFixtures.indices) {
+                colorSlot[i] = evaluator.evaluate(curFixtures[i].position)
             }
         }
-        colorOutput.swapWrite()
+        curColorOutput.swapWrite()
     }
 
     /**

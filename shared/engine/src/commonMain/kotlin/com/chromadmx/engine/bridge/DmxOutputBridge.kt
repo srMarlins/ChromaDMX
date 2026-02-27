@@ -16,12 +16,21 @@ import kotlinx.coroutines.launch
  * Runs at a configurable rate (default 40Hz to match DMX output).
  */
 class DmxOutputBridge(
-    private val colorOutput: TripleBuffer<Array<Color>>,
+    private val colorOutputProvider: () -> TripleBuffer<Array<Color>>,
     private val dmxBridge: DmxBridge,
     private val onFrame: (Map<Int, ByteArray>) -> Unit,
     private val scope: CoroutineScope,
     private val intervalMs: Long = 25L // 40Hz
 ) {
+    @Deprecated("Use the provider overload", level = DeprecationLevel.HIDDEN)
+    constructor(
+        colorOutput: TripleBuffer<Array<Color>>,
+        dmxBridge: DmxBridge,
+        onFrame: (Map<Int, ByteArray>) -> Unit,
+        scope: CoroutineScope,
+        intervalMs: Long = 25L,
+    ) : this({ colorOutput }, dmxBridge, onFrame, scope, intervalMs)
+
     private var job: Job? = null
     val isRunning: Boolean get() = job?.isActive == true
 
@@ -29,6 +38,7 @@ class DmxOutputBridge(
         if (isRunning) return
         job = scope.launch(Dispatchers.Default) {
             while (isActive) {
+                val colorOutput = colorOutputProvider()
                 if (colorOutput.swapRead()) {
                     val colors = colorOutput.readSlot()
                     val frame = dmxBridge.convert(colors)

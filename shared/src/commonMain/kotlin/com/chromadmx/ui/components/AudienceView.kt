@@ -107,6 +107,10 @@ fun AudienceView(
         val availableW = size.width - 2 * padding
         val stageH = stageBottom - stageTop
 
+        // Scale fixture sizes based on available space per fixture
+        val fixtureScale = ((availableW / fixtures.size.coerceAtLeast(1).toFloat()) / 50f)
+            .coerceIn(0.8f, 2.5f)
+
         // Place trusses based on actual fixture Z heights
         val trussY1 = stageTop + stageH * 0.15f // upper truss
         val trussY2 = stageTop + stageH * 0.45f // lower truss
@@ -164,21 +168,23 @@ fun AudienceView(
                 1f - normY * 0.15f // 0.85x to 1x scale
             } else 1f
 
+            val combinedScale = depthScale * fixtureScale
+
             when (renderHint) {
                 RenderHint.POINT -> {
                     val fixtureType = profile?.type ?: FixtureType.PAR
                     when (fixtureType) {
-                        FixtureType.STROBE -> drawAudienceStrobe(fx, fixtureY, composeColor, floorTop, depthScale)
-                        FixtureType.WASH -> drawAudienceWash(fx, fixtureY, composeColor, floorTop, reusablePath, depthScale)
-                        else -> drawAudiencePar(fx, fixtureY, composeColor, floorTop, reusablePath, depthScale)
+                        FixtureType.STROBE -> drawAudienceStrobe(fx, fixtureY, composeColor, floorTop, combinedScale)
+                        FixtureType.WASH -> drawAudienceWash(fx, fixtureY, composeColor, floorTop, reusablePath, combinedScale)
+                        else -> drawAudiencePar(fx, fixtureY, composeColor, floorTop, reusablePath, combinedScale)
                     }
                 }
                 RenderHint.BAR -> {
                     val pixelCount = profile?.physical?.pixelCount ?: 8
-                    drawAudienceBar(fx, fixtureY, composeColor, pixelCount, depthScale)
+                    drawAudienceBar(fx, fixtureY, composeColor, pixelCount, combinedScale)
                 }
                 RenderHint.BEAM_CONE -> {
-                    drawAudienceBeamCone(fx, fixtureY, composeColor, floorTop, reusablePath, depthScale)
+                    drawAudienceBeamCone(fx, fixtureY, composeColor, floorTop, reusablePath, combinedScale)
                 }
             }
 

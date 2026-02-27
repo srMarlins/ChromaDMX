@@ -103,6 +103,9 @@ fun StageScreen(
     val networkState by viewModel.networkState.collectAsState()
     val viewState by viewModel.viewState.collectAsState()
 
+    // Fixture colors come from a high-frequency SharedFlow, not the fixture state slice
+    val fixtureColors by viewModel.fixtureColors.collectAsState(initial = emptyList())
+
     // Local overlay state
     var showFixtureEdit by remember { mutableStateOf(false) }
     var showNewGroupDialog by remember { mutableStateOf(false) }
@@ -134,7 +137,7 @@ fun StageScreen(
             when (viewState.mode) {
                 ViewMode.TOP_DOWN -> VenueCanvas(
                     fixtures = fixtureState.fixtures,
-                    fixtureColors = fixtureState.fixtureColors,
+                    fixtureColors = fixtureColors,
                     selectedFixtureIndex = fixtureState.selectedFixtureIndex,
                     isEditMode = fixtureState.isEditMode,
                     onFixtureTapped = { viewModel.onEvent(StageEvent.SelectFixture(it)) },
@@ -151,7 +154,7 @@ fun StageScreen(
                 ViewMode.ISO -> IsometricRenderer(
                     fixtureState = fixtureState,
                     viewState = viewState,
-                    fixtureColors = fixtureState.fixtureColors.map { it.toComposeColor() },
+                    fixtureColors = fixtureColors.map { it.toComposeColor() },
                     onFixtureTapped = { viewModel.onEvent(StageEvent.SelectFixture(it)) },
                     onBackgroundTapped = { viewModel.onEvent(StageEvent.SelectFixture(null)) },
                     modifier = Modifier.fillMaxSize(),
@@ -159,7 +162,7 @@ fun StageScreen(
 
                 ViewMode.AUDIENCE -> AudienceView(
                     fixtures = fixtureState.fixtures,
-                    fixtureColors = fixtureState.fixtureColors,
+                    fixtureColors = fixtureColors,
                     onBackgroundTapped = { viewModel.onEvent(StageEvent.SelectFixture(null)) },
                     modifier = Modifier.fillMaxSize(),
                 )
@@ -298,7 +301,7 @@ fun StageScreen(
                             FixtureInfoOverlay(
                                 fixture = fixture,
                                 fixtureIndex = index,
-                                color = fixtureState.fixtureColors.getOrNull(index),
+                                color = fixtureColors.getOrNull(index),
                                 onDismiss = {
                                     viewModel.onEvent(StageEvent.SelectFixture(null))
                                 },

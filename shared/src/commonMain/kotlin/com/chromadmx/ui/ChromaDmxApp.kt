@@ -23,6 +23,7 @@ import com.chromadmx.ui.screen.settings.SettingsScreen
 import com.chromadmx.ui.screen.setup.SetupScreen
 import com.chromadmx.ui.screen.stage.StageScreen
 import com.chromadmx.ui.state.MascotEvent
+import com.chromadmx.ui.state.StageEvent
 import com.chromadmx.ui.theme.ChromaDmxTheme
 import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.viewmodel.MascotViewModelV2
@@ -67,6 +68,17 @@ fun ChromaDmxApp() {
                                 viewModel = setupVm,
                                 onComplete = {
                                     appStateManager?.completeSetup()
+                                    // Bridge simulation state to stage view
+                                    val setupState = setupVm.state.value
+                                    if (setupState.isSimulationMode && stageVm != null) {
+                                        val presetName = setupState.selectedGenre?.displayName ?: "Simulation"
+                                        stageVm.onEvent(
+                                            StageEvent.EnableSimulation(
+                                                presetName = presetName,
+                                                fixtureCount = setupState.simulationFixtureCount,
+                                            )
+                                        )
+                                    }
                                 },
                             )
                         } else {

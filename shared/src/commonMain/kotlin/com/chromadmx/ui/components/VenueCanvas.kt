@@ -232,8 +232,16 @@ fun VenueCanvas(
             if (f.position.y < minY) minY = f.position.y
             if (f.position.y > maxY) maxY = f.position.y
         }
-        val rangeX = (maxX - minX).coerceAtLeast(1f)
-        val rangeY = (maxY - minY).coerceAtLeast(1f)
+        val rawRangeX = maxX - minX
+        val rawRangeY = maxY - minY
+        val collapsedX = rawRangeX < 0.1f
+        val collapsedY = rawRangeY < 0.1f
+        val rangeX = if (collapsedX) 1f else rawRangeX
+        val rangeY = if (collapsedY) 1f else rawRangeY
+
+        // Scale fixture rendering sizes based on available space per fixture
+        val fixtureScale = ((canvasW / fixtures.size.coerceAtLeast(1).toFloat()) / 40f)
+            .coerceIn(0.8f, 3f)
 
         // Reusable Path to avoid allocations inside the fixture loop
         val reusablePath = Path()
@@ -246,8 +254,8 @@ fun VenueCanvas(
             val positions = mutableListOf<Offset>()
 
             for ((index, fixture) in fixtures.withIndex()) {
-                val normX = (fixture.position.x - minX) / rangeX
-                val normY = (fixture.position.y - minY) / rangeY
+                val normX = if (collapsedX) 0.5f else (fixture.position.x - minX) / rangeX
+                val normY = if (collapsedY) 0.5f else (fixture.position.y - minY) / rangeY
                 val cx = padding + normX * canvasW
                 val cy = padding + (1f - normY) * canvasH // Flip Y for top-down
 
@@ -264,16 +272,16 @@ fun VenueCanvas(
                     RenderHint.POINT -> {
                         val fixtureType = profile?.type ?: FixtureType.PAR
                         when (fixtureType) {
-                            FixtureType.STROBE -> drawStrobeFixture(cx, cy, composeColor, isSelected, selectionColor)
-                            FixtureType.WASH -> drawWashFixture(cx, cy, composeColor, isSelected, selectionColor)
-                            else -> drawParFixture(cx, cy, composeColor, isSelected, selectionColor)
+                            FixtureType.STROBE -> drawStrobeFixture(cx, cy, composeColor, isSelected, selectionColor, fixtureScale)
+                            FixtureType.WASH -> drawWashFixture(cx, cy, composeColor, isSelected, selectionColor, fixtureScale)
+                            else -> drawParFixture(cx, cy, composeColor, isSelected, selectionColor, fixtureScale)
                         }
                     }
                     RenderHint.BAR -> {
                         val pixelCount = profile?.physical?.pixelCount ?: 8
-                        drawBarFixture(cx, cy, composeColor, pixelCount, isSelected, selectionColor)
+                        drawBarFixture(cx, cy, composeColor, pixelCount, isSelected, selectionColor, fixtureScale)
                     }
-                    RenderHint.BEAM_CONE -> drawBeamConeFixture(cx, cy, composeColor, isSelected, reusablePath, selectionColor)
+                    RenderHint.BEAM_CONE -> drawBeamConeFixture(cx, cy, composeColor, isSelected, reusablePath, selectionColor, fixtureScale)
                 }
             }
 
@@ -312,20 +320,22 @@ private fun DrawScope.drawParFixture(
     color: Color,
     isSelected: Boolean,
     selectionColor: Color,
+    scale: Float = 1f,
 ) {
-    val housingSize = 16f
+    val housingSize = 16f * scale
     val half = housingSize / 2f
-    val lensInset = 2f
+    val lensInset = 2f * scale
     val lensSize = housingSize - 2 * lensInset
 
     // Radial glow (light output)
+    val glowRadius = 24f * scale
     drawCircle(
         brush = Brush.radialGradient(
             colors = listOf(color.copy(alpha = 0.35f), Color.Transparent),
             center = Offset(cx, cy),
-            radius = 24f,
+            radius = glowRadius,
         ),
-        radius = 24f,
+        radius = glowRadius,
         center = Offset(cx, cy),
     )
     // Housing border
@@ -347,8 +357,8 @@ private fun DrawScope.drawParFixture(
         size = Size(lensSize, lensSize),
     )
     // Mount brackets (two ticks on top edge)
-    drawRect(HousingBorderColor, Offset(cx - 4f, cy - half - 3f), Size(2f, 3f))
-    drawRect(HousingBorderColor, Offset(cx + 2f, cy - half - 3f), Size(2f, 3f))
+    drawRect(HousingBorderColor, Offset(cx - 4f * scale, cy - half - 3f * scale), Size(2f * scale, 3f * scale))
+    drawRect(HousingBorderColor, Offset(cx + 2f * scale, cy - half - 3f * scale), Size(2f * scale, 3f * scale))
 
     if (isSelected) drawSelectionBorder(cx, cy, half + 2f, selectionColor)
 }
@@ -362,20 +372,22 @@ private fun DrawScope.drawStrobeFixture(
     color: Color,
     isSelected: Boolean,
     selectionColor: Color,
+    scale: Float = 1f,
 ) {
-    val width = 22f
-    val height = 10f
+    val width = 22f * scale
+    val height = 10f * scale
     val halfW = width / 2f
     val halfH = height / 2f
 
     // Sharp flash glow
+    val glowRadius = 28f * scale
     drawCircle(
         brush = Brush.radialGradient(
             colors = listOf(Color.White.copy(alpha = 0.3f), Color.Transparent),
             center = Offset(cx, cy),
-            radius = 28f,
+            radius = glowRadius,
         ),
-        radius = 28f,
+        radius = glowRadius,
         center = Offset(cx, cy),
     )
     // Housing border
@@ -398,8 +410,8 @@ private fun DrawScope.drawStrobeFixture(
     )
     drawRect(
         color = flashColor,
-        topLeft = Offset(cx - halfW + 2f, cy - halfH + 2f),
-        size = Size(width - 4f, height - 4f),
+        topLeft = Offset(cx - halfW + 2f * scale, cy - halfH + 2f * scale),
+        size = Size(width - 4f * scale, height - 4f * scale),
     )
 
     if (isSelected) drawSelectionBorder(cx, cy, halfW + 2f, selectionColor)
@@ -414,19 +426,21 @@ private fun DrawScope.drawWashFixture(
     color: Color,
     isSelected: Boolean,
     selectionColor: Color,
+    scale: Float = 1f,
 ) {
-    val housingSize = 20f
+    val housingSize = 20f * scale
     val half = housingSize / 2f
-    val lensRadius = 7f
+    val lensRadius = 7f * scale
 
     // Wide soft glow (larger radius for wash)
+    val glowRadius = 36f * scale
     drawCircle(
         brush = Brush.radialGradient(
             colors = listOf(color.copy(alpha = 0.25f), Color.Transparent),
             center = Offset(cx, cy),
-            radius = 36f,
+            radius = glowRadius,
         ),
-        radius = 36f,
+        radius = glowRadius,
         center = Offset(cx, cy),
     )
     // Housing border
@@ -448,8 +462,8 @@ private fun DrawScope.drawWashFixture(
         center = Offset(cx, cy),
     )
     // Mount brackets
-    drawRect(HousingBorderColor, Offset(cx - 5f, cy - half - 3f), Size(2f, 3f))
-    drawRect(HousingBorderColor, Offset(cx + 3f, cy - half - 3f), Size(2f, 3f))
+    drawRect(HousingBorderColor, Offset(cx - 5f * scale, cy - half - 3f * scale), Size(2f * scale, 3f * scale))
+    drawRect(HousingBorderColor, Offset(cx + 3f * scale, cy - half - 3f * scale), Size(2f * scale, 3f * scale))
 
     if (isSelected) drawSelectionBorder(cx, cy, half + 2f, selectionColor)
 }
@@ -464,10 +478,11 @@ private fun DrawScope.drawBarFixture(
     pixelCount: Int,
     isSelected: Boolean,
     selectionColor: Color,
+    scale: Float = 1f,
 ) {
-    val segmentW = 8f
-    val segmentH = 12f
-    val gap = 2f
+    val segmentW = 8f * scale
+    val segmentH = 12f * scale
+    val gap = 2f * scale
     val totalW = pixelCount * segmentW + (pixelCount - 1) * gap
     val startX = cx - totalW / 2f
     val startY = cy - segmentH / 2f
@@ -517,10 +532,11 @@ private fun DrawScope.drawBeamConeFixture(
     isSelected: Boolean,
     reusablePath: Path,
     selectionColor: Color,
+    scale: Float = 1f,
 ) {
     // Beam cone (downward triangle-like glow)
-    val beamLength = 30f
-    val beamHalfWidth = 12f
+    val beamLength = 30f * scale
+    val beamHalfWidth = 12f * scale
     reusablePath.reset()
     reusablePath.moveTo(cx, cy)
     reusablePath.lineTo(cx - beamHalfWidth, cy + beamLength)
@@ -532,7 +548,7 @@ private fun DrawScope.drawBeamConeFixture(
     )
 
     // Square housing (schematic style)
-    val housingSize = 14f
+    val housingSize = 14f * scale
     val hh = housingSize / 2f
     drawRect(
         color = HousingBorderColor,
@@ -545,16 +561,17 @@ private fun DrawScope.drawBeamConeFixture(
         size = Size(housingSize, housingSize),
     )
     // Inner color lens
+    val lensInset = 2f * scale
     drawRect(
         color = color,
-        topLeft = Offset(cx - hh + 2f, cy - hh + 2f),
-        size = Size(housingSize - 4f, housingSize - 4f),
+        topLeft = Offset(cx - hh + lensInset, cy - hh + lensInset),
+        size = Size(housingSize - 2 * lensInset, housingSize - 2 * lensInset),
     )
     // Directional indicator (short line pointing down = default tilt direction)
     drawLine(
         color = color.copy(alpha = 0.7f),
         start = Offset(cx, cy + hh),
-        end = Offset(cx, cy + hh + 8f),
+        end = Offset(cx, cy + hh + 8f * scale),
         strokeWidth = 2f,
     )
 
