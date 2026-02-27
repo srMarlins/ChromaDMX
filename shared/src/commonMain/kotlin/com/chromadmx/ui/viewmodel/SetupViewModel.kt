@@ -384,7 +384,6 @@ class SetupViewModel(
     }
 
     fun onCleared() {
-        scanJob?.cancel()
         scope.coroutineContext[Job]?.cancel()
     }
 

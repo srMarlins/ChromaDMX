@@ -223,8 +223,8 @@ class MascotViewModelV2(
                     delay(500)
                     "Something went wrong — no agent available. Please restart the app."
                 }
-            } catch (e: Exception) {
-                "Sorry, something went wrong: ${e.message ?: "unknown error"}"
+            } catch (_: Exception) {
+                "Sorry, something went wrong. Please try again."
             }
 
             val response = ChatMessage(
@@ -348,8 +348,6 @@ class MascotViewModelV2(
 
     fun onCleared() {
         animationController.stop()
-        autoDismissJob?.cancel()
-        idleTimerJob?.cancel()
         scope.coroutineContext[Job]?.cancel()
     }
 }
