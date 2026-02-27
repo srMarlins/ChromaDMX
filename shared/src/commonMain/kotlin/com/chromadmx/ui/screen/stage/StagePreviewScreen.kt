@@ -64,6 +64,7 @@ import com.chromadmx.ui.components.beat.BeatBar
 import com.chromadmx.ui.components.pixelBorder
 import com.chromadmx.ui.screen.network.NodeDiagnosticsOverlay
 import com.chromadmx.ui.screen.network.NodeListOverlay
+import com.chromadmx.ui.state.BeatUiState
 import com.chromadmx.ui.state.FixtureState
 import com.chromadmx.ui.state.NetworkState
 import com.chromadmx.ui.state.PerformanceState
@@ -75,6 +76,7 @@ import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.theme.PixelFontFamily
 import com.chromadmx.ui.theme.PixelShape
 import com.chromadmx.ui.viewmodel.StageViewModelV2
+import kotlinx.coroutines.flow.map
 
 // ============================================================================
 // StageScreen — Main stage view with top-down/audience view modes,
@@ -97,14 +99,14 @@ fun StageScreen(
     onSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val perfState by viewModel.performanceState.collectAsState()
-    val fixtureState by viewModel.fixtureState.collectAsState()
-    val presetState by viewModel.presetState.collectAsState()
-    val networkState by viewModel.networkState.collectAsState()
-    val viewState by viewModel.viewState.collectAsState()
-
-    // Fixture colors come from a high-frequency SharedFlow, not the fixture state slice
+    // Only fixtureColors is collected at root — it's a high-frequency
+    // SharedFlow consumed directly by the canvas and fixture-info overlay.
     val fixtureColors by viewModel.fixtureColors.collectAsState(initial = emptyList())
+
+    // Fixture & view state are needed across several canvas branches; collect
+    // here to keep the when-branch stable without duplicating collection.
+    val fixtureState by viewModel.fixtureState.collectAsState()
+    val viewState by viewModel.viewState.collectAsState()
 
     // Local overlay state
     var showFixtureEdit by remember { mutableStateOf(false) }
@@ -117,28 +119,15 @@ fun StageScreen(
         modifier = modifier.fillMaxSize(),
         topBar = {
             StageTopBar(
-                perfState = perfState,
-                networkState = networkState,
-                viewState = viewState,
-                isEditMode = fixtureState.isEditMode,
-                onEvent = viewModel::onEvent,
+                viewModel = viewModel,
                 onSettings = onSettings,
             )
         },
         bottomBar = {
-            Column {
-                EffectLayerPanel(
-                    layers = perfState.layers,
-                    availableEffects = presetState.availableEffects,
-                    onEvent = viewModel::onEvent,
-                )
-                PresetStripBar(
-                    presetState = presetState,
-                    performanceState = perfState,
-                    onEvent = viewModel::onEvent,
-                    onOpenBrowser = { showPresetBrowser = !showPresetBrowser },
-                )
-            }
+            StageBottomBar(
+                viewModel = viewModel,
+                onTogglePresetBrowser = { showPresetBrowser = !showPresetBrowser },
+            )
         },
     ) { padding ->
         Box(
@@ -366,52 +355,118 @@ fun StageScreen(
                 )
             }
 
-            // Node list overlay
-            if (networkState.isNodeListOpen) {
-                NodeListOverlay(
-                    nodes = networkState.nodes,
-                    currentTimeMs = networkState.currentTimeMs,
-                    onDiagnose = { viewModel.onEvent(StageEvent.DiagnoseNode(it)) },
-                    onClose = { viewModel.onEvent(StageEvent.ToggleNodeList) },
-                )
-            }
-
-            // Network diagnostics overlay
-            networkState.diagnosticsResult?.let { diagnostics ->
-                NodeDiagnosticsOverlay(
-                    diagnostics = diagnostics,
-                    onDismiss = { viewModel.onEvent(StageEvent.DismissDiagnostics) },
-                )
-            }
+            // Node list & diagnostics overlays — collect networkState locally
+            // so the rest of StageScreen doesn't recompose on network ticks.
+            NetworkOverlays(viewModel = viewModel)
 
             // Preset browser bottom sheet
-            PresetBrowserSheet(
+            PresetBrowserOverlay(
+                viewModel = viewModel,
                 visible = showPresetBrowser,
-                presets = presetState.allPresets,
-                favoriteIds = presetState.favoriteIds,
-                activePresetName = perfState.activeSceneName,
-                onEvent = viewModel::onEvent,
                 onDismiss = { showPresetBrowser = false },
             )
         }
     }
 }
 
+/**
+ * Bottom bar wrapper that collects performance & preset state locally.
+ */
+@Composable
+private fun StageBottomBar(
+    viewModel: StageViewModelV2,
+    onTogglePresetBrowser: () -> Unit,
+) {
+    val perfState by viewModel.performanceState.collectAsState()
+    val presetState by viewModel.presetState.collectAsState()
+
+    Column {
+        EffectLayerPanel(
+            layers = perfState.layers,
+            availableEffects = presetState.availableEffects,
+            onEvent = viewModel::onEvent,
+        )
+        PresetStripBar(
+            presetState = presetState,
+            performanceState = perfState,
+            onEvent = viewModel::onEvent,
+            onOpenBrowser = onTogglePresetBrowser,
+        )
+    }
+}
+
+/**
+ * Network-related overlays (node list + diagnostics).
+ * Collects [NetworkState] locally so that currentTimeMs ticks
+ * don't trigger recomposition of the entire stage screen.
+ */
+@Composable
+private fun NetworkOverlays(viewModel: StageViewModelV2) {
+    val networkState by viewModel.networkState.collectAsState()
+
+    // Node list overlay
+    if (networkState.isNodeListOpen) {
+        NodeListOverlay(
+            nodes = networkState.nodes,
+            currentTimeMs = networkState.currentTimeMs,
+            onDiagnose = { viewModel.onEvent(StageEvent.DiagnoseNode(it)) },
+            onClose = { viewModel.onEvent(StageEvent.ToggleNodeList) },
+        )
+    }
+
+    // Network diagnostics overlay
+    networkState.diagnosticsResult?.let { diagnostics ->
+        NodeDiagnosticsOverlay(
+            diagnostics = diagnostics,
+            onDismiss = { viewModel.onEvent(StageEvent.DismissDiagnostics) },
+        )
+    }
+}
+
+/**
+ * Preset browser overlay that collects preset & performance state locally.
+ */
+@Composable
+private fun PresetBrowserOverlay(
+    viewModel: StageViewModelV2,
+    visible: Boolean,
+    onDismiss: () -> Unit,
+) {
+    val presetState by viewModel.presetState.collectAsState()
+    val perfState by viewModel.performanceState.collectAsState()
+
+    PresetBrowserSheet(
+        visible = visible,
+        presets = presetState.allPresets,
+        favoriteIds = presetState.favoriteIds,
+        activePresetName = perfState.activeSceneName,
+        onEvent = viewModel::onEvent,
+        onDismiss = onDismiss,
+    )
+}
+
 // ============================================================================
 // StageTopBar — Top bar with performance info and controls.
-// Subscribes to: PerformanceState, NetworkState, ViewState, isEditMode.
+// Collects: BeatUiState, PerformanceState, NetworkState, ViewState,
+//           FixtureState (isEditMode only).
 // ============================================================================
 
 @Composable
 private fun StageTopBar(
-    perfState: PerformanceState,
-    networkState: NetworkState,
-    viewState: ViewState,
-    isEditMode: Boolean,
-    onEvent: (StageEvent) -> Unit,
+    viewModel: StageViewModelV2,
     onSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val perfState by viewModel.performanceState.collectAsState()
+    val beatState by viewModel.beatUiState.collectAsState()
+    val networkState by viewModel.networkState.collectAsState()
+    val viewState by viewModel.viewState.collectAsState()
+    // Only derive isEditMode — avoids recomposing the entire top bar
+    // when fixture list, selection, or groups change.
+    val isEditMode by remember {
+        viewModel.fixtureState.map { it.isEditMode }
+    }.collectAsState(initial = false)
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -424,10 +479,10 @@ private fun StageTopBar(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Beat bar (BPM + phase indicators)
+            // Beat bar (BPM + phase indicators) — uses BeatUiState
             BeatBar(
-                beatState = perfState.beatState,
-                onTapTempo = { onEvent(StageEvent.TapTempo) },
+                beatState = beatState.beatState,
+                onTapTempo = { viewModel.onEvent(StageEvent.TapTempo) },
                 modifier = Modifier.weight(1f),
             )
 
@@ -440,13 +495,13 @@ private fun StageTopBar(
                 NodeHealthCompact(
                     nodes = networkState.nodes,
                     currentTimeMs = networkState.currentTimeMs,
-                    onClick = { onEvent(StageEvent.ToggleNodeList) },
+                    onClick = { viewModel.onEvent(StageEvent.ToggleNodeList) },
                     isSimulationMode = viewState.isSimulationMode,
                 )
 
                 // Edit mode toggle
                 IconButton(
-                    onClick = { onEvent(StageEvent.ToggleEditMode) },
+                    onClick = { viewModel.onEvent(StageEvent.ToggleEditMode) },
                     modifier = Modifier.size(40.dp),
                 ) {
                     Icon(
@@ -481,7 +536,7 @@ private fun StageTopBar(
         // Row 2: Full-width master dimmer
         MasterDimmerCompact(
             value = perfState.masterDimmer,
-            onValueChange = { onEvent(StageEvent.SetMasterDimmer(it)) },
+            onValueChange = { viewModel.onEvent(StageEvent.SetMasterDimmer(it)) },
             modifier = Modifier.fillMaxWidth(),
         )
     }
@@ -527,7 +582,7 @@ private fun PresetStripBar(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            items(presetState.allScenes.size) { index ->
+            items(presetState.allScenes.size, key = { presetState.allScenes[it].name }) { index ->
                 val scene = presetState.allScenes[index]
                 val isSelected = scene.name == performanceState.activeSceneName
 

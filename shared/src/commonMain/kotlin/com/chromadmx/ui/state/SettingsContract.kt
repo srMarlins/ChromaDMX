@@ -6,6 +6,8 @@ import com.chromadmx.core.model.FixtureProfile
 import com.chromadmx.networking.discovery.NodeDiscovery
 import com.chromadmx.simulation.fixtures.RigPreset
 import com.chromadmx.ui.theme.PixelColorTheme
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 /**
  * DMX protocol type.
@@ -49,7 +51,7 @@ data class SettingsUiState(
     val manualStartAddress: String = "1",
 
     // Fixture Profiles
-    val fixtureProfiles: List<FixtureProfile> = emptyList(),
+    val fixtureProfiles: ImmutableList<FixtureProfile> = persistentListOf(),
 
     // Simulation Settings
     val simulationEnabled: Boolean = false,

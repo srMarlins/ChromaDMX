@@ -109,8 +109,10 @@ fun SetupScreen(
 
 // ── Phase Detection ─────────────────────────────────────────────────
 
+private val DISCOVERY_STEPS = setOf(SetupStep.SPLASH, SetupStep.NETWORK_DISCOVERY)
+
 private fun isDiscoveryPhase(step: SetupStep): Boolean =
-    step in setOf(SetupStep.SPLASH, SetupStep.NETWORK_DISCOVERY)
+    step in DISCOVERY_STEPS
 
 // ── Top Bar ─────────────────────────────────────────────────────────
 
@@ -119,7 +121,7 @@ private fun SetupTopBar(
     currentStep: SetupStep,
     modifier: Modifier = Modifier,
 ) {
-    val steps = SetupStep.entries.filter { it != SetupStep.COMPLETE }
+    val steps = remember { SetupStep.entries.filter { it != SetupStep.COMPLETE } }
     val currentIndex = steps.indexOf(currentStep).coerceAtLeast(0)
 
     Column(
@@ -475,7 +477,7 @@ private fun VibeCheckContent(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.heightIn(max = 340.dp),
         ) {
-            items(state.availableGenres) { genre ->
+            items(state.availableGenres, key = { it.id }) { genre ->
                 val isSelected = state.selectedGenre?.id == genre.id
                 PixelCard(
                     borderColor = Color(genre.color).copy(alpha = if (isSelected) 0.9f else 0.3f),

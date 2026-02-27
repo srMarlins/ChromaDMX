@@ -78,8 +78,14 @@ fun VenueCanvas(
     var zoom by remember { mutableFloatStateOf(1f) }
     var panOffset by remember { mutableStateOf(Offset.Zero) }
 
-    // Pre-compute fixture positions for hit testing in tap gesture
+    // Fixture screen positions for hit testing in gesture handlers.
+    // Using mutableStateOf for atomic single-assignment (avoids clear()+addAll() race).
     var fixtureScreenPositions by remember { mutableStateOf(emptyList<Offset>()) }
+
+    // Pre-compute profile map to avoid O(n*m) lookups per frame
+    val profileMap = remember(fixtures) {
+        fixtures.associate { it.fixture.profileId to BuiltInProfiles.findById(it.fixture.profileId) }
+    }
 
     // Edit mode drag tracking
     var dragTargetIndex by remember { mutableIntStateOf(-1) }
@@ -105,7 +111,7 @@ fun VenueCanvas(
             }
             .then(
                 if (isEditMode) {
-                    Modifier.pointerInput(fixtures.size, zoom, panOffset, fixtureScreenPositions) {
+                    Modifier.pointerInput(fixtures.size, zoom, panOffset) {
                         detectDragGestures(
                             onDragStart = { startOffset ->
                                 // Find nearest fixture within touch radius
@@ -265,7 +271,7 @@ fun VenueCanvas(
                 val composeColor = dmxColor.toComposeColor()
                 val isSelected = selectedFixtureIndex == index
 
-                val profile = BuiltInProfiles.findById(fixture.fixture.profileId)
+                val profile = profileMap[fixture.fixture.profileId]
                 val renderHint = profile?.renderHint ?: RenderHint.POINT
 
                 when (renderHint) {
@@ -295,6 +301,7 @@ fun VenueCanvas(
             }
 
             // Update screen positions for hit testing (transform-adjusted)
+            // Atomic single-assignment avoids race between draw and gesture threads.
             fixtureScreenPositions = positions.map { pos ->
                 val pivotX = size.width / 2f
                 val pivotY = size.height / 2f

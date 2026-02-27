@@ -17,6 +17,7 @@ import com.chromadmx.core.model.BuiltInProfiles
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.core.model.FixtureType
 import com.chromadmx.core.model.RenderHint
+import androidx.compose.runtime.remember
 import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.core.model.Color as DmxColor
 
@@ -58,6 +59,28 @@ fun AudienceView(
     val housingColor = PixelDesign.colors.fixtureHousing
     val housingBorderColor = PixelDesign.colors.fixtureHousingBorder
     val idleGlowColor = PixelDesign.colors.fixtureHousing.copy(alpha = 0.8f)
+
+    // Pre-compute profile map to avoid O(n*m) lookups per frame
+    val profileMap = remember(fixtures) {
+        fixtures.associate { it.fixture.profileId to BuiltInProfiles.findById(it.fixture.profileId) }
+    }
+
+    // Pre-compute fixture bounds outside draw scope to avoid redundant minOf/maxOf per frame
+    val bounds = remember(fixtures) {
+        if (fixtures.isEmpty()) null
+        else AudienceFixtureBounds(
+            minX = fixtures.minOf { it.position.x },
+            maxX = fixtures.maxOf { it.position.x },
+            minY = fixtures.minOf { it.position.y },
+            maxY = fixtures.maxOf { it.position.y },
+            minZ = fixtures.minOf { it.position.z },
+            maxZ = fixtures.maxOf { it.position.z },
+            zLevels = fixtures
+                .map { (it.position.z * 10f).let { z -> kotlin.math.round(z) } / 10f }
+                .distinct()
+                .sorted(),
+        )
+    }
 
     Canvas(
         modifier = modifier
@@ -148,21 +171,19 @@ fun AudienceView(
             scanY += 5f + progress * 8f
         }
 
-        if (fixtures.isEmpty()) return@Canvas
+        if (bounds == null) return@Canvas
 
-        // Compute horizontal bounds for distributing fixtures
-        val minX = fixtures.minOf { it.position.x }
-        val maxX = fixtures.maxOf { it.position.x }
+        // Use pre-computed bounds
+        val minX = bounds.minX
+        val maxX = bounds.maxX
         val rangeX = (maxX - minX).coerceAtLeast(1f)
 
-        // Compute Z bounds for vertical placement
-        val minZ = fixtures.minOf { it.position.z }
-        val maxZ = fixtures.maxOf { it.position.z }
+        val minZ = bounds.minZ
+        val maxZ = bounds.maxZ
         val rangeZ = maxZ - minZ
 
-        // Compute Y bounds for depth scaling (once, outside the fixture loop)
-        val minY = fixtures.minOf { it.position.y }
-        val maxY = fixtures.maxOf { it.position.y }
+        val minY = bounds.minY
+        val maxY = bounds.maxY
         val rangeY = (maxY - minY).coerceAtLeast(1f)
 
         val padding = 60f
@@ -177,10 +198,8 @@ fun AudienceView(
         val trussY1 = stageTop + stageH * 0.15f // upper truss
         val trussY2 = stageTop + stageH * 0.45f // lower truss
 
-        // Collect distinct Z levels for truss drawing (rounded to nearest 0.1)
-        val zLevels = fixtures
-            .map { (it.position.z * 10f).let { z -> kotlin.math.round(z) } / 10f }
-            .toSet()
+        // Use pre-computed distinct Z levels for truss drawing
+        val zLevels = bounds.zLevels
 
         // Collect fixture X positions for mounting brackets
         val fixtureXPositions = fixtures.map { fixture ->
@@ -217,7 +236,7 @@ fun AudienceView(
             val dmxColor = fixtureColors.getOrNull(index) ?: DmxColor.BLACK
             val composeColor = dmxColor.toComposeColor()
 
-            val profile = BuiltInProfiles.findById(fixture.fixture.profileId)
+            val profile = profileMap[fixture.fixture.profileId]
             val renderHint = profile?.renderHint ?: RenderHint.POINT
 
             // Place fixtures based on actual Z position
@@ -265,6 +284,14 @@ fun AudienceView(
         }
     }
 }
+
+/** Pre-computed fixture bounds for the audience view. */
+private data class AudienceFixtureBounds(
+    val minX: Float, val maxX: Float,
+    val minY: Float, val maxY: Float,
+    val minZ: Float, val maxZ: Float,
+    val zLevels: List<Float>,
+)
 
 /**
  * Draw a horizontal truss bar with cross-bracing and mounting brackets.

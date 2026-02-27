@@ -2,6 +2,8 @@ package com.chromadmx.ui.state
 
 import androidx.compose.runtime.Immutable
 import com.chromadmx.ui.mascot.BubbleType
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 /**
  * Mascot animation states.
@@ -44,10 +46,9 @@ data class SpeechBubble(
 @Immutable
 data class MascotUiState(
     val animState: MascotAnimState = MascotAnimState.IDLE,
-    val currentFrameIndex: Int = 0,
     val currentBubble: SpeechBubble? = null,
     val isChatOpen: Boolean = false,
-    val chatHistory: List<ChatMessage> = emptyList()
+    val chatHistory: ImmutableList<ChatMessage> = persistentListOf()
 )
 
 /**

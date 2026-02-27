@@ -353,12 +353,11 @@ private fun BleNodeCard(
     }
 }
 
-@Composable
 private fun signalColor(quality: SignalQuality): Color = when (quality) {
     SignalQuality.EXCELLENT -> NeonGreen
     SignalQuality.GOOD -> NeonCyan
     SignalQuality.FAIR -> Color(0xFFFFC107)
-    SignalQuality.WEAK -> MaterialTheme.colorScheme.error
+    SignalQuality.WEAK -> Color(0xFFB3261E) // Material error red — avoids @Composable dependency
 }
 
 @Composable

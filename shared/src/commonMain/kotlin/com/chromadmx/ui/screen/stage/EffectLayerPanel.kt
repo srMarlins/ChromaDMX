@@ -21,6 +21,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,6 +46,8 @@ import com.chromadmx.ui.state.StageEvent
 import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.theme.PixelFontFamily
 import com.chromadmx.ui.theme.PixelShape
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
 
 // ============================================================================
 // EffectLayerPanel — Collapsible panel showing active effect layers.
@@ -64,8 +67,8 @@ import com.chromadmx.ui.theme.PixelShape
  */
 @Composable
 fun EffectLayerPanel(
-    layers: List<EffectLayer>,
-    availableEffects: Set<String>,
+    layers: ImmutableList<EffectLayer>,
+    availableEffects: ImmutableSet<String>,
     onEvent: (StageEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -73,9 +76,11 @@ fun EffectLayerPanel(
     var selectedLayerIndex by remember { mutableStateOf<Int?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
 
-    // Reset selection if it's out of bounds
-    if (selectedLayerIndex != null && selectedLayerIndex!! >= layers.size) {
-        selectedLayerIndex = null
+    // Reset selection if it's out of bounds (must run in SideEffect to avoid state mutation during composition)
+    SideEffect {
+        if (selectedLayerIndex != null && selectedLayerIndex!! >= layers.size) {
+            selectedLayerIndex = null
+        }
     }
 
     Column(
@@ -497,7 +502,7 @@ private fun AddLayerDialog(
     onEffectSelected: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val effects = availableEffects.sorted()
+    val effects = remember(availableEffects) { availableEffects.sorted() }
     var selectedIndex by remember { mutableStateOf(-1) }
 
     com.chromadmx.ui.components.PixelDialog(

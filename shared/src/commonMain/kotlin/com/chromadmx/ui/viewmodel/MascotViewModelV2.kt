@@ -12,7 +12,10 @@ import com.chromadmx.ui.state.MascotAnimState
 import com.chromadmx.ui.state.MascotEvent
 import com.chromadmx.ui.state.MascotUiState
 import com.chromadmx.ui.state.SpeechBubble
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -24,6 +27,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Rewritten MascotViewModel following the UDF (Unidirectional Data Flow) pattern.
@@ -80,7 +84,6 @@ class MascotViewModelV2(
     init {
         animationController.start()
         startBeatSync()
-        startStateSync()
         startNodeSync()
         resetIdleTimer()
     }
@@ -98,28 +101,6 @@ class MascotViewModelV2(
             is MascotEvent.ReturnToIdle -> returnToIdle()
             is MascotEvent.ToggleChat -> toggleChat()
             is MascotEvent.SendChatMessage -> sendChatMessage(event.text)
-        }
-    }
-
-    // ── State sync ──────────────────────────────────────────────────
-
-    /**
-     * Keep animState in sync with the animation controller's state.
-     * The controller can autonomously transition back to IDLE when a
-     * non-looping animation completes.
-     */
-    private fun startStateSync() {
-        scope.launch {
-            animationController.currentState.collect { controllerState ->
-                val animState = controllerState.toAnimState()
-                _state.update { it.copy(animState = animState) }
-            }
-        }
-        // Also sync the frame index
-        scope.launch {
-            animationController.currentFrameIndex.collect { frameIndex ->
-                _state.update { it.copy(currentFrameIndex = frameIndex) }
-            }
         }
     }
 
@@ -229,7 +210,7 @@ class MascotViewModelV2(
             isFromUser = true,
             timestampMs = currentTimeMillis()
         )
-        _state.update { it.copy(chatHistory = it.chatHistory + userMsg) }
+        _state.update { it.copy(chatHistory = (it.chatHistory + userMsg).toImmutableList()) }
         triggerThinking()
 
         scope.launch {
@@ -237,13 +218,13 @@ class MascotViewModelV2(
                 // SimulatedLightingAgent is always provided when no API key is set,
                 // so lightingAgent should never be null. Safety fallback just in case.
                 if (lightingAgent != null) {
-                    lightingAgent.send(text)
+                    withContext(Dispatchers.IO) { lightingAgent.send(text) }
                 } else {
                     delay(500)
                     "Something went wrong — no agent available. Please restart the app."
                 }
-            } catch (e: Exception) {
-                "Sorry, something went wrong: ${e.message ?: "unknown error"}"
+            } catch (_: Exception) {
+                "Sorry, something went wrong. Please try again."
             }
 
             val response = ChatMessage(
@@ -252,7 +233,7 @@ class MascotViewModelV2(
                 isFromUser = false,
                 timestampMs = currentTimeMillis()
             )
-            _state.update { it.copy(chatHistory = it.chatHistory + response) }
+            _state.update { it.copy(chatHistory = (it.chatHistory + response).toImmutableList()) }
             returnToIdle()
         }
     }
@@ -367,8 +348,7 @@ class MascotViewModelV2(
 
     fun onCleared() {
         animationController.stop()
-        autoDismissJob?.cancel()
-        idleTimerJob?.cancel()
+        scope.coroutineContext[Job]?.cancel()
     }
 }
 

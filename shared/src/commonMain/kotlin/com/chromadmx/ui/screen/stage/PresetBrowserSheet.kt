@@ -51,6 +51,8 @@ import com.chromadmx.ui.state.StageEvent
 import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.theme.PixelFontFamily
 import com.chromadmx.ui.theme.PixelShape
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
 
 // ============================================================================
 // PresetBrowserSheet — Bottom sheet for browsing, applying, saving, and
@@ -63,7 +65,7 @@ import com.chromadmx.ui.theme.PixelShape
  *
  * @param visible       Whether the sheet is shown.
  * @param presets       Full list of [ScenePreset] from the library.
- * @param favoriteIds   List of favorite preset IDs.
+ * @param favoriteIds   Set of favorite preset IDs.
  * @param activePresetName Currently active preset name for highlight.
  * @param onEvent       Event callback routed to [StageViewModelV2.onEvent].
  * @param onDismiss     Callback to close the sheet.
@@ -71,8 +73,8 @@ import com.chromadmx.ui.theme.PixelShape
 @Composable
 fun PresetBrowserSheet(
     visible: Boolean,
-    presets: List<ScenePreset>,
-    favoriteIds: List<String>,
+    presets: ImmutableList<ScenePreset>,
+    favoriteIds: ImmutableSet<String>,
     activePresetName: String?,
     onEvent: (StageEvent) -> Unit,
     onDismiss: () -> Unit,
@@ -215,7 +217,7 @@ private fun GenreFilterRow(
 @Composable
 private fun PresetGrid(
     presets: List<ScenePreset>,
-    favoriteIds: List<String>,
+    favoriteIds: Set<String>,
     activePresetName: String?,
     onApply: (ScenePreset) -> Unit,
     onToggleFavorite: (ScenePreset) -> Unit,
@@ -400,7 +402,7 @@ private fun SavePresetDialog(
     onDismiss: () -> Unit,
 ) {
     var presetName by remember { mutableStateOf("") }
-    val genreOptions = Genre.entries.map { it.name }
+    val genreOptions = remember { Genre.entries.map { it.name } }
     var selectedGenreIndex by remember { mutableStateOf(genreOptions.indexOf("CUSTOM").coerceAtLeast(0)) }
 
     PixelDialog(

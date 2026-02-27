@@ -15,7 +15,12 @@ import com.chromadmx.ui.state.GenreOption
 import com.chromadmx.ui.state.SetupEvent
 import com.chromadmx.ui.state.SetupStep
 import com.chromadmx.ui.state.SetupUiState
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +29,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * ViewModel managing the setup/onboarding flow using the
@@ -52,7 +58,7 @@ class SetupViewModel(
 ) {
     private val _state = MutableStateFlow(
         SetupUiState(
-            availableGenres = GENRES,
+            availableGenres = GENRES.toImmutableList(),
         )
     )
     val state: StateFlow<SetupUiState> = _state.asStateFlow()
@@ -74,7 +80,7 @@ class SetupViewModel(
         // Collect discovered nodes into UI state
         scope.launch {
             fixtureDiscovery.discoveredNodes.collect { nodes ->
-                _state.update { it.copy(discoveredNodes = nodes) }
+                _state.update { it.copy(discoveredNodes = nodes.toImmutableList()) }
             }
         }
         scope.launch {
@@ -278,7 +284,7 @@ class SetupViewModel(
             // Collect active fixtures for flash animation
             val flashJob = scope.launch {
                 runner.activeFixtures.collect { active ->
-                    _state.update { it.copy(scanActiveFixtures = active) }
+                    _state.update { it.copy(scanActiveFixtures = active.toImmutableSet()) }
                 }
             }
 
@@ -288,7 +294,7 @@ class SetupViewModel(
                     it.copy(
                         isScanningFixtures = false,
                         scanComplete = result != null,
-                        scanActiveFixtures = emptySet(),
+                        scanActiveFixtures = persistentSetOf(),
                     )
                 }
             } catch (_: Exception) {
@@ -296,7 +302,7 @@ class SetupViewModel(
                     it.copy(
                         isScanningFixtures = false,
                         scanComplete = false,
-                        scanActiveFixtures = emptySet(),
+                        scanActiveFixtures = persistentSetOf(),
                     )
                 }
             } finally {
@@ -313,21 +319,23 @@ class SetupViewModel(
      */
     private fun persistSetupComplete() {
         scope.launch {
-            settingsStore.setSetupCompleted(true)
+            withContext(Dispatchers.IO) {
+                settingsStore.setSetupCompleted(true)
 
-            if (_state.value.isSimulationMode) {
-                settingsStore.setIsSimulation(true)
+                if (_state.value.isSimulationMode) {
+                    settingsStore.setIsSimulation(true)
 
-                // Save simulated fixtures
-                val rig = SimulatedFixtureRig(_state.value.selectedRigPreset)
-                fixtureStore.saveAll(rig.fixtures)
-            }
+                    // Save simulated fixtures
+                    val rig = SimulatedFixtureRig(_state.value.selectedRigPreset)
+                    fixtureStore.saveAll(rig.fixtures)
+                }
 
-            // Persist the current node topology for comparison on next launch
-            val currentNodes = _state.value.discoveredNodes
-            if (networkStateRepository != null && currentNodes.isNotEmpty()) {
-                val knownNodes = currentNodes.take(MAX_PERSISTED_NODES).map { it.toKnownNode() }
-                networkStateRepository.saveKnownNodes(knownNodes)
+                // Persist the current node topology for comparison on next launch
+                val currentNodes = _state.value.discoveredNodes
+                if (networkStateRepository != null && currentNodes.isNotEmpty()) {
+                    val knownNodes = currentNodes.take(MAX_PERSISTED_NODES).map { it.toKnownNode() }
+                    networkStateRepository.saveKnownNodes(knownNodes)
+                }
             }
         }
     }
@@ -373,6 +381,10 @@ class SetupViewModel(
             val knownNodes = currentNodes.take(MAX_PERSISTED_NODES).map { it.toKnownNode() }
             networkStateRepository.saveKnownNodes(knownNodes)
         }
+    }
+
+    fun onCleared() {
+        scope.coroutineContext[Job]?.cancel()
     }
 
     companion object {
