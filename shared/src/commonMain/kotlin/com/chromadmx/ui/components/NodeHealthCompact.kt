@@ -60,23 +60,18 @@ fun NodeHealthCompact(
         }
 
         if (nodes.isEmpty()) {
-            if (isSimulationMode) {
-                Text(
-                    text = "SIM",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontFamily = PixelFontFamily,
-                    ),
-                    color = PixelDesign.colors.info
-                )
+            val (label, color) = if (isSimulationMode) {
+                "SIM" to PixelDesign.colors.info
             } else {
-                Text(
-                    text = "No Nodes",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontFamily = PixelFontFamily,
-                    ),
-                    color = PixelDesign.colors.warning
-                )
+                "No Nodes" to PixelDesign.colors.warning
             }
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontFamily = PixelFontFamily,
+                ),
+                color = color,
+            )
         }
     }
 }
