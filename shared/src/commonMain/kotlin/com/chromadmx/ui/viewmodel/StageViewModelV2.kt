@@ -3,7 +3,10 @@ package com.chromadmx.ui.viewmodel
 import com.chromadmx.agent.controller.FixtureController
 import com.chromadmx.agent.scene.Scene
 import com.chromadmx.core.EffectParams
+import com.chromadmx.core.model.EffectLayerConfig
 import com.chromadmx.core.model.Fixture3D
+import com.chromadmx.core.model.Genre
+import com.chromadmx.core.model.ScenePreset
 import com.chromadmx.core.model.Vec3
 import com.chromadmx.core.persistence.FixtureGroup
 import com.chromadmx.core.persistence.FixtureRepository
@@ -209,6 +212,11 @@ class StageViewModelV2(
             is StageEvent.ToggleEditMode -> handleToggleEditMode()
             is StageEvent.ToggleNodeList -> handleToggleNodeList()
             is StageEvent.DiagnoseNode -> handleDiagnoseNode(event.node)
+
+            // Preset management
+            is StageEvent.SaveCurrentPreset -> handleSaveCurrentPreset(event.name, event.genre)
+            is StageEvent.DeletePreset -> handleDeletePreset(event.id)
+            is StageEvent.ToggleFavorite -> handleToggleFavorite(event.presetId)
 
             // Simulation controls
             is StageEvent.EnableSimulation -> handleEnableSimulation(event.presetName, event.fixtureCount)
@@ -499,6 +507,56 @@ class StageViewModelV2(
         }
     }
 
+    // ── Preset management handlers ─────────────────────────────────────
+
+    private fun handleSaveCurrentPreset(name: String, genre: String) {
+        val genreEnum = try {
+            Genre.valueOf(genre.uppercase())
+        } catch (_: Exception) {
+            Genre.CUSTOM
+        }
+        val layers = effectStack.layers
+        val layerConfigs = layers.map { layer ->
+            EffectLayerConfig(
+                effectId = layer.effect.id,
+                params = layer.params,
+                blendMode = layer.blendMode,
+                opacity = layer.opacity,
+                enabled = layer.enabled,
+            )
+        }
+        val id = "user_${name.lowercase().replace(" ", "_")}_${currentTimeMillis()}"
+        val preset = ScenePreset(
+            id = id,
+            name = name,
+            genre = genreEnum,
+            layers = layerConfigs,
+            masterDimmer = effectStack.masterDimmer,
+            isBuiltIn = false,
+            createdAt = currentTimeMillis(),
+            thumbnailColors = emptyList(),
+        )
+        presetLibrary.savePreset(preset)
+        _performanceState.update { it.copy(activeSceneName = name) }
+        syncFromEngine()
+    }
+
+    private fun handleDeletePreset(id: String) {
+        presetLibrary.deletePreset(id)
+        syncFromEngine()
+    }
+
+    private fun handleToggleFavorite(presetId: String) {
+        val current = presetLibrary.getFavorites().toMutableList()
+        if (presetId in current) {
+            current.remove(presetId)
+        } else {
+            current.add(presetId)
+        }
+        presetLibrary.setFavorites(current)
+        _presetState.update { it.copy(favoriteIds = current) }
+    }
+
     // ── Sync helpers ───────────────────────────────────────────────────
 
     private fun syncFromEngine() {
@@ -508,9 +566,13 @@ class StageViewModelV2(
                 layers = effectStack.layers,
             )
         }
+        val presets = presetLibrary.listPresets()
+        val favorites = presetLibrary.getFavorites()
         _presetState.update { state ->
             state.copy(
-                allScenes = presetLibrary.listPresets().map { preset ->
+                allPresets = presets,
+                favoriteIds = favorites,
+                allScenes = presets.map { preset ->
                     Scene(
                         name = preset.name,
                         layers = preset.layers.map { config ->

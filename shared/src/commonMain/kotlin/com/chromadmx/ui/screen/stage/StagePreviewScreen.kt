@@ -6,7 +6,9 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
@@ -38,6 +41,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -68,6 +72,7 @@ import com.chromadmx.ui.state.ViewMode
 import com.chromadmx.ui.state.ViewState
 import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.theme.PixelFontFamily
+import com.chromadmx.ui.theme.PixelShape
 import com.chromadmx.ui.viewmodel.StageViewModelV2
 
 // ============================================================================
@@ -105,6 +110,7 @@ fun StageScreen(
     var showNewGroupDialog by remember { mutableStateOf(false) }
     var newGroupName by remember { mutableStateOf("") }
     var showSimTooltip by remember { mutableStateOf(false) }
+    var showPresetBrowser by remember { mutableStateOf(false) }
 
     PixelScaffold(
         modifier = modifier.fillMaxSize(),
@@ -129,6 +135,7 @@ fun StageScreen(
                     presetState = presetState,
                     performanceState = perfState,
                     onEvent = viewModel::onEvent,
+                    onOpenBrowser = { showPresetBrowser = true },
                 )
             }
         },
@@ -367,6 +374,16 @@ fun StageScreen(
                     onClose = { viewModel.onEvent(StageEvent.ToggleNodeList) },
                 )
             }
+
+            // Preset browser bottom sheet
+            PresetBrowserSheet(
+                visible = showPresetBrowser,
+                presets = presetState.allPresets,
+                favoriteIds = presetState.favoriteIds,
+                activePresetName = perfState.activeSceneName,
+                onEvent = viewModel::onEvent,
+                onDismiss = { showPresetBrowser = false },
+            )
         }
     }
 }
@@ -471,13 +488,15 @@ private fun StageTopBar(
 // Subscribes to: PresetState.
 // ============================================================================
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun PresetStripBar(
     presetState: PresetState,
     performanceState: PerformanceState,
     onEvent: (StageEvent) -> Unit,
+    onOpenBrowser: () -> Unit,
 ) {
-    androidx.compose.foundation.lazy.LazyRow(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(PixelDesign.colors.surface.copy(alpha = 0.95f))
@@ -487,17 +506,83 @@ private fun PresetStripBar(
                 pixelSize = 1.dp,
             )
             .padding(horizontal = 8.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        items(presetState.allScenes.size) { index ->
-            val scene = presetState.allScenes[index]
-            PixelChip(
-                text = scene.name,
-                selected = scene.name == performanceState.activeSceneName,
-                onClick = { onEvent(StageEvent.ApplyScene(scene.name)) },
-            )
+        // Browse button (opens the full preset browser)
+        PixelChip(
+            text = "\u25A6", // grid icon
+            selected = false,
+            onClick = onOpenBrowser,
+        )
+
+        Spacer(Modifier.width(6.dp))
+
+        // Scrollable preset chips with long-press to open browser
+        androidx.compose.foundation.lazy.LazyRow(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            items(presetState.allScenes.size) { index ->
+                val scene = presetState.allScenes[index]
+                val isSelected = scene.name == performanceState.activeSceneName
+
+                PresetStripChip(
+                    text = scene.name,
+                    selected = isSelected,
+                    onClick = { onEvent(StageEvent.ApplyScene(scene.name)) },
+                    onLongClick = onOpenBrowser,
+                )
+            }
         }
+    }
+}
+
+/**
+ * A preset chip with combined click and long-click support.
+ * Tap applies the preset, long-press opens the browser.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun PresetStripChip(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+) {
+    val chipShape = PixelShape(6.dp)
+    val backgroundColor = if (selected) PixelDesign.colors.primary else Color.Transparent
+    val contentColor = if (selected) PixelDesign.colors.onPrimary else PixelDesign.colors.onSurface
+
+    Box(
+        modifier = Modifier
+            .clip(chipShape)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick,
+            )
+            .let { mod ->
+                if (selected) {
+                    mod.pixelBorder(
+                        width = 1.dp,
+                        color = PixelDesign.colors.glow,
+                        pixelSize = 1.dp,
+                    )
+                } else {
+                    mod.pixelBorder(chamfer = 6.dp)
+                }
+            }
+            .background(backgroundColor, chipShape)
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = text.uppercase(),
+            style = MaterialTheme.typography.labelMedium.copy(
+                color = contentColor,
+                fontFamily = PixelFontFamily,
+            ),
+        )
     }
 }
 

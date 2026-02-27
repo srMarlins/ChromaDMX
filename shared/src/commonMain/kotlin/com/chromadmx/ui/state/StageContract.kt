@@ -7,6 +7,7 @@ import com.chromadmx.core.model.BeatState
 import com.chromadmx.core.model.BlendMode
 import com.chromadmx.core.model.Color
 import com.chromadmx.core.model.Fixture3D
+import com.chromadmx.core.model.ScenePreset
 import com.chromadmx.core.model.Vec3
 import com.chromadmx.core.persistence.FixtureGroup
 import com.chromadmx.engine.effect.EffectLayer
@@ -43,6 +44,8 @@ data class FixtureState(
 @Immutable
 data class PresetState(
     val allScenes: List<Scene> = emptyList(),
+    val allPresets: List<ScenePreset> = emptyList(),
+    val favoriteIds: List<String> = emptyList(),
     val availableEffects: Set<String> = emptySet(),
     val availableGenres: List<String> = emptyList()
 )
@@ -111,6 +114,11 @@ sealed interface StageEvent {
     data object ToggleEditMode : StageEvent
     data object ToggleNodeList : StageEvent
     data class DiagnoseNode(val node: DmxNode) : StageEvent
+
+    // Preset management
+    data class SaveCurrentPreset(val name: String, val genre: String) : StageEvent
+    data class DeletePreset(val id: String) : StageEvent
+    data class ToggleFavorite(val presetId: String) : StageEvent
 
     // Simulation controls
     data class EnableSimulation(val presetName: String, val fixtureCount: Int) : StageEvent
