@@ -9,21 +9,22 @@ import com.chromadmx.vision.mapping.SpatialMap
 import kotlinx.coroutines.flow.StateFlow
 
 /**
- * Runs the full vision scan pipeline using simulated DMX + camera.
+ * Runs the full vision scan pipeline using simulated DMX + camera
+ * against the [PixelBarVRig] V-formation rig.
  *
  * Wires together [SimulatedDmxController], [SimulatedFrameCapture], and
  * [ScanOrchestrator] using the real [BlobDetector]. The UI observes
  * [scanState] for progress and [activeFixtures] for flash animation.
+ *
+ * This class is single-use: create a new instance for each scan.
  */
-class SimulatedScanRunner(
-    private val rig: PixelBarVRig,
-) {
+class SimulatedScanRunner {
     private val dmxController = SimulatedDmxController(
         pixelsPerFixture = PixelBarVRig.PIXELS_PER_BAR,
     )
 
     private val frameCapture = SimulatedFrameCapture(
-        pixelPositions = rig.pixelPositions(),
+        pixelPositions = PixelBarVRig.pixelPositions(),
         dmxController = dmxController,
     )
 
@@ -47,7 +48,7 @@ class SimulatedScanRunner(
      * @return the completed [SpatialMap], or null if the scan failed
      */
     suspend fun runScan(): SpatialMap? {
-        val fixtures = rig.createFixtures()
+        val fixtures = PixelBarVRig.createFixtures()
         val scanFixtures = fixtures.map { f3d ->
             ScanFixture(
                 fixtureId = f3d.fixture.fixtureId,

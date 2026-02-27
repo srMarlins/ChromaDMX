@@ -6,7 +6,6 @@ import com.chromadmx.core.persistence.SettingsStore
 import com.chromadmx.networking.FixtureDiscovery
 import com.chromadmx.simulation.fixtures.RigPreset
 import com.chromadmx.simulation.fixtures.SimulatedFixtureRig
-import com.chromadmx.simulation.rigs.PixelBarVRig
 import com.chromadmx.simulation.vision.SimulatedScanRunner
 import com.chromadmx.vision.calibration.ScanState
 import com.chromadmx.ui.state.GenreOption
@@ -228,7 +227,7 @@ class SetupViewModel(
         _state.update { it.copy(isScanningFixtures = true) }
 
         scope.launch {
-            val runner = SimulatedScanRunner(PixelBarVRig)
+            val runner = SimulatedScanRunner()
 
             // Collect active fixtures for flash animation
             val flashJob = scope.launch {
@@ -237,15 +236,25 @@ class SetupViewModel(
                 }
             }
 
-            val result = runner.runScan()
-
-            flashJob.cancel()
-            _state.update {
-                it.copy(
-                    isScanningFixtures = false,
-                    scanComplete = result != null,
-                    scanActiveFixtures = emptySet(),
-                )
+            try {
+                val result = runner.runScan()
+                _state.update {
+                    it.copy(
+                        isScanningFixtures = false,
+                        scanComplete = result != null,
+                        scanActiveFixtures = emptySet(),
+                    )
+                }
+            } catch (_: Exception) {
+                _state.update {
+                    it.copy(
+                        isScanningFixtures = false,
+                        scanComplete = false,
+                        scanActiveFixtures = emptySet(),
+                    )
+                }
+            } finally {
+                flashJob.cancel()
             }
         }
     }

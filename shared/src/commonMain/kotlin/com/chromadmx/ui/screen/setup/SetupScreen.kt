@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import com.chromadmx.core.model.DmxNode
 import com.chromadmx.simulation.fixtures.RigPreset
 import com.chromadmx.simulation.fixtures.SimulatedFixtureRig
+import com.chromadmx.simulation.rigs.PixelBarVRig
 import com.chromadmx.ui.components.PixelButton
 import com.chromadmx.ui.components.PixelButtonVariant
 import com.chromadmx.ui.components.PixelCard
@@ -408,7 +409,7 @@ private fun FixtureScanContent(
 
         // Rig preset selector (simulation mode only)
         if (state.isSimulationMode) {
-            RigPresetSelector(
+            RigPresetDropdown(
                 selectedPreset = state.selectedRigPreset,
                 onEvent = onEvent,
             )
@@ -583,6 +584,11 @@ private fun VFormationCanvas(
     activeFixtures: Set<String> = emptySet(),
     modifier: Modifier = Modifier,
 ) {
+    // Derive bar IDs and x-positions from the rig definition
+    val barPositions = remember {
+        PixelBarVRig.createFixtures().map { it.fixture.fixtureId to it.position.x }
+    }
+
     Canvas(
         modifier = modifier.background(PixelDesign.colors.background.copy(alpha = 0.8f)),
     ) {
@@ -604,20 +610,12 @@ private fun VFormationCanvas(
         }
 
         // World-space ranges matching SimulatedFrameCapture
-        val xMin = -3f; val xMax = 3f
-        val zMin = 0f; val zMax = 2.5f
-        val barBottomZ = 0.5f; val barTopZ = 1.7f
-
-        val barPositions = listOf(
-            "vbar-phys-1" to -2.0f,
-            "vbar-phys-2" to -1.5f,
-            "vbar-phys-3" to -1.0f,
-            "vbar-phys-4" to -0.5f,
-            "vbar-phys-5" to 0.5f,
-            "vbar-phys-6" to 1.0f,
-            "vbar-phys-7" to 1.5f,
-            "vbar-phys-8" to 2.0f,
-        )
+        val xMin = -3f
+        val xMax = 3f
+        val zMin = 0f
+        val zMax = 2.5f
+        val barBottomZ = 0.5f
+        val barTopZ = 1.7f
 
         for ((barId, worldX) in barPositions) {
             val isActive = barId in activeFixtures
@@ -696,7 +694,7 @@ private fun NodeCard(
 }
 
 @Composable
-private fun RigPresetSelector(
+private fun RigPresetDropdown(
     selectedPreset: RigPreset,
     onEvent: (SetupEvent) -> Unit,
     modifier: Modifier = Modifier,

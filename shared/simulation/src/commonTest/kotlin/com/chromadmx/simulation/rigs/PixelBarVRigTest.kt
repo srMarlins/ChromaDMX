@@ -29,10 +29,10 @@ class PixelBarVRigTest {
     }
 
     @Test
-    fun usesTwoUniverses() {
+    fun usesThreeUniverses() {
         val rig = SimulatedFixtureRig(RigPreset.PIXEL_BAR_V)
-        assertEquals(2, rig.universeCount)
-        assertTrue(rig.universeIds.containsAll(setOf(0, 1)))
+        assertEquals(3, rig.universeCount)
+        assertTrue(rig.universeIds.containsAll(setOf(0, 1, 2)))
     }
 
     @Test
@@ -45,20 +45,12 @@ class PixelBarVRigTest {
     @Test
     fun physicalPositionsFormVShape() {
         val fixtures = PixelBarVRig.createFixtures()
-        val leftArm = fixtures.filter {
-            it.fixture.fixtureId.contains("phys-1") ||
-                it.fixture.fixtureId.contains("phys-2") ||
-                it.fixture.fixtureId.contains("phys-3") ||
-                it.fixture.fixtureId.contains("phys-4")
-        }
+        val leftArm = fixtures.filter { it.groupId == "v-left" }
+        assertEquals(4, leftArm.size, "Should be 4 fixtures in the left arm")
         leftArm.forEach { assertTrue(it.position.x < 0f, "${it.fixture.fixtureId} should be on left (negative x)") }
 
-        val rightArm = fixtures.filter {
-            it.fixture.fixtureId.contains("phys-5") ||
-                it.fixture.fixtureId.contains("phys-6") ||
-                it.fixture.fixtureId.contains("phys-7") ||
-                it.fixture.fixtureId.contains("phys-8")
-        }
+        val rightArm = fixtures.filter { it.groupId == "v-right" }
+        assertEquals(4, rightArm.size, "Should be 4 fixtures in the right arm")
         rightArm.forEach { assertTrue(it.position.x > 0f, "${it.fixture.fixtureId} should be on right (positive x)") }
     }
 

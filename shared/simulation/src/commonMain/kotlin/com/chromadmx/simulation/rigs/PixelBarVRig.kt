@@ -12,7 +12,7 @@ import com.chromadmx.core.model.Vec3
  * position mapping.
  *
  * Bar spec: 24 pixels x 3ch (RGB) = 72 DMX channels each.
- * Total: 576 channels across 2 universes.
+ * Total: 576 channels across 3 universes.
  */
 object PixelBarVRig {
 
@@ -52,7 +52,7 @@ object PixelBarVRig {
         432 to 1,  // bar 5 -> uni 1, ch 432
          72 to 0,  // bar 6 -> uni 0, ch 72
         216 to 0,  // bar 7 -> uni 0, ch 216
-        504 to 1,  // bar 8 -> uni 1, ch 504
+          0 to 2,  // bar 8 -> uni 2, ch 0 (avoids exceeding 512 on uni 1)
     )
 
     fun createFixtures(): List<Fixture3D> {

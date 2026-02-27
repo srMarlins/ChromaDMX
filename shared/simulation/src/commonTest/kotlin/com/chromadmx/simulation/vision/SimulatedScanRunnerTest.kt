@@ -13,7 +13,7 @@ class SimulatedScanRunnerTest {
 
     @Test
     fun scanResolvesAllEightBars() = runTest {
-        val runner = SimulatedScanRunner(PixelBarVRig)
+        val runner = SimulatedScanRunner()
         val result = runner.runScan()
 
         assertNotNull(result, "Scan should produce a SpatialMap")
@@ -22,7 +22,7 @@ class SimulatedScanRunnerTest {
 
     @Test
     fun scanStateReachesComplete() = runTest {
-        val runner = SimulatedScanRunner(PixelBarVRig)
+        val runner = SimulatedScanRunner()
         runner.runScan()
 
         assertIs<ScanState.Complete>(runner.scanState.value)
@@ -30,7 +30,7 @@ class SimulatedScanRunnerTest {
 
     @Test
     fun resolvedPositionsMatchPhysicalLayout() = runTest {
-        val runner = SimulatedScanRunner(PixelBarVRig)
+        val runner = SimulatedScanRunner()
         val result = runner.runScan()
         assertNotNull(result)
 
@@ -46,7 +46,7 @@ class SimulatedScanRunnerTest {
 
     @Test
     fun scrambledAddressesDontAffectPositionMapping() = runTest {
-        val runner = SimulatedScanRunner(PixelBarVRig)
+        val runner = SimulatedScanRunner()
         val result = runner.runScan()
         assertNotNull(result)
 
