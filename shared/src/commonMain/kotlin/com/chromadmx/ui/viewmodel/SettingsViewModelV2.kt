@@ -14,6 +14,7 @@ import com.chromadmx.ui.theme.PixelColorTheme
 import com.chromadmx.ui.state.DataTransferStatus
 import com.chromadmx.ui.state.SettingsEvent
 import com.chromadmx.ui.state.SettingsUiState
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -51,7 +52,7 @@ class SettingsViewModelV2(
 
     init {
         // Seed the built-in fixture profiles so they appear immediately.
-        _state.update { it.copy(fixtureProfiles = BuiltInProfiles.all()) }
+        _state.update { it.copy(fixtureProfiles = BuiltInProfiles.all().toImmutableList()) }
 
         // Derive simulation state from the persisted repository value.
         scope.launch {
@@ -95,20 +96,20 @@ class SettingsViewModelV2(
                 forceRescan()
 
             is SettingsEvent.AddFixtureProfile ->
-                _state.update { it.copy(fixtureProfiles = it.fixtureProfiles + event.profile) }
+                _state.update { it.copy(fixtureProfiles = (it.fixtureProfiles + event.profile).toImmutableList()) }
 
             is SettingsEvent.UpdateFixtureProfile ->
                 _state.update { st ->
                     st.copy(
                         fixtureProfiles = st.fixtureProfiles.map { p ->
                             if (p.profileId == event.profile.profileId) event.profile else p
-                        }
+                        }.toImmutableList()
                     )
                 }
 
             is SettingsEvent.DeleteFixtureProfile ->
                 _state.update {
-                    it.copy(fixtureProfiles = it.fixtureProfiles.filter { p -> p.profileId != event.profileId })
+                    it.copy(fixtureProfiles = it.fixtureProfiles.filter { p -> p.profileId != event.profileId }.toImmutableList())
                 }
 
             is SettingsEvent.ToggleSimulation ->

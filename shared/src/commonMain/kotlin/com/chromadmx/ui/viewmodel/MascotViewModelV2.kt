@@ -12,6 +12,7 @@ import com.chromadmx.ui.state.MascotAnimState
 import com.chromadmx.ui.state.MascotEvent
 import com.chromadmx.ui.state.MascotUiState
 import com.chromadmx.ui.state.SpeechBubble
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -209,7 +210,7 @@ class MascotViewModelV2(
             isFromUser = true,
             timestampMs = currentTimeMillis()
         )
-        _state.update { it.copy(chatHistory = it.chatHistory + userMsg) }
+        _state.update { it.copy(chatHistory = (it.chatHistory + userMsg).toImmutableList()) }
         triggerThinking()
 
         scope.launch {
@@ -232,7 +233,7 @@ class MascotViewModelV2(
                 isFromUser = false,
                 timestampMs = currentTimeMillis()
             )
-            _state.update { it.copy(chatHistory = it.chatHistory + response) }
+            _state.update { it.copy(chatHistory = (it.chatHistory + response).toImmutableList()) }
             returnToIdle()
         }
     }

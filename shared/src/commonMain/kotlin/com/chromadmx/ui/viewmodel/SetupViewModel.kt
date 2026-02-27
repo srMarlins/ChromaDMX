@@ -15,6 +15,9 @@ import com.chromadmx.ui.state.GenreOption
 import com.chromadmx.ui.state.SetupEvent
 import com.chromadmx.ui.state.SetupStep
 import com.chromadmx.ui.state.SetupUiState
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -55,7 +58,7 @@ class SetupViewModel(
 ) {
     private val _state = MutableStateFlow(
         SetupUiState(
-            availableGenres = GENRES,
+            availableGenres = GENRES.toImmutableList(),
         )
     )
     val state: StateFlow<SetupUiState> = _state.asStateFlow()
@@ -77,7 +80,7 @@ class SetupViewModel(
         // Collect discovered nodes into UI state
         scope.launch {
             fixtureDiscovery.discoveredNodes.collect { nodes ->
-                _state.update { it.copy(discoveredNodes = nodes) }
+                _state.update { it.copy(discoveredNodes = nodes.toImmutableList()) }
             }
         }
         scope.launch {
@@ -281,7 +284,7 @@ class SetupViewModel(
             // Collect active fixtures for flash animation
             val flashJob = scope.launch {
                 runner.activeFixtures.collect { active ->
-                    _state.update { it.copy(scanActiveFixtures = active) }
+                    _state.update { it.copy(scanActiveFixtures = active.toImmutableSet()) }
                 }
             }
 
@@ -291,7 +294,7 @@ class SetupViewModel(
                     it.copy(
                         isScanningFixtures = false,
                         scanComplete = result != null,
-                        scanActiveFixtures = emptySet(),
+                        scanActiveFixtures = persistentSetOf(),
                     )
                 }
             } catch (_: Exception) {
@@ -299,7 +302,7 @@ class SetupViewModel(
                     it.copy(
                         isScanningFixtures = false,
                         scanComplete = false,
-                        scanActiveFixtures = emptySet(),
+                        scanActiveFixtures = persistentSetOf(),
                     )
                 }
             } finally {

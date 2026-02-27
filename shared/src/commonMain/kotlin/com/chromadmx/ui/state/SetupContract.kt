@@ -4,6 +4,10 @@ import androidx.compose.runtime.Immutable
 import com.chromadmx.core.model.Genre
 import com.chromadmx.core.model.DmxNode
 import com.chromadmx.simulation.fixtures.RigPreset
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
 
 /**
  * Genre entry for the Vibe Check step.
@@ -22,14 +26,14 @@ data class GenreOption(
 @Immutable
 data class SetupUiState(
     val currentStep: SetupStep = SetupStep.SPLASH,
-    val discoveredNodes: List<DmxNode> = emptyList(),
+    val discoveredNodes: ImmutableList<DmxNode> = persistentListOf(),
     val isScanning: Boolean = false,
     val isSimulationMode: Boolean = false,
     val selectedRigPreset: RigPreset = RigPreset.SMALL_DJ,
     val simulationFixtureCount: Int = 0,
     val fixturesLoadedCount: Int = 0,
     val selectedGenre: GenreOption? = null,
-    val availableGenres: List<GenreOption> = emptyList(),
+    val availableGenres: ImmutableList<GenreOption> = persistentListOf(),
     val matchingPresetCount: Int = 0,
     val isGenerating: Boolean = false,
     val generationProgress: Float = 0f,
@@ -39,7 +43,7 @@ data class SetupUiState(
     val removedNodeCount: Int = 0,
     val repeatLaunchCheckComplete: Boolean = false,
     val isScanningFixtures: Boolean = false,
-    val scanActiveFixtures: Set<String> = emptySet(),
+    val scanActiveFixtures: ImmutableSet<String> = persistentSetOf(),
     val scanComplete: Boolean = false,
 )
 
