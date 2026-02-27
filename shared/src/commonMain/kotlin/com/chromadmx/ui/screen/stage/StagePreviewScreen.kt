@@ -238,7 +238,7 @@ fun StageScreen(
                             color = PixelDesign.colors.warning.copy(alpha = 0.4f),
                             pixelSize = 1.dp,
                         )
-                        .background(Color(0x88000000))
+                        .background(PixelDesign.colors.scrim)
                         .padding(horizontal = 8.dp, vertical = 4.dp),
                 )
             }
