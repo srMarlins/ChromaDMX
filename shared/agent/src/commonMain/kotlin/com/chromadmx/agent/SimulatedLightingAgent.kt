@@ -104,11 +104,10 @@ class SimulatedLightingAgent(
             lower.containsAny("spooky", "halloween", "creepy") -> handleCreativeScene("spooky")
             lower.containsAny("underwater", "deep sea", "aqua") -> handleCreativeScene("underwater")
 
-            // Direct effect requests
+            // Direct effect requests (keywords chosen to avoid overlap with preset matches above)
             lower.containsAny("gradient", "sweep") -> handleEffectDirect("gradient_sweep_3d", "Gradient Sweep")
-            lower.containsAny("wave") -> handleEffectDirect("wave_3d", "Wave")
             lower.containsAny("chase") -> handleEffectDirect("chase_3d", "Chase")
-            lower.containsAny("pulse", "radial") -> handleEffectDirect("radial_pulse_3d", "Radial Pulse")
+            lower.containsAny("radial") -> handleEffectDirect("radial_pulse_3d", "Radial Pulse")
             lower.containsAny("noise", "perlin", "organic") -> handleEffectDirect("perlin_noise_3d", "Perlin Noise")
             lower.containsAny("burst", "particle", "explosion") -> handleEffectDirect("particle_burst_3d", "Particle Burst")
 

@@ -281,7 +281,7 @@ class SimulatedLightingAgentTest {
     fun unknownCommand() {
         val agent = createAgent()
         val response = agent.processMessage("xyzzy plugh")
-        assertContains(response, "didn't understand")
+        assertContains(response, "didn't quite get")
         assertContains(response, "help")
     }
 

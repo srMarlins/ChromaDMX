@@ -96,7 +96,7 @@ fun ChatPanel(
             LazyColumn(
                 state = listState,
                 modifier = Modifier.weight(1f).fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(vertical = 4.dp),
             ) {
                 items(state.chatHistory, key = { it.id }) { message ->

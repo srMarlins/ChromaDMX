@@ -193,7 +193,7 @@ class LightingAgentService(
             system(AgentSystemPrompt.PROMPT)
         },
         model = resolveModel(),
-        maxAgentIterations = MAX_ITERATIONS,
+        maxAgentIterations = config.maxIterations,
     )
 
     /**
@@ -246,8 +246,5 @@ class LightingAgentService(
 
         /** Number of recent messages to include as context. */
         const val CONTEXT_MESSAGE_COUNT = 10
-
-        /** Maximum tool-calling iterations per agent run. */
-        const val MAX_ITERATIONS = 50
     }
 }
