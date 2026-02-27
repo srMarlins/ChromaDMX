@@ -119,11 +119,18 @@ fun StageScreen(
             )
         },
         bottomBar = {
-            PresetStripBar(
-                presetState = presetState,
-                performanceState = perfState,
-                onEvent = viewModel::onEvent,
-            )
+            Column {
+                EffectLayerPanel(
+                    layers = perfState.layers,
+                    availableEffects = presetState.availableEffects,
+                    onEvent = viewModel::onEvent,
+                )
+                PresetStripBar(
+                    presetState = presetState,
+                    performanceState = perfState,
+                    onEvent = viewModel::onEvent,
+                )
+            }
         },
     ) { padding ->
         Box(
