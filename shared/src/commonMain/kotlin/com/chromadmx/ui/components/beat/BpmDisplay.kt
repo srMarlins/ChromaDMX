@@ -12,10 +12,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.chromadmx.ui.theme.LocalPixelTheme
 import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.theme.PixelFontFamily
 
@@ -42,7 +40,6 @@ enum class BpmSource {
  * @param source     Where the BPM value originates (determines display color).
  * @param onTap      Called when the user taps this display (for tap-tempo).
  * @param modifier   Compose modifier.
- * @param pixelSize  Pixel unit for the border.
  */
 @Composable
 fun BpmDisplay(
@@ -51,7 +48,6 @@ fun BpmDisplay(
     source: BpmSource = BpmSource.TAP,
     onTap: () -> Unit = {},
     modifier: Modifier = Modifier,
-    pixelSize: Dp = LocalPixelTheme.current.pixelSize,
 ) {
     val colors = PixelDesign.colors
     val bpmColor: Color = when (source) {
