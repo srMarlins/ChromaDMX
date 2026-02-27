@@ -155,7 +155,7 @@ class SettingsViewModelV2Test {
     }
 
     /**
-     * Helper to create VM + router + discovery triple.
+     * Helper to create VM + routers triple.
      * Uses [UnconfinedTestDispatcher] by default so that launched
      * coroutines (init collectors, scope.launch calls) run eagerly.
      */
@@ -163,21 +163,28 @@ class SettingsViewModelV2Test {
         settingsStore: FakeSettingsStore = createSettingsStore(),
         transportRouter: DmxTransportRouter? = null,
         discoveryRouter: FixtureDiscoveryRouter? = null,
-        fixtureDiscovery: FakeFixtureDiscovery = FakeFixtureDiscovery(),
         fixtureStore: FakeFixtureStore? = null,
         scope: CoroutineScope,
-    ): Triple<SettingsViewModelV2, DmxTransportRouter, FakeFixtureDiscovery> {
+    ): Triple<SettingsViewModelV2, DmxTransportRouter, FixtureDiscoveryRouter> {
         val router = transportRouter ?: createRouter(scope)
         val discRouter = discoveryRouter ?: createDiscoveryRouter(scope)
         val vm = SettingsViewModelV2(
             settingsRepository = settingsStore,
             transportRouter = router,
             discoveryRouter = discRouter,
-            fixtureDiscovery = fixtureDiscovery,
             scope = scope,
             fixtureStore = fixtureStore,
         )
-        return Triple(vm, router, fixtureDiscovery)
+        return Triple(vm, router, discRouter)
+    }
+
+    /**
+     * Wait for async operations dispatched on [kotlinx.coroutines.Dispatchers.IO]
+     * to complete. Needed because the test scheduler cannot advance real IO work.
+     */
+    @Suppress("BlockingMethodInNonBlockingContext")
+    private fun waitForIo() {
+        Thread.sleep(200)
     }
 
     // -- Initial state --
@@ -192,7 +199,8 @@ class SettingsViewModelV2Test {
         assertEquals("192.168.1.100", state.manualIp)
         assertEquals("0", state.manualUniverse)
         assertEquals("1", state.manualStartAddress)
-        assertTrue(state.fixtureProfiles.isEmpty())
+        // Init seeds built-in fixture profiles
+        assertTrue(state.fixtureProfiles.isNotEmpty())
         assertEquals(RigPreset.SMALL_DJ, state.selectedRigPreset)
         assertIs<AgentStatus.Idle>(state.agentStatus)
     }
@@ -221,26 +229,28 @@ class SettingsViewModelV2Test {
     // -- Transport mode switch via ToggleSimulation --
 
     @Test
-    fun toggleSimulationOnSwitchesRouterToSimulated() = runTest {
+    fun toggleSimulationOnSwitchesBothRoutersToSimulated() = runTest {
         val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler) + SupervisorJob())
-        val (vm, router, _) = createVm(scope = scope)
+        val (vm, router, discRouter) = createVm(scope = scope)
 
         vm.onEvent(SettingsEvent.ToggleSimulation(true))
 
         assertTrue(vm.state.value.simulationEnabled)
         assertEquals(TransportMode.Simulated, router.mode.value)
+        assertEquals(TransportMode.Simulated, discRouter.mode.value)
     }
 
     @Test
-    fun toggleSimulationOffSwitchesRouterToReal() = runTest {
+    fun toggleSimulationOffSwitchesBothRoutersToReal() = runTest {
         val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler) + SupervisorJob())
-        val (vm, router, _) = createVm(scope = scope)
+        val (vm, router, discRouter) = createVm(scope = scope)
 
         vm.onEvent(SettingsEvent.ToggleSimulation(true))
         vm.onEvent(SettingsEvent.ToggleSimulation(false))
 
         assertFalse(vm.state.value.simulationEnabled)
         assertEquals(TransportMode.Real, router.mode.value)
+        assertEquals(TransportMode.Real, discRouter.mode.value)
     }
 
     @Test
@@ -250,6 +260,7 @@ class SettingsViewModelV2Test {
         val (vm, _, _) = createVm(settingsStore = store, scope = scope)
 
         vm.onEvent(SettingsEvent.ToggleSimulation(true))
+        waitForIo()
 
         assertTrue(store.isSimulation.first())
     }
@@ -259,24 +270,34 @@ class SettingsViewModelV2Test {
     @Test
     fun forceRescanTriggersDiscoveryStartScan() = runTest {
         val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler) + SupervisorJob())
-        val discovery = FakeFixtureDiscovery()
-        val (vm, _, _) = createVm(fixtureDiscovery = discovery, scope = scope)
+        val realFake = FakeFixtureDiscovery()
+        val discRouter = FixtureDiscoveryRouter(
+            real = realFake,
+            simulated = FakeFixtureDiscovery(),
+            scope = scope,
+        )
+        val (vm, _, _) = createVm(discoveryRouter = discRouter, scope = scope)
 
-        assertEquals(0, discovery.startScanCount)
+        assertEquals(0, realFake.startScanCount)
         vm.onEvent(SettingsEvent.ForceRescan)
-        assertEquals(1, discovery.startScanCount)
+        assertEquals(1, realFake.startScanCount)
     }
 
     @Test
     fun forceRescanCanBeCalledMultipleTimes() = runTest {
         val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler) + SupervisorJob())
-        val discovery = FakeFixtureDiscovery()
-        val (vm, _, _) = createVm(fixtureDiscovery = discovery, scope = scope)
+        val realFake = FakeFixtureDiscovery()
+        val discRouter = FixtureDiscoveryRouter(
+            real = realFake,
+            simulated = FakeFixtureDiscovery(),
+            scope = scope,
+        )
+        val (vm, _, _) = createVm(discoveryRouter = discRouter, scope = scope)
 
         vm.onEvent(SettingsEvent.ForceRescan)
         vm.onEvent(SettingsEvent.ForceRescan)
         vm.onEvent(SettingsEvent.ForceRescan)
-        assertEquals(3, discovery.startScanCount)
+        assertEquals(3, realFake.startScanCount)
     }
 
     // -- Simulation toggle state --
@@ -429,6 +450,7 @@ class SettingsViewModelV2Test {
         val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler) + SupervisorJob())
         val (vm, _, _) = createVm(scope = scope)
 
+        val baseCount = vm.state.value.fixtureProfiles.size
         val profile = FixtureProfile(
             profileId = "par-rgb",
             name = "RGB Par",
@@ -440,8 +462,8 @@ class SettingsViewModelV2Test {
             ),
         )
         vm.onEvent(SettingsEvent.AddFixtureProfile(profile))
-        assertEquals(1, vm.state.value.fixtureProfiles.size)
-        assertEquals("par-rgb", vm.state.value.fixtureProfiles[0].profileId)
+        assertEquals(baseCount + 1, vm.state.value.fixtureProfiles.size)
+        assertTrue(vm.state.value.fixtureProfiles.any { it.profileId == "par-rgb" })
     }
 
     @Test
@@ -449,6 +471,7 @@ class SettingsViewModelV2Test {
         val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler) + SupervisorJob())
         val (vm, _, _) = createVm(scope = scope)
 
+        val baseCount = vm.state.value.fixtureProfiles.size
         val profile = FixtureProfile(
             profileId = "par-rgb",
             name = "RGB Par",
@@ -460,10 +483,11 @@ class SettingsViewModelV2Test {
             ),
         )
         vm.onEvent(SettingsEvent.AddFixtureProfile(profile))
-        assertEquals(1, vm.state.value.fixtureProfiles.size)
+        assertEquals(baseCount + 1, vm.state.value.fixtureProfiles.size)
 
         vm.onEvent(SettingsEvent.DeleteFixtureProfile("par-rgb"))
-        assertTrue(vm.state.value.fixtureProfiles.isEmpty())
+        assertEquals(baseCount, vm.state.value.fixtureProfiles.size)
+        assertFalse(vm.state.value.fixtureProfiles.any { it.profileId == "par-rgb" })
     }
 
     @Test
@@ -471,6 +495,7 @@ class SettingsViewModelV2Test {
         val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler) + SupervisorJob())
         val (vm, _, _) = createVm(scope = scope)
 
+        val baseCount = vm.state.value.fixtureProfiles.size
         val profile = FixtureProfile(
             profileId = "par-rgb",
             name = "RGB Par",
@@ -479,7 +504,7 @@ class SettingsViewModelV2Test {
         )
         vm.onEvent(SettingsEvent.AddFixtureProfile(profile))
         vm.onEvent(SettingsEvent.DeleteFixtureProfile("nonexistent-id"))
-        assertEquals(1, vm.state.value.fixtureProfiles.size)
+        assertEquals(baseCount + 1, vm.state.value.fixtureProfiles.size)
     }
 
     // -- Rig preset --
@@ -500,6 +525,8 @@ class SettingsViewModelV2Test {
         val (vm, _, _) = createVm(fixtureStore = store, scope = scope)
 
         vm.onEvent(SettingsEvent.SetRigPreset(RigPreset.FESTIVAL_STAGE))
+        // Persistence runs on Dispatchers.IO — wait for it to complete
+        waitForIo()
         advanceUntilIdle()
 
         assertEquals(1, store.deleteAllCount)
@@ -510,19 +537,21 @@ class SettingsViewModelV2Test {
     // -- Reset simulation --
 
     @Test
-    fun resetSimulationDisablesSimAndSwitchesToReal() = runTest {
+    fun resetSimulationDisablesSimAndSwitchesBothRoutersToReal() = runTest {
         val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler) + SupervisorJob())
-        val (vm, router, _) = createVm(scope = scope)
+        val (vm, router, discRouter) = createVm(scope = scope)
 
         // Enable simulation first
         vm.onEvent(SettingsEvent.ToggleSimulation(true))
         assertTrue(vm.state.value.simulationEnabled)
         assertEquals(TransportMode.Simulated, router.mode.value)
+        assertEquals(TransportMode.Simulated, discRouter.mode.value)
 
         // Reset simulation
         vm.onEvent(SettingsEvent.ResetSimulation)
         assertFalse(vm.state.value.simulationEnabled)
         assertEquals(TransportMode.Real, router.mode.value)
+        assertEquals(TransportMode.Real, discRouter.mode.value)
     }
 
     // -- Reset onboarding --
@@ -539,6 +568,8 @@ class SettingsViewModelV2Test {
 
         // Reset onboarding
         vm.onEvent(SettingsEvent.ResetOnboarding)
+        // Persistence runs on Dispatchers.IO — wait for it to complete
+        waitForIo()
 
         assertFalse(store.setupCompleted.first())
     }

@@ -36,7 +36,7 @@ import org.koin.dsl.module
  * - SetupViewModel requires: FixtureDiscovery, FixtureStore, SettingsStore
  * - StageViewModelV2 requires: EffectEngine, EffectRegistry, PresetLibrary,
  *     BeatClock, FixtureDiscovery, NodeDiscovery (optional)
- * - SettingsViewModelV2 requires: SettingsStore, DmxTransportRouter, FixtureDiscovery
+ * - SettingsViewModelV2 requires: SettingsStore, DmxTransportRouter, FixtureDiscoveryRouter
  * - MascotViewModelV2 requires: BeatClock, knownNodesFlow, LightingAgentInterface (optional)
  * - ProvisioningViewModel requires: BleProvisioningService (optional)
  */
@@ -94,7 +94,6 @@ val uiModule = module {
             settingsRepository = get(),
             transportRouter = get(),
             discoveryRouter = get(),
-            fixtureDiscovery = get(),
             scope = vmScope,
             fixtureStore = getOrNull<FixtureStore>(),
         )

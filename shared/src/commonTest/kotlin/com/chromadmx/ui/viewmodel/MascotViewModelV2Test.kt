@@ -319,12 +319,6 @@ class MascotViewModelV2Test {
         assertNull(vm.state.value.currentBubble)
     }
 
-    @Test
-    fun currentFrameIndexExposedInState() = runTest {
-        val vm = createVm(scope = backgroundScope)
-        assertEquals(0, vm.state.value.currentFrameIndex)
-    }
-
     // ── 7. Topology alert ────────────────────────────────────────────
 
     @Test
