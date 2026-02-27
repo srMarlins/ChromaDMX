@@ -5,13 +5,16 @@ import com.chromadmx.agent.scene.Scene
 import com.chromadmx.core.EffectParams
 import com.chromadmx.core.model.BeatState
 import com.chromadmx.core.model.BlendMode
-import com.chromadmx.core.model.Color
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.core.model.ScenePreset
 import com.chromadmx.core.model.Vec3
 import com.chromadmx.core.persistence.FixtureGroup
 import com.chromadmx.engine.effect.EffectLayer
 import com.chromadmx.core.model.DmxNode
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
 
 /**
  * Performance-related UI state (tempo, master, layers).
@@ -22,7 +25,7 @@ data class PerformanceState(
     val bpm: Float = 120f,
     val isRunning: Boolean = false,
     val masterDimmer: Float = 1f,
-    val layers: List<EffectLayer> = emptyList(),
+    val layers: ImmutableList<EffectLayer> = persistentListOf(),
     val activeSceneName: String? = null
 )
 
@@ -31,10 +34,9 @@ data class PerformanceState(
  */
 @Immutable
 data class FixtureState(
-    val fixtures: List<Fixture3D> = emptyList(),
-    val fixtureColors: List<Color> = emptyList(),
+    val fixtures: ImmutableList<Fixture3D> = persistentListOf(),
     val selectedFixtureIndex: Int? = null,
-    val groups: List<FixtureGroup> = emptyList(),
+    val groups: ImmutableList<FixtureGroup> = persistentListOf(),
     val isEditMode: Boolean = false
 )
 
@@ -43,11 +45,11 @@ data class FixtureState(
  */
 @Immutable
 data class PresetState(
-    val allScenes: List<Scene> = emptyList(),
-    val allPresets: List<ScenePreset> = emptyList(),
-    val favoriteIds: List<String> = emptyList(),
-    val availableEffects: Set<String> = emptySet(),
-    val availableGenres: List<String> = emptyList()
+    val allScenes: ImmutableList<Scene> = persistentListOf(),
+    val allPresets: ImmutableList<ScenePreset> = persistentListOf(),
+    val favoriteIds: ImmutableSet<String> = persistentSetOf(),
+    val availableEffects: ImmutableSet<String> = persistentSetOf(),
+    val availableGenres: ImmutableList<String> = persistentListOf()
 )
 
 /**
@@ -55,7 +57,7 @@ data class PresetState(
  */
 @Immutable
 data class NetworkState(
-    val nodes: List<DmxNode> = emptyList(),
+    val nodes: ImmutableList<DmxNode> = persistentListOf(),
     val currentTimeMs: Long = 0,
     val isNodeListOpen: Boolean = false,
     val diagnosticsResult: NodeDiagnostics? = null
@@ -74,7 +76,7 @@ data class NodeDiagnostics(
     val macAddress: String,
     val firmwareVersion: String,
     val latencyMs: Long,
-    val universes: List<Int>,
+    val universes: ImmutableList<Int>,
     val numPorts: Int,
     val uptimeMs: Long,
     val isAlive: Boolean,

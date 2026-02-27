@@ -22,6 +22,10 @@ import com.chromadmx.tempo.clock.BeatClock
 import com.chromadmx.tempo.tap.TapTempoClock
 import com.chromadmx.core.model.Color as DmxColor
 import com.chromadmx.ui.state.*
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableSet
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -71,18 +75,18 @@ class StageViewModelV2(
 
     private val _performanceState = MutableStateFlow(PerformanceState(
         masterDimmer = effectStack.masterDimmer,
-        layers = effectStack.layers,
+        layers = effectStack.layers.toImmutableList(),
     ))
     val performanceState: StateFlow<PerformanceState> = _performanceState.asStateFlow()
 
     private val _fixtureState = MutableStateFlow(FixtureState(
-        fixtures = if (fixtureRepository != null) emptyList() else engine.fixtures,
+        fixtures = if (fixtureRepository != null) persistentListOf() else engine.fixtures.toImmutableList(),
     ))
     val fixtureState: StateFlow<FixtureState> = _fixtureState.asStateFlow()
 
     private val _presetState = MutableStateFlow(PresetState(
-        availableEffects = effectRegistry.ids(),
-        availableGenres = listOf("techno", "ambient", "house", "default"),
+        availableEffects = effectRegistry.ids().toImmutableSet(),
+        availableGenres = listOf("techno", "ambient", "house", "default").toImmutableList(),
     ))
     val presetState: StateFlow<PresetState> = _presetState.asStateFlow()
 
@@ -148,7 +152,7 @@ class StageViewModelV2(
     /** Collect nodes from FixtureDiscovery interface. */
     private val discoverySyncJob: Job = scope.launch {
         fixtureDiscovery.discoveredNodes.collect { nodes ->
-            _networkState.update { it.copy(nodes = nodes) }
+            _networkState.update { it.copy(nodes = nodes.toImmutableList()) }
         }
     }
 
@@ -156,7 +160,7 @@ class StageViewModelV2(
     private val repoSyncJob: Job? = fixtureRepository?.let { repo ->
         scope.launch {
             repo.allFixtures().collect { dbFixtures ->
-                _fixtureState.update { it.copy(fixtures = dbFixtures) }
+                _fixtureState.update { it.copy(fixtures = dbFixtures.toImmutableList()) }
                 engine.updateFixtures(dbFixtures)
                 // Keep simulation badge in sync when rig preset changes via Settings
                 if (_viewState.value.isSimulationMode) {
@@ -175,7 +179,7 @@ class StageViewModelV2(
     private val groupSyncJob: Job? = fixtureRepository?.let { repo ->
         scope.launch {
             repo.allGroups().collect { dbGroups ->
-                _fixtureState.update { it.copy(groups = dbGroups) }
+                _fixtureState.update { it.copy(groups = dbGroups.toImmutableList()) }
             }
         }
     }
@@ -338,7 +342,7 @@ class StageViewModelV2(
             val current = state.fixtures.toMutableList()
             if (index in current.indices) {
                 current[index] = current[index].copy(position = newPosition)
-                state.copy(fixtures = current)
+                state.copy(fixtures = current.toImmutableList())
             } else {
                 state
             }
@@ -356,7 +360,7 @@ class StageViewModelV2(
 
     private fun handleAddFixture(fixture: Fixture3D) {
         _fixtureState.update { state ->
-            state.copy(fixtures = state.fixtures + fixture)
+            state.copy(fixtures = (state.fixtures + fixture).toImmutableList())
         }
         scope.launch { withContext(Dispatchers.IO) { fixtureRepository?.saveFixture(fixture) } }
     }
@@ -369,7 +373,7 @@ class StageViewModelV2(
                 val removed = current.removeAt(index)
                 removedFixtureId = removed.fixture.fixtureId
                 val newSelection = if (state.selectedFixtureIndex == index) null else state.selectedFixtureIndex
-                state.copy(fixtures = current, selectedFixtureIndex = newSelection)
+                state.copy(fixtures = current.toImmutableList(), selectedFixtureIndex = newSelection)
             } else {
                 state
             }
@@ -388,7 +392,7 @@ class StageViewModelV2(
                 current[index] = f.copy(position = newPos)
                 updatedFixtureId = f.fixture.fixtureId
                 updatedPosition = newPos
-                state.copy(fixtures = current)
+                state.copy(fixtures = current.toImmutableList())
             } else {
                 state
             }
@@ -410,7 +414,7 @@ class StageViewModelV2(
                 current[index] = updated
                 assignedFixtureId = updated.fixture.fixtureId
                 assignedGroupId = groupId
-                state.copy(fixtures = current)
+                state.copy(fixtures = current.toImmutableList())
             } else {
                 state
             }
@@ -422,14 +426,14 @@ class StageViewModelV2(
         val groupId = "grp-${name.lowercase().replace(" ", "-")}-${currentTimeMillis()}-${kotlin.random.Random.nextInt(0, Int.MAX_VALUE)}"
         val group = FixtureGroup(groupId = groupId, name = name, color = color)
         _fixtureState.update { state ->
-            state.copy(groups = state.groups + group)
+            state.copy(groups = (state.groups + group).toImmutableList())
         }
         scope.launch { withContext(Dispatchers.IO) { fixtureRepository?.saveGroup(group) } }
     }
 
     private fun handleDeleteGroup(groupId: String) {
         _fixtureState.update { state ->
-            state.copy(groups = state.groups.filter { it.groupId != groupId })
+            state.copy(groups = state.groups.filter { it.groupId != groupId }.toImmutableList())
         }
         scope.launch { withContext(Dispatchers.IO) { fixtureRepository?.deleteGroup(groupId) } }
     }
@@ -477,7 +481,7 @@ class StageViewModelV2(
             macAddress = node.macAddress,
             firmwareVersion = "v${node.firmwareVersion}",
             latencyMs = node.latencyMs,
-            universes = node.universes,
+            universes = node.universes.toImmutableList(),
             numPorts = node.numPorts,
             uptimeMs = if (node.firstSeenMs > 0) currentTime - node.firstSeenMs else 0L,
             isAlive = node.isAlive(currentTime),
@@ -573,7 +577,7 @@ class StageViewModelV2(
             current.add(presetId)
         }
         presetLibrary.setFavorites(current)
-        _presetState.update { it.copy(favoriteIds = current) }
+        _presetState.update { it.copy(favoriteIds = current.toImmutableSet()) }
     }
 
     // ── Sync helpers ───────────────────────────────────────────────────
@@ -583,7 +587,7 @@ class StageViewModelV2(
             _performanceState.update { state ->
                 state.copy(
                     masterDimmer = effectStack.masterDimmer,
-                    layers = effectStack.layers,
+                    layers = effectStack.layers.toImmutableList(),
                 )
             }
             val (presets, favorites, scenes) = withContext(Dispatchers.Default) {
@@ -616,10 +620,10 @@ class StageViewModelV2(
             }
             _presetState.update { state ->
                 state.copy(
-                    allPresets = presets,
-                    favoriteIds = favorites,
-                    allScenes = scenes,
-                    availableEffects = effectRegistry.ids(),
+                    allPresets = presets.toImmutableList(),
+                    favoriteIds = favorites.toImmutableSet(),
+                    allScenes = scenes.toImmutableList(),
+                    availableEffects = effectRegistry.ids().toImmutableSet(),
                 )
             }
         }
