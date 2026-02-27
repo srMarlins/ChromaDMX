@@ -15,7 +15,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
@@ -35,22 +34,7 @@ import com.chromadmx.ui.renderer.TopDownRenderer.drawStrobeFixture
 import com.chromadmx.ui.renderer.TopDownRenderer.drawWashFixture
 import com.chromadmx.core.model.Color as DmxColor
 import com.chromadmx.ui.components.toComposeColor
-
-/** Scanline color for the subtle CRT-like horizontal lines. */
-private val ScanlineColor = Color.White.copy(alpha = 0.015f)
-
-/** Grid line color for the LED matrix background. */
-private val GridLineColor = Color.White.copy(alpha = 0.04f)
-
-/** Background color for the canvas. */
-private val CanvasBackground = Color(0xFF060612)
-
-/** Highlight color for selected fixture border. */
-private val SelectionColor = Color(0xFF00FBFF)
-
-/** Highlight color for edit-mode drag crosshair. */
-private val EditDragColor = Color(0xFFFFFF00)
-
+import com.chromadmx.ui.theme.PixelDesign
 
 /**
  * Canvas-based top-down fixture editor with profile-aware rendering.
@@ -92,6 +76,15 @@ fun TopDownEditor(
     onBackgroundTapped: (() -> Unit)? = null,
     onDragEnd: ((fixtureIndex: Int) -> Unit)? = null,
 ) {
+    // Read theme colors in composable scope for use in Canvas DrawScope lambdas
+    val canvasBackground = PixelDesign.colors.stageBackground
+    val selectionColor = PixelDesign.colors.primary
+    val editDragColor = PixelDesign.colors.warning
+    val scanlineColor = PixelDesign.colors.scanlineColor
+    val gridLineColor = PixelDesign.colors.gridLineColor
+    val housingColor = PixelDesign.colors.fixtureHousing
+    val housingBorderColor = PixelDesign.colors.fixtureHousingBorder
+
     // Zoom and pan state
     var zoom by remember { mutableFloatStateOf(1f) }
     var panOffset by remember { mutableStateOf(Offset.Zero) }
@@ -105,7 +98,7 @@ fun TopDownEditor(
     Canvas(
         modifier = modifier
             .fillMaxSize()
-            .background(CanvasBackground)
+            .background(canvasBackground)
             .pointerInput(isEditable) {
                 if (!isEditable) {
                     detectTransformGestures { _, pan, gestureZoom, _ ->
@@ -239,8 +232,8 @@ fun TopDownEditor(
             },
     ) {
         val gridSpacing = 24f
-        drawLedMatrixGrid(gridSpacing)
-        drawScanlines()
+        drawLedMatrixGrid(gridSpacing, gridLineColor)
+        drawScanlines(scanlineColor)
 
         if (fixtures.isEmpty()) return@Canvas
 
@@ -301,17 +294,17 @@ fun TopDownEditor(
                     RenderHint.POINT -> {
                         val fixtureType = profile?.type ?: FixtureType.PAR
                         when (fixtureType) {
-                            FixtureType.STROBE -> drawStrobeFixture(cx, cy, composeColor, isSelected, SelectionColor, fixtureScale)
-                            FixtureType.WASH -> drawWashFixture(cx, cy, composeColor, isSelected, SelectionColor, fixtureScale)
-                            else -> drawParFixture(cx, cy, composeColor, isSelected, SelectionColor, fixtureScale)
+                            FixtureType.STROBE -> drawStrobeFixture(cx, cy, composeColor, isSelected, selectionColor, fixtureScale, housingColor, housingBorderColor)
+                            FixtureType.WASH -> drawWashFixture(cx, cy, composeColor, isSelected, selectionColor, fixtureScale, housingColor, housingBorderColor)
+                            else -> drawParFixture(cx, cy, composeColor, isSelected, selectionColor, fixtureScale, housingColor, housingBorderColor)
                         }
                     }
                     RenderHint.BAR -> {
                         val pixelCount = profile?.physical?.pixelCount ?: 8
-                        drawBarFixture(cx, cy, composeColor, pixelCount, isSelected, SelectionColor, fixtureScale)
+                        drawBarFixture(cx, cy, composeColor, pixelCount, isSelected, selectionColor, fixtureScale, housingColor, housingBorderColor)
                     }
                     RenderHint.BEAM_CONE -> drawBeamConeFixture(
-                        cx, cy, composeColor, isSelected, reusablePath, SelectionColor, fixtureScale,
+                        cx, cy, composeColor, isSelected, reusablePath, selectionColor, fixtureScale, housingColor, housingBorderColor,
                     )
                 }
             }
@@ -322,7 +315,7 @@ fun TopDownEditor(
                     if (dragTargetIndex >= 0) dragTargetIndex else selectedFixtureIndex
                 if (editIndex != null && editIndex in positions.indices) {
                     val pos = positions[editIndex]
-                    drawEditDragHandle(pos.x, pos.y)
+                    drawEditDragHandle(pos.x, pos.y, editDragColor)
                 }
             }
 
@@ -346,15 +339,15 @@ fun TopDownEditor(
 /**
  * Draw subtle LED matrix grid lines on the canvas background.
  */
-private fun DrawScope.drawLedMatrixGrid(spacing: Float) {
+private fun DrawScope.drawLedMatrixGrid(spacing: Float, gridColor: Color) {
     var x = 0f
     while (x < size.width) {
-        drawLine(GridLineColor, Offset(x, 0f), Offset(x, size.height), strokeWidth = 1f)
+        drawLine(gridColor, Offset(x, 0f), Offset(x, size.height), strokeWidth = 1f)
         x += spacing
     }
     var y = 0f
     while (y < size.height) {
-        drawLine(GridLineColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 1f)
+        drawLine(gridColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 1f)
         y += spacing
     }
 }
@@ -362,10 +355,10 @@ private fun DrawScope.drawLedMatrixGrid(spacing: Float) {
 /**
  * Draw horizontal scanlines for CRT aesthetic.
  */
-private fun DrawScope.drawScanlines() {
+private fun DrawScope.drawScanlines(scanlineColor: Color) {
     var y = 0f
     while (y < size.height) {
-        drawLine(ScanlineColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 1f)
+        drawLine(scanlineColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 1f)
         y += 3f
     }
 }
@@ -373,13 +366,13 @@ private fun DrawScope.drawScanlines() {
 /**
  * Draw a crosshair drag handle for edit mode on the selected fixture.
  */
-private fun DrawScope.drawEditDragHandle(cx: Float, cy: Float) {
+private fun DrawScope.drawEditDragHandle(cx: Float, cy: Float, color: Color) {
     val armLen = 28f
     val dashEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 4f), phase = 0f)
 
     // Horizontal crosshair
     drawLine(
-        color = EditDragColor,
+        color = color,
         start = Offset(cx - armLen, cy),
         end = Offset(cx + armLen, cy),
         strokeWidth = 2f,
@@ -387,7 +380,7 @@ private fun DrawScope.drawEditDragHandle(cx: Float, cy: Float) {
     )
     // Vertical crosshair
     drawLine(
-        color = EditDragColor,
+        color = color,
         start = Offset(cx, cy - armLen),
         end = Offset(cx, cy + armLen),
         strokeWidth = 2f,
@@ -396,7 +389,7 @@ private fun DrawScope.drawEditDragHandle(cx: Float, cy: Float) {
 
     // Dashed circle border
     drawCircle(
-        color = EditDragColor,
+        color = color,
         radius = 24f,
         center = Offset(cx, cy),
         style = Stroke(width = 2f, pathEffect = dashEffect),

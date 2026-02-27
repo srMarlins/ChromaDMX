@@ -16,16 +16,22 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
  */
 object FixtureRenderer {
 
-    /** Standardized dark fixture housing color. */
-    private val HousingColor = Color(0xFF1A1A2E)
+    /** Standardized dark fixture housing color (default; prefer theme via PixelDesign.colors.fixtureHousing). */
+    val HousingColor = Color(0xFF1A1A2E)
 
-    /** Lighter border for fixture housing. */
-    private val HousingBorderColor = Color(0xFF2A2A3E)
+    /** Lighter border for fixture housing (default; prefer theme via PixelDesign.colors.fixtureHousingBorder). */
+    val HousingBorderColor = Color(0xFF2A2A3E)
 
     /**
      * Draw a PAR fixture as a square housing with colored lens and radial glow.
      */
-    fun DrawScope.drawPar(position: Offset, color: Color, size: Float = 16f) {
+    fun DrawScope.drawPar(
+        position: Offset,
+        color: Color,
+        size: Float = 16f,
+        housingColor: Color = HousingColor,
+        housingBorderColor: Color = HousingBorderColor,
+    ) {
         val half = size / 2f
         val lensInset = 2f
         // Radial glow
@@ -39,13 +45,13 @@ object FixtureRenderer {
             center = position,
         )
         // Housing border + body
-        drawRect(HousingBorderColor, Offset(position.x - half - 1f, position.y - half - 1f), Size(size + 2f, size + 2f))
-        drawRect(HousingColor, Offset(position.x - half, position.y - half), Size(size, size))
+        drawRect(housingBorderColor, Offset(position.x - half - 1f, position.y - half - 1f), Size(size + 2f, size + 2f))
+        drawRect(housingColor, Offset(position.x - half, position.y - half), Size(size, size))
         // Colored lens
         drawRect(color, Offset(position.x - half + lensInset, position.y - half + lensInset), Size(size - 2 * lensInset, size - 2 * lensInset))
         // Mount brackets
-        drawRect(HousingBorderColor, Offset(position.x - 4f, position.y - half - 3f), Size(2f, 3f))
-        drawRect(HousingBorderColor, Offset(position.x + 2f, position.y - half - 3f), Size(2f, 3f))
+        drawRect(housingBorderColor, Offset(position.x - 4f, position.y - half - 3f), Size(2f, 3f))
+        drawRect(housingBorderColor, Offset(position.x + 2f, position.y - half - 3f), Size(2f, 3f))
     }
 
     /**
@@ -60,16 +66,18 @@ object FixtureRenderer {
         panTilt: Offset = Offset.Zero,
         @Suppress("UNUSED_PARAMETER") beamAngle: Float = 15f,
         size: Float = 14f,
+        housingColor: Color = HousingColor,
+        housingBorderColor: Color = HousingBorderColor,
     ) {
         val half = size / 2f
         // Fixture body (dark housing)
         drawRect(
-            HousingBorderColor,
+            housingBorderColor,
             topLeft = Offset(position.x - half - 1f, position.y - half - 1f),
             size = Size(size + 2f, size + 2f),
         )
         drawRect(
-            HousingColor,
+            housingColor,
             topLeft = Offset(position.x - half, position.y - half),
             size = Size(size, size),
         )
@@ -93,6 +101,7 @@ object FixtureRenderer {
         segmentColors: List<Color>? = null,
         baseColor: Color = Color.White,
         segmentSize: Float = 8f,
+        housingColor: Color = HousingColor,
     ) {
         val gap = 2f
         val totalW = segments * segmentSize + (segments - 1) * gap
@@ -110,7 +119,7 @@ object FixtureRenderer {
         )
         // Housing
         drawRect(
-            HousingColor,
+            housingColor,
             topLeft = Offset(startX - 2f, startY - 2f),
             size = Size(totalW + 4f, segmentSize + 4f),
         )
@@ -125,7 +134,13 @@ object FixtureRenderer {
     /**
      * Draw a strobe as a wide rectangular flash panel with sharp glow.
      */
-    fun DrawScope.drawStrobe(position: Offset, color: Color, size: Float = 14f) {
+    fun DrawScope.drawStrobe(
+        position: Offset,
+        color: Color,
+        size: Float = 14f,
+        housingColor: Color = HousingColor,
+        housingBorderColor: Color = HousingBorderColor,
+    ) {
         val width = size * 1.6f
         val height = size * 0.7f
         val halfW = width / 2f
@@ -141,8 +156,8 @@ object FixtureRenderer {
             center = position,
         )
         // Housing
-        drawRect(HousingBorderColor, Offset(position.x - halfW - 1f, position.y - halfH - 1f), Size(width + 2f, height + 2f))
-        drawRect(HousingColor, Offset(position.x - halfW, position.y - halfH), Size(width, height))
+        drawRect(housingBorderColor, Offset(position.x - halfW - 1f, position.y - halfH - 1f), Size(width + 2f, height + 2f))
+        drawRect(housingColor, Offset(position.x - halfW, position.y - halfH), Size(width, height))
         // Flash panel
         val flashColor = Color(
             red = (color.red + 1f) / 2f,
@@ -155,7 +170,13 @@ object FixtureRenderer {
     /**
      * Draw a wash fixture as a larger housing with wide soft radial glow.
      */
-    fun DrawScope.drawWash(position: Offset, color: Color, size: Float = 20f) {
+    fun DrawScope.drawWash(
+        position: Offset,
+        color: Color,
+        size: Float = 20f,
+        housingColor: Color = HousingColor,
+        housingBorderColor: Color = HousingBorderColor,
+    ) {
         val half = size / 2f
         val lensRadius = size * 0.35f
         // Wide soft glow
@@ -169,29 +190,32 @@ object FixtureRenderer {
             center = position,
         )
         // Housing
-        drawRect(HousingBorderColor, Offset(position.x - half - 1f, position.y - half - 1f), Size(size + 2f, size + 2f))
-        drawRect(HousingColor, Offset(position.x - half, position.y - half), Size(size, size))
+        drawRect(housingBorderColor, Offset(position.x - half - 1f, position.y - half - 1f), Size(size + 2f, size + 2f))
+        drawRect(housingColor, Offset(position.x - half, position.y - half), Size(size, size))
         // Round lens
         drawCircle(color, radius = lensRadius, center = position)
         // Mount brackets
-        drawRect(HousingBorderColor, Offset(position.x - 5f, position.y - half - 3f), Size(2f, 3f))
-        drawRect(HousingBorderColor, Offset(position.x + 3f, position.y - half - 3f), Size(2f, 3f))
+        drawRect(housingBorderColor, Offset(position.x - 5f, position.y - half - 3f), Size(2f, 3f))
+        drawRect(housingBorderColor, Offset(position.x + 3f, position.y - half - 3f), Size(2f, 3f))
     }
 
     /**
      * Draw a pixelated selection border around a fixture (cyan rectangle).
      */
-    fun DrawScope.drawSelection(position: Offset, size: Float = 20f) {
-        val selColor = Color(0xFF00FBFF) // cyan matching VenueCanvas
+    fun DrawScope.drawSelection(
+        position: Offset,
+        size: Float = 20f,
+        selectionColor: Color = Color(0xFF00FBFF),
+    ) {
         val r = size / 2f + 3f
         val pixel = 3f
         // Top edge
-        drawRect(selColor, Offset(position.x - r, position.y - r), Size(2 * r, pixel))
+        drawRect(selectionColor, Offset(position.x - r, position.y - r), Size(2 * r, pixel))
         // Bottom edge
-        drawRect(selColor, Offset(position.x - r, position.y + r - pixel), Size(2 * r, pixel))
+        drawRect(selectionColor, Offset(position.x - r, position.y + r - pixel), Size(2 * r, pixel))
         // Left edge
-        drawRect(selColor, Offset(position.x - r, position.y - r), Size(pixel, 2 * r))
+        drawRect(selectionColor, Offset(position.x - r, position.y - r), Size(pixel, 2 * r))
         // Right edge
-        drawRect(selColor, Offset(position.x + r - pixel, position.y - r), Size(pixel, 2 * r))
+        drawRect(selectionColor, Offset(position.x + r - pixel, position.y - r), Size(pixel, 2 * r))
     }
 }
