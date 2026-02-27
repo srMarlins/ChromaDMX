@@ -22,6 +22,14 @@ enum class PixelColorTheme {
     MatchaLight,
     /** Pure black/white with maximum contrast — accessibility theme. */
     HighContrast,
+    /** Electric blues, hot pinks, deep purple-black. */
+    NeonCyberpunk,
+    /** Deep navy, teal, aquamarine. Calm underwater. */
+    OceanDepths,
+    /** Amber, coral, warm dark browns. Golden hour. */
+    SunsetWarm,
+    /** Grayscale with single cyan accent. Minimal, professional. */
+    MonochromePro,
 }
 
 // --- Matcha Palette ---
@@ -157,6 +165,154 @@ val HighContrastColors = PixelColors(
     gridLineColor = Color.White.copy(alpha = 0.1f),
 )
 
+/** Neon Cyberpunk — electric blues, hot pinks, deep purple-black. */
+val NeonCyberpunkColors = PixelColors(
+    primary = Color(0xFF00D4FF),
+    onPrimary = Color(0xFF0D0221),
+    secondary = Color(0xFFFF2E97),
+    onSecondary = Color(0xFF0D0221),
+    tertiary = Color(0xFFBF00FF),
+    onTertiary = Color(0xFF0D0221),
+    background = Color(0xFF0D0221),
+    onBackground = Color(0xFFE0D4FF),
+    surface = Color(0xFF1A0A3E),
+    onSurface = Color(0xFFE0D4FF),
+    surfaceVariant = Color(0xFF261450),
+    onSurfaceVariant = Color(0xFFE0D4FF).copy(alpha = 0.8f),
+    error = Color(0xFFFF4444),
+    onError = Color(0xFF0D0221),
+    success = Color(0xFF00FF88),
+    warning = Color(0xFFFFD600),
+    info = Color(0xFF00D4FF),
+    onSurfaceDim = Color(0xFFE0D4FF).copy(alpha = 0.6f),
+    primaryDark = Color(0xFF0088AA),
+    primaryLight = Color(0xFF66E5FF),
+    scrim = Color(0xFF0D0221).copy(alpha = 0.7f),
+    outline = Color(0xFF00D4FF).copy(alpha = 0.6f),
+    outlineVariant = Color(0xFF00D4FF).copy(alpha = 0.3f),
+    glow = Color(0xFF00D4FF),
+    stageBackground = Color(0xFF0A0118),
+    stageFloor = Color(0xFF0D0221),
+    stageHorizon = Color(0xFF2A1050),
+    trussColor = Color(0xFF2E1A5E),
+    trussBorder = Color(0xFF4A2880),
+    fixtureHousing = Color(0xFF1A0A3E),
+    fixtureHousingBorder = Color(0xFF2E1A5E),
+    scanlineColor = Color(0xFF00D4FF).copy(alpha = 0.03f),
+    gridLineColor = Color(0xFFBF00FF).copy(alpha = 0.05f),
+)
+
+/** Ocean Depths — deep navy, teal, aquamarine. Calm underwater. */
+val OceanDepthsColors = PixelColors(
+    primary = Color(0xFF00B4D8),
+    onPrimary = Color(0xFF03045E),
+    secondary = Color(0xFF90E0EF),
+    onSecondary = Color(0xFF03045E),
+    tertiary = Color(0xFF48CAE4),
+    onTertiary = Color(0xFF03045E),
+    background = Color(0xFF03045E),
+    onBackground = Color(0xFFCAF0F8),
+    surface = Color(0xFF0A1128),
+    onSurface = Color(0xFFCAF0F8),
+    surfaceVariant = Color(0xFF122040),
+    onSurfaceVariant = Color(0xFFCAF0F8).copy(alpha = 0.8f),
+    error = Color(0xFFFF6B6B),
+    onError = Color(0xFF03045E),
+    success = Color(0xFF00E676),
+    warning = Color(0xFFFFCA28),
+    info = Color(0xFF00B4D8),
+    onSurfaceDim = Color(0xFFCAF0F8).copy(alpha = 0.6f),
+    primaryDark = Color(0xFF007B9E),
+    primaryLight = Color(0xFF66D4EB),
+    scrim = Color(0xFF03045E).copy(alpha = 0.7f),
+    outline = Color(0xFF00B4D8).copy(alpha = 0.6f),
+    outlineVariant = Color(0xFF00B4D8).copy(alpha = 0.3f),
+    glow = Color(0xFF00B4D8),
+    stageBackground = Color(0xFF020338),
+    stageFloor = Color(0xFF03045E),
+    stageHorizon = Color(0xFF0A2472),
+    trussColor = Color(0xFF1A3A6E),
+    trussBorder = Color(0xFF2A5080),
+    fixtureHousing = Color(0xFF0A1840),
+    fixtureHousingBorder = Color(0xFF1A3060),
+    scanlineColor = Color(0xFF00B4D8).copy(alpha = 0.02f),
+    gridLineColor = Color(0xFF90E0EF).copy(alpha = 0.04f),
+)
+
+/** Sunset Warm — amber, coral, warm dark browns. Golden hour. */
+val SunsetWarmColors = PixelColors(
+    primary = Color(0xFFFF9E00),
+    onPrimary = Color(0xFF1A0F0A),
+    secondary = Color(0xFFFF6B6B),
+    onSecondary = Color(0xFF1A0F0A),
+    tertiary = Color(0xFFFFD54F),
+    onTertiary = Color(0xFF1A0F0A),
+    background = Color(0xFF1A0F0A),
+    onBackground = Color(0xFFFFE0C0),
+    surface = Color(0xFF2A1A10),
+    onSurface = Color(0xFFFFE0C0),
+    surfaceVariant = Color(0xFF3A2418),
+    onSurfaceVariant = Color(0xFFFFE0C0).copy(alpha = 0.8f),
+    error = Color(0xFFFF4444),
+    onError = Color(0xFF1A0F0A),
+    success = Color(0xFF8BC34A),
+    warning = Color(0xFFFFD54F),
+    info = Color(0xFFFFB74D),
+    onSurfaceDim = Color(0xFFFFE0C0).copy(alpha = 0.6f),
+    primaryDark = Color(0xFFCC7E00),
+    primaryLight = Color(0xFFFFBE4D),
+    scrim = Color(0xFF1A0F0A).copy(alpha = 0.7f),
+    outline = Color(0xFFFF9E00).copy(alpha = 0.6f),
+    outlineVariant = Color(0xFFFF9E00).copy(alpha = 0.3f),
+    glow = Color(0xFFFF9E00),
+    stageBackground = Color(0xFF120A06),
+    stageFloor = Color(0xFF1A0F0A),
+    stageHorizon = Color(0xFF3A2418),
+    trussColor = Color(0xFF4A3020),
+    trussBorder = Color(0xFF5A3C28),
+    fixtureHousing = Color(0xFF2A1810),
+    fixtureHousingBorder = Color(0xFF4A3020),
+    scanlineColor = Color(0xFFFF9E00).copy(alpha = 0.02f),
+    gridLineColor = Color(0xFFFF6B6B).copy(alpha = 0.04f),
+)
+
+/** Monochrome Pro — grayscale with single cyan accent. Minimal, professional. */
+val MonochromeProColors = PixelColors(
+    primary = Color(0xFFE0E0E0),
+    onPrimary = Color(0xFF1A1A1A),
+    secondary = Color(0xFF00BCD4),
+    onSecondary = Color(0xFF1A1A1A),
+    tertiary = Color(0xFF80DEEA),
+    onTertiary = Color(0xFF1A1A1A),
+    background = Color(0xFF1A1A1A),
+    onBackground = Color(0xFFE0E0E0),
+    surface = Color(0xFF252525),
+    onSurface = Color(0xFFE0E0E0),
+    surfaceVariant = Color(0xFF303030),
+    onSurfaceVariant = Color(0xFFE0E0E0).copy(alpha = 0.8f),
+    error = Color(0xFFFF5252),
+    onError = Color(0xFF1A1A1A),
+    success = Color(0xFF69F0AE),
+    warning = Color(0xFFFFD740),
+    info = Color(0xFF00BCD4),
+    onSurfaceDim = Color(0xFFE0E0E0).copy(alpha = 0.6f),
+    primaryDark = Color(0xFFB0B0B0),
+    primaryLight = Color(0xFFF0F0F0),
+    scrim = Color.Black.copy(alpha = 0.6f),
+    outline = Color(0xFFE0E0E0).copy(alpha = 0.5f),
+    outlineVariant = Color(0xFFE0E0E0).copy(alpha = 0.25f),
+    glow = Color(0xFF00BCD4),
+    stageBackground = Color(0xFF111111),
+    stageFloor = Color(0xFF1A1A1A),
+    stageHorizon = Color(0xFF333333),
+    trussColor = Color(0xFF3D3D3D),
+    trussBorder = Color(0xFF505050),
+    fixtureHousing = Color(0xFF2A2A2A),
+    fixtureHousingBorder = Color(0xFF3D3D3D),
+    scanlineColor = Color.White.copy(alpha = 0.02f),
+    gridLineColor = Color.White.copy(alpha = 0.04f),
+)
+
 /**
  * Resolves a [PixelColorTheme] to its [PixelColors] instance.
  *
@@ -166,6 +322,10 @@ fun PixelColorTheme.toColors(): PixelColors = when (this) {
     PixelColorTheme.MatchaDark -> MatchaDarkColors
     PixelColorTheme.MatchaLight -> MatchaLightColors
     PixelColorTheme.HighContrast -> HighContrastColors
+    PixelColorTheme.NeonCyberpunk -> NeonCyberpunkColors
+    PixelColorTheme.OceanDepths -> OceanDepthsColors
+    PixelColorTheme.SunsetWarm -> SunsetWarmColors
+    PixelColorTheme.MonochromePro -> MonochromeProColors
 }
 
 // --- Spacing ---
@@ -231,19 +391,14 @@ object PixelDesign {
     /**
      * Whether the active theme uses a dark background.
      *
-     * `true` for [PixelColorTheme.MatchaDark] and [PixelColorTheme.HighContrast];
-     * `false` for [PixelColorTheme.MatchaLight].
+     * All themes are dark except [PixelColorTheme.MatchaLight].
      *
      * Use this for conditional rendering (e.g., glow intensity, scanline color).
      */
     val isDarkTheme: Boolean
         @Composable
         @ReadOnlyComposable
-        get() = when (LocalPixelColorTheme.current) {
-            PixelColorTheme.MatchaDark -> true
-            PixelColorTheme.MatchaLight -> false
-            PixelColorTheme.HighContrast -> true
-        }
+        get() = LocalPixelColorTheme.current != PixelColorTheme.MatchaLight
 
     /**
      * Whether the system requests reduced motion (accessibility preference).
