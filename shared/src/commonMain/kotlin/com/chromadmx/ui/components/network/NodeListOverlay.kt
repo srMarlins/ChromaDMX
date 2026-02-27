@@ -115,6 +115,7 @@ private fun NodeCard(
 
             PixelButton(
                 onClick = onDiagnose,
+                modifier = Modifier.fillMaxWidth(),
                 backgroundColor = healthColor.copy(alpha = 0.3f),
                 contentColor = healthColor,
                 borderColor = healthColor,

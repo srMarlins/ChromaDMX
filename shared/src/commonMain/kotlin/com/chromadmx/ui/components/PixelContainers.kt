@@ -325,14 +325,13 @@ fun PixelDialog(
                 // Actions row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     if (dismissButton != null) {
-                        dismissButton()
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(modifier = Modifier.weight(1f)) { dismissButton() }
                     }
-                    confirmButton()
+                    Box(modifier = Modifier.weight(1f)) { confirmButton() }
                 }
             }
         }
