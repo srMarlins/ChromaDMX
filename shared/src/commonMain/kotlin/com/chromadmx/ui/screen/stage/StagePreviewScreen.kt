@@ -76,6 +76,7 @@ import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.theme.PixelFontFamily
 import com.chromadmx.ui.theme.PixelShape
 import com.chromadmx.ui.viewmodel.StageViewModelV2
+import kotlinx.coroutines.flow.map
 
 // ============================================================================
 // StageScreen — Main stage view with top-down/audience view modes,
@@ -460,7 +461,11 @@ private fun StageTopBar(
     val beatState by viewModel.beatUiState.collectAsState()
     val networkState by viewModel.networkState.collectAsState()
     val viewState by viewModel.viewState.collectAsState()
-    val fixtureState by viewModel.fixtureState.collectAsState()
+    // Only derive isEditMode — avoids recomposing the entire top bar
+    // when fixture list, selection, or groups change.
+    val isEditMode by remember {
+        viewModel.fixtureState.map { it.isEditMode }
+    }.collectAsState(initial = false)
 
     Column(
         modifier = modifier
@@ -502,7 +507,7 @@ private fun StageTopBar(
                     Icon(
                         imageVector = Icons.Default.Edit,
                         contentDescription = "Edit Mode",
-                        tint = if (fixtureState.isEditMode) {
+                        tint = if (isEditMode) {
                             PixelDesign.colors.warning
                         } else {
                             PixelDesign.colors.onSurface.copy(alpha = 0.5f)

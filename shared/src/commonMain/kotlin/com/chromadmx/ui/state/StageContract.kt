@@ -1,6 +1,7 @@
 package com.chromadmx.ui.state
 
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
 import com.chromadmx.agent.scene.Scene
 import com.chromadmx.core.EffectParams
 import com.chromadmx.core.model.BeatState
@@ -18,8 +19,11 @@ import kotlinx.collections.immutable.persistentSetOf
 
 /**
  * Performance-related UI state (master dimmer, layers, active scene).
+ *
+ * Uses @Stable (not @Immutable) because [EffectLayer] contains a [SpatialEffect]
+ * interface that the Compose compiler can't verify as deeply immutable.
  */
-@Immutable
+@Stable
 data class PerformanceState(
     val masterDimmer: Float = 1f,
     val layers: ImmutableList<EffectLayer> = persistentListOf(),

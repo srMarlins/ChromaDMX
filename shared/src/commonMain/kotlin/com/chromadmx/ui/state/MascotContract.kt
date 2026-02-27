@@ -46,7 +46,6 @@ data class SpeechBubble(
 @Immutable
 data class MascotUiState(
     val animState: MascotAnimState = MascotAnimState.IDLE,
-    val currentFrameIndex: Int = 0,
     val currentBubble: SpeechBubble? = null,
     val isChatOpen: Boolean = false,
     val chatHistory: ImmutableList<ChatMessage> = persistentListOf()

@@ -51,6 +51,8 @@ import com.chromadmx.ui.state.StageEvent
 import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.theme.PixelFontFamily
 import com.chromadmx.ui.theme.PixelShape
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
 
 // ============================================================================
 // PresetBrowserSheet — Bottom sheet for browsing, applying, saving, and
@@ -71,8 +73,8 @@ import com.chromadmx.ui.theme.PixelShape
 @Composable
 fun PresetBrowserSheet(
     visible: Boolean,
-    presets: List<ScenePreset>,
-    favoriteIds: Set<String>,
+    presets: ImmutableList<ScenePreset>,
+    favoriteIds: ImmutableSet<String>,
     activePresetName: String?,
     onEvent: (StageEvent) -> Unit,
     onDismiss: () -> Unit,

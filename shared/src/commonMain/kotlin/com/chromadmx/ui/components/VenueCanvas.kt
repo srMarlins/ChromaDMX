@@ -78,8 +78,9 @@ fun VenueCanvas(
     var zoom by remember { mutableFloatStateOf(1f) }
     var panOffset by remember { mutableStateOf(Offset.Zero) }
 
-    // Pre-compute fixture positions for hit testing in tap gesture (plain mutable ref — not state)
-    val fixtureScreenPositionsRef = remember { mutableListOf<Offset>() }
+    // Fixture screen positions for hit testing in gesture handlers.
+    // Using mutableStateOf for atomic single-assignment (avoids clear()+addAll() race).
+    var fixtureScreenPositions by remember { mutableStateOf(emptyList<Offset>()) }
 
     // Pre-compute profile map to avoid O(n*m) lookups per frame
     val profileMap = remember(fixtures) {
@@ -118,7 +119,7 @@ fun VenueCanvas(
                                 val touchRadiusSq = touchRadius * touchRadius
                                 var closestIndex = -1
                                 var closestDistSq = Float.MAX_VALUE
-                                for ((i, pos) in fixtureScreenPositionsRef.withIndex()) {
+                                for ((i, pos) in fixtureScreenPositions.withIndex()) {
                                     val dx = startOffset.x - pos.x
                                     val dy = startOffset.y - pos.y
                                     val distSq = dx * dx + dy * dy
@@ -199,7 +200,7 @@ fun VenueCanvas(
                     val touchRadiusSq = touchRadius * touchRadius
                     var closestIndex = -1
                     var closestDistSq = Float.MAX_VALUE
-                    for ((i, pos) in fixtureScreenPositionsRef.withIndex()) {
+                    for ((i, pos) in fixtureScreenPositions.withIndex()) {
                         val dx = tapOffset.x - pos.x
                         val dy = tapOffset.y - pos.y
                         val distSq = dx * dx + dy * dy
@@ -300,15 +301,15 @@ fun VenueCanvas(
             }
 
             // Update screen positions for hit testing (transform-adjusted)
-            fixtureScreenPositionsRef.clear()
-            fixtureScreenPositionsRef.addAll(positions.map { pos ->
+            // Atomic single-assignment avoids race between draw and gesture threads.
+            fixtureScreenPositions = positions.map { pos ->
                 val pivotX = size.width / 2f
                 val pivotY = size.height / 2f
                 Offset(
                     (pos.x - pivotX) * zoom + pivotX + panOffset.x,
                     (pos.y - pivotY) * zoom + pivotY + panOffset.y,
                 )
-            })
+            }
         }
     }
 }

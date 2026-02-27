@@ -46,6 +46,8 @@ import com.chromadmx.ui.state.StageEvent
 import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.theme.PixelFontFamily
 import com.chromadmx.ui.theme.PixelShape
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
 
 // ============================================================================
 // EffectLayerPanel — Collapsible panel showing active effect layers.
@@ -65,8 +67,8 @@ import com.chromadmx.ui.theme.PixelShape
  */
 @Composable
 fun EffectLayerPanel(
-    layers: List<EffectLayer>,
-    availableEffects: Set<String>,
+    layers: ImmutableList<EffectLayer>,
+    availableEffects: ImmutableSet<String>,
     onEvent: (StageEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {

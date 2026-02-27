@@ -566,13 +566,13 @@ class StageViewModelV2(
             createdAt = currentTimeMillis(),
             thumbnailColors = emptyList(),
         )
-        presetLibrary.savePreset(preset)
+        scope.launch { withContext(Dispatchers.IO) { presetLibrary.savePreset(preset) } }
         _performanceState.update { it.copy(activeSceneName = name) }
         syncFromEngine()
     }
 
     private fun handleDeletePreset(id: String) {
-        presetLibrary.deletePreset(id)
+        scope.launch { withContext(Dispatchers.IO) { presetLibrary.deletePreset(id) } }
         syncFromEngine()
     }
 
@@ -583,21 +583,24 @@ class StageViewModelV2(
         } else {
             current.add(presetId)
         }
-        presetLibrary.setFavorites(current)
         _presetState.update { it.copy(favoriteIds = current.toImmutableSet()) }
+        scope.launch { withContext(Dispatchers.IO) { presetLibrary.setFavorites(current) } }
     }
 
     // ── Sync helpers ───────────────────────────────────────────────────
 
     private fun syncFromEngine() {
+        // Synchronous: update performance state immediately so callers see
+        // the new layers/dimmer right after mutating the engine.
+        _performanceState.update { state ->
+            state.copy(
+                masterDimmer = effectStack.masterDimmer,
+                layers = effectStack.layers.toImmutableList(),
+            )
+        }
+        // Async: preset mapping is heavier (I/O + list transforms) — offload.
         scope.launch {
-            _performanceState.update { state ->
-                state.copy(
-                    masterDimmer = effectStack.masterDimmer,
-                    layers = effectStack.layers.toImmutableList(),
-                )
-            }
-            val (presets, favorites, scenes) = withContext(Dispatchers.Default) {
+            val (presets, favorites, scenes) = withContext(Dispatchers.IO) {
                 val p = presetLibrary.listPresets()
                 val f = presetLibrary.getFavorites()
                 val s = p.map { preset ->
