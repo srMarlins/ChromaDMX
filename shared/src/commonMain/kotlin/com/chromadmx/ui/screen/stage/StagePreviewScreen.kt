@@ -577,7 +577,7 @@ private fun PresetStripBar(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            items(presetState.allScenes.size) { index ->
+            items(presetState.allScenes.size, key = { presetState.allScenes[it].name }) { index ->
                 val scene = presetState.allScenes[index]
                 val isSelected = scene.name == performanceState.activeSceneName
 

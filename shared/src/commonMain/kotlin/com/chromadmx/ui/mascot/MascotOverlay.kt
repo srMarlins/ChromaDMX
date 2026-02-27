@@ -50,7 +50,7 @@ fun MascotOverlay(
     var offsetX by remember { mutableStateOf(0f) }
     var offsetY by remember { mutableStateOf(0f) }
 
-    val animation = MascotSprites.animationFor(mascotState)
+    val animation = remember(mascotState) { MascotSprites.animationFor(mascotState) }
     val frame = animation.frameAt(frameIndex)
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -72,8 +72,9 @@ fun MascotOverlay(
             // Speech bubble (above mascot)
             val bubble = uiState.currentBubble
             if (bubble != null) {
+                val mascotBubble = remember(bubble) { bubble.toMascotBubble() }
                 SpeechBubbleView(
-                    bubble = bubble.toMascotBubble(),
+                    bubble = mascotBubble,
                     onDismiss = { viewModel.onEvent(MascotEvent.DismissBubble) },
                     onAction = { actionId ->
                         viewModel.onEvent(MascotEvent.OnBubbleAction(actionId))

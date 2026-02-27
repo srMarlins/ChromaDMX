@@ -400,7 +400,7 @@ private fun SavePresetDialog(
     onDismiss: () -> Unit,
 ) {
     var presetName by remember { mutableStateOf("") }
-    val genreOptions = Genre.entries.map { it.name }
+    val genreOptions = remember { Genre.entries.map { it.name } }
     var selectedGenreIndex by remember { mutableStateOf(genreOptions.indexOf("CUSTOM").coerceAtLeast(0)) }
 
     PixelDialog(

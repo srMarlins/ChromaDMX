@@ -261,7 +261,7 @@ private fun NetworkSection(
     state: SettingsUiState,
     onEvent: (SettingsEvent) -> Unit,
 ) {
-    val protocolItems = ProtocolType.entries.map { it.name }
+    val protocolItems = remember { ProtocolType.entries.map { it.name } }
     val selectedProtocolIndex = ProtocolType.entries.indexOf(state.protocol)
 
     PixelCard(
@@ -347,7 +347,7 @@ private fun SimulationSection(
     state: SettingsUiState,
     onEvent: (SettingsEvent) -> Unit,
 ) {
-    val rigPresetItems = RigPreset.entries.map { it.presetDisplayName() }
+    val rigPresetItems = remember { RigPreset.entries.map { it.presetDisplayName() } }
     val selectedPresetIndex = RigPreset.entries.indexOf(state.selectedRigPreset)
 
     PixelCard(
