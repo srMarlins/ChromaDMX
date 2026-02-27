@@ -17,34 +17,8 @@ import com.chromadmx.core.model.BuiltInProfiles
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.core.model.FixtureType
 import com.chromadmx.core.model.RenderHint
+import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.core.model.Color as DmxColor
-
-/** Dark stage background for audience view. */
-private val StageBackground = Color(0xFF060612)
-
-/** Truss bar color (structural element). */
-private val TrussColor = Color(0xFF2A2A3E)
-
-/** Lighter truss highlight for cross-bracing detail. */
-private val TrussHighlight = Color(0xFF3A3A52)
-
-/** Mounting bracket color (metallic grey). */
-private val BracketColor = Color(0xFF3E3E56)
-
-/** Floor color beneath the stage. */
-private val FloorColor = Color(0xFF0A0A14)
-
-/** Horizon line color (subtle stage edge). */
-private val HorizonColor = Color(0xFF1A1A30)
-
-/** Standardized dark fixture housing color. */
-private val HousingColor = Color(0xFF222236)
-
-/** Lighter border for fixture housing — bright enough to contrast against dark backdrops. */
-private val HousingBorderColor = Color(0xFF484868)
-
-/** Dim grey idle glow for fixtures that have no active color. */
-private val IdleGlowColor = Color(0xFF333344)
 
 /**
  * Returns true when a fixture color is effectively black (no output).
@@ -75,10 +49,20 @@ fun AudienceView(
     modifier: Modifier = Modifier,
     onBackgroundTapped: () -> Unit = {},
 ) {
+    val stageBackground = PixelDesign.colors.stageBackground
+    val stageFloor = PixelDesign.colors.stageFloor
+    val stageHorizon = PixelDesign.colors.stageHorizon
+    val trussColor = PixelDesign.colors.trussColor
+    val trussBorder = PixelDesign.colors.trussBorder
+    val bracketColor = PixelDesign.colors.trussBorder
+    val housingColor = PixelDesign.colors.fixtureHousing
+    val housingBorderColor = PixelDesign.colors.fixtureHousingBorder
+    val idleGlowColor = PixelDesign.colors.fixtureHousing.copy(alpha = 0.8f)
+
     Canvas(
         modifier = modifier
             .fillMaxSize()
-            .background(StageBackground)
+            .background(stageBackground)
             .pointerInput(Unit) {
                 detectTapGestures { onBackgroundTapped() }
             },
@@ -92,8 +76,8 @@ fun AudienceView(
         drawRect(
             brush = Brush.verticalGradient(
                 colors = listOf(
-                    Color(0xFF08081A),  // slightly lighter at top (ambient sky)
-                    StageBackground,    // dark in mid-stage
+                    stageBackground.copy(alpha = 0.95f),  // slightly lighter at top (ambient sky)
+                    stageBackground,    // dark in mid-stage
                 ),
                 startY = 0f,
                 endY = stageBottom,
@@ -106,9 +90,9 @@ fun AudienceView(
         drawRect(
             brush = Brush.verticalGradient(
                 colors = listOf(
-                    FloorColor,
-                    Color(0xFF080810),  // deeper black towards bottom
-                    StageBackground,
+                    stageFloor,
+                    stageFloor.copy(alpha = 0.85f),  // deeper towards bottom
+                    stageBackground,
                 ),
                 startY = floorTop,
                 endY = floorBottom,
@@ -122,9 +106,9 @@ fun AudienceView(
             brush = Brush.horizontalGradient(
                 colors = listOf(
                     Color.Transparent,
-                    HorizonColor.copy(alpha = 0.5f),
-                    HorizonColor.copy(alpha = 0.7f),
-                    HorizonColor.copy(alpha = 0.5f),
+                    stageHorizon.copy(alpha = 0.5f),
+                    stageHorizon.copy(alpha = 0.7f),
+                    stageHorizon.copy(alpha = 0.5f),
                     Color.Transparent,
                 ),
                 startX = 0f,
@@ -138,7 +122,7 @@ fun AudienceView(
         drawRect(
             brush = Brush.verticalGradient(
                 colors = listOf(
-                    HorizonColor.copy(alpha = 0.15f),
+                    stageHorizon.copy(alpha = 0.15f),
                     Color.Transparent,
                 ),
                 startY = floorTop - 4f,
@@ -207,7 +191,7 @@ fun AudienceView(
         // Draw truss bars through actual fixture heights
         if (rangeZ < 0.1f) {
             // All fixtures at same height — one truss
-            drawTruss(padding - 20f, trussY1, availableW + 40f, fixtureXPositions)
+            drawTruss(padding - 20f, trussY1, availableW + 40f, fixtureXPositions, trussColor, trussBorder, bracketColor)
         } else {
             // Draw a truss for each distinct Z level
             for (z in zLevels) {
@@ -218,7 +202,7 @@ fun AudienceView(
                     val fz = (f.position.z * 10f).let { fzr -> kotlin.math.round(fzr) } / 10f
                     if (fz == z) fixtureXPositions[i] else null
                 }
-                drawTruss(padding - 20f, trussY, availableW + 40f, positionsAtLevel)
+                drawTruss(padding - 20f, trussY, availableW + 40f, positionsAtLevel, trussColor, trussBorder, bracketColor)
             }
         }
 
@@ -256,23 +240,23 @@ fun AudienceView(
 
             // Determine the effective draw color — use idle glow if fixture is black
             val isDark = isEffectivelyBlack(composeColor)
-            val drawColor = if (isDark) IdleGlowColor else composeColor
+            val drawColor = if (isDark) idleGlowColor else composeColor
 
             when (renderHint) {
                 RenderHint.POINT -> {
                     val fixtureType = profile?.type ?: FixtureType.PAR
                     when (fixtureType) {
-                        FixtureType.STROBE -> drawAudienceStrobe(fx, fixtureY, drawColor, floorTop, combinedScale, isDark)
-                        FixtureType.WASH -> drawAudienceWash(fx, fixtureY, drawColor, floorTop, reusablePath, combinedScale, isDark)
-                        else -> drawAudiencePar(fx, fixtureY, drawColor, floorTop, reusablePath, combinedScale, isDark)
+                        FixtureType.STROBE -> drawAudienceStrobe(fx, fixtureY, drawColor, floorTop, combinedScale, isDark, housingColor, housingBorderColor)
+                        FixtureType.WASH -> drawAudienceWash(fx, fixtureY, drawColor, floorTop, reusablePath, combinedScale, isDark, housingColor, housingBorderColor)
+                        else -> drawAudiencePar(fx, fixtureY, drawColor, floorTop, reusablePath, combinedScale, isDark, housingColor, housingBorderColor)
                     }
                 }
                 RenderHint.BAR -> {
                     val pixelCount = profile?.physical?.pixelCount ?: 8
-                    drawAudienceBar(fx, fixtureY, drawColor, pixelCount, combinedScale, isDark)
+                    drawAudienceBar(fx, fixtureY, drawColor, pixelCount, combinedScale, isDark, housingColor)
                 }
                 RenderHint.BEAM_CONE -> {
-                    drawAudienceBeamCone(fx, fixtureY, drawColor, floorTop, reusablePath, combinedScale, isDark)
+                    drawAudienceBeamCone(fx, fixtureY, drawColor, floorTop, reusablePath, combinedScale, isDark, housingColor, housingBorderColor)
                 }
             }
 
@@ -294,6 +278,9 @@ private fun DrawScope.drawTruss(
     y: Float,
     width: Float,
     fixturePositions: List<Float> = emptyList(),
+    trussColor: Color,
+    trussBorder: Color,
+    bracketColor: Color,
 ) {
     val trussH = 10f
     val railH = 3f
@@ -301,20 +288,20 @@ private fun DrawScope.drawTruss(
 
     // Top rail
     drawRect(
-        color = TrussColor,
+        color = trussColor,
         topLeft = Offset(x, y - halfH),
         size = Size(width, railH),
     )
     // Bottom rail
     drawRect(
-        color = TrussColor,
+        color = trussColor,
         topLeft = Offset(x, y + halfH - railH),
         size = Size(width, railH),
     )
 
     // Highlight on top edge of upper rail (light catch)
     drawLine(
-        color = TrussHighlight.copy(alpha = 0.4f),
+        color = trussBorder.copy(alpha = 0.4f),
         start = Offset(x, y - halfH),
         end = Offset(x + width, y - halfH),
         strokeWidth = 1f,
@@ -329,7 +316,7 @@ private fun DrawScope.drawTruss(
 
         // Vertical struts at each segment boundary
         drawLine(
-            color = TrussColor.copy(alpha = 0.6f),
+            color = trussColor.copy(alpha = 0.6f),
             start = Offset(sx, y - halfH + railH),
             end = Offset(sx, y + halfH - railH),
             strokeWidth = 1.5f,
@@ -338,14 +325,14 @@ private fun DrawScope.drawTruss(
         // Diagonal cross-brace (alternating direction)
         if (even) {
             drawLine(
-                color = TrussColor.copy(alpha = 0.35f),
+                color = trussColor.copy(alpha = 0.35f),
                 start = Offset(sx, y - halfH + railH),
                 end = Offset(nextX, y + halfH - railH),
                 strokeWidth = 1f,
             )
         } else {
             drawLine(
-                color = TrussColor.copy(alpha = 0.35f),
+                color = trussColor.copy(alpha = 0.35f),
                 start = Offset(sx, y + halfH - railH),
                 end = Offset(nextX, y - halfH + railH),
                 strokeWidth = 1f,
@@ -356,7 +343,7 @@ private fun DrawScope.drawTruss(
     }
     // Final vertical strut at right end
     drawLine(
-        color = TrussColor.copy(alpha = 0.6f),
+        color = trussColor.copy(alpha = 0.6f),
         start = Offset((x + width).coerceAtMost(size.width), y - halfH + railH),
         end = Offset((x + width).coerceAtMost(size.width), y + halfH - railH),
         strokeWidth = 1.5f,
@@ -365,7 +352,7 @@ private fun DrawScope.drawTruss(
     // Mounting brackets at each fixture position
     for (fxPos in fixturePositions) {
         if (fxPos < x || fxPos > x + width) continue
-        drawMountingBracket(fxPos, y + halfH, 8f)
+        drawMountingBracket(fxPos, y + halfH, 8f, bracketColor, trussBorder)
     }
 }
 
@@ -373,25 +360,31 @@ private fun DrawScope.drawTruss(
  * Draw a small mounting bracket hanging from the truss at a fixture position.
  * Looks like a C-clamp / pipe clamp attachment.
  */
-private fun DrawScope.drawMountingBracket(cx: Float, topY: Float, bracketSize: Float) {
+private fun DrawScope.drawMountingBracket(
+    cx: Float,
+    topY: Float,
+    bracketSize: Float,
+    bracketColor: Color,
+    trussBorder: Color,
+) {
     val halfW = bracketSize / 2f
     val height = bracketSize * 0.8f
 
     // Bracket body (small rectangle hanging from truss)
     drawRect(
-        color = BracketColor,
+        color = bracketColor,
         topLeft = Offset(cx - halfW, topY),
         size = Size(bracketSize, height),
     )
     // Highlight edge
     drawRect(
-        color = TrussHighlight.copy(alpha = 0.3f),
+        color = trussBorder.copy(alpha = 0.3f),
         topLeft = Offset(cx - halfW, topY),
         size = Size(bracketSize, 1.5f),
     )
     // Bolt detail (small dot)
     drawCircle(
-        color = TrussHighlight.copy(alpha = 0.5f),
+        color = trussBorder.copy(alpha = 0.5f),
         radius = 1.5f,
         center = Offset(cx, topY + height / 2f),
     )
@@ -408,6 +401,8 @@ private fun DrawScope.drawAudiencePar(
     reusablePath: Path,
     scale: Float = 1f,
     isIdle: Boolean = false,
+    housingColor: Color,
+    housingBorderColor: Color,
 ) {
     val housingSize = 14f * scale
     val half = housingSize / 2f
@@ -425,8 +420,8 @@ private fun DrawScope.drawAudiencePar(
         center = Offset(fx, fy),
     )
     // Housing
-    drawRect(HousingBorderColor, Offset(fx - half - 1f, fy - half - 1f), Size(housingSize + 2f, housingSize + 2f))
-    drawRect(HousingColor, Offset(fx - half, fy - half), Size(housingSize, housingSize))
+    drawRect(housingBorderColor, Offset(fx - half - 1f, fy - half - 1f), Size(housingSize + 2f, housingSize + 2f))
+    drawRect(housingColor, Offset(fx - half, fy - half), Size(housingSize, housingSize))
     // Lens
     val lensSize = housingSize - 2 * lensInset
     val lensColor = if (isIdle) color.copy(alpha = 0.3f) else color
@@ -491,6 +486,8 @@ private fun DrawScope.drawAudienceStrobe(
     floorY: Float,
     scale: Float = 1f,
     isIdle: Boolean = false,
+    housingColor: Color,
+    housingBorderColor: Color,
 ) {
     val width = 20f * scale
     val height = 8f * scale
@@ -509,8 +506,8 @@ private fun DrawScope.drawAudienceStrobe(
         center = Offset(fx, fy),
     )
     // Housing
-    drawRect(HousingBorderColor, Offset(fx - halfW - 1f, fy - halfH - 1f), Size(width + 2f, height + 2f))
-    drawRect(HousingColor, Offset(fx - halfW, fy - halfH), Size(width, height))
+    drawRect(housingBorderColor, Offset(fx - halfW - 1f, fy - halfH - 1f), Size(width + 2f, height + 2f))
+    drawRect(housingColor, Offset(fx - halfW, fy - halfH), Size(width, height))
     // Flash panel
     val flashColor = if (isIdle) {
         color.copy(alpha = 0.25f)
@@ -552,6 +549,8 @@ private fun DrawScope.drawAudienceWash(
     reusablePath: Path,
     scale: Float = 1f,
     isIdle: Boolean = false,
+    housingColor: Color,
+    housingBorderColor: Color,
 ) {
     val housingSize = 16f * scale
     val half = housingSize / 2f
@@ -569,8 +568,8 @@ private fun DrawScope.drawAudienceWash(
         center = Offset(fx, fy),
     )
     // Housing
-    drawRect(HousingBorderColor, Offset(fx - half - 1f, fy - half - 1f), Size(housingSize + 2f, housingSize + 2f))
-    drawRect(HousingColor, Offset(fx - half, fy - half), Size(housingSize, housingSize))
+    drawRect(housingBorderColor, Offset(fx - half - 1f, fy - half - 1f), Size(housingSize + 2f, housingSize + 2f))
+    drawRect(housingColor, Offset(fx - half, fy - half), Size(housingSize, housingSize))
     // Round lens
     val lensColor = if (isIdle) color.copy(alpha = 0.3f) else color
     drawCircle(lensColor, radius = lensRadius, center = Offset(fx, fy))
@@ -634,6 +633,7 @@ private fun DrawScope.drawAudienceBar(
     pixelCount: Int,
     scale: Float = 1f,
     isIdle: Boolean = false,
+    housingColor: Color,
 ) {
     val segW = 6f * scale
     val segH = 10f * scale
@@ -651,7 +651,7 @@ private fun DrawScope.drawAudienceBar(
 
     // Bar housing
     drawRect(
-        color = HousingColor,
+        color = housingColor,
         topLeft = Offset(startX - 2f, fy - segH / 2f - 2f),
         size = Size(totalW + 4f, segH + 4f),
     )
@@ -693,6 +693,8 @@ private fun DrawScope.drawAudienceBeamCone(
     reusablePath: Path,
     scale: Float = 1f,
     isIdle: Boolean = false,
+    housingColor: Color,
+    housingBorderColor: Color,
 ) {
     val housingSize = 14f * scale
     val half = housingSize / 2f
@@ -784,8 +786,8 @@ private fun DrawScope.drawAudienceBeamCone(
     )
 
     // Square housing
-    drawRect(HousingBorderColor, Offset(fx - half - 1f, fy - half - 1f), Size(housingSize + 2f, housingSize + 2f))
-    drawRect(HousingColor, Offset(fx - half, fy - half), Size(housingSize, housingSize))
+    drawRect(housingBorderColor, Offset(fx - half - 1f, fy - half - 1f), Size(housingSize + 2f, housingSize + 2f))
+    drawRect(housingColor, Offset(fx - half, fy - half), Size(housingSize, housingSize))
     // Lens
     val lensColor = if (isIdle) color.copy(alpha = 0.3f) else color
     drawRect(lensColor, Offset(fx - half + 2f, fy - half + 2f), Size(housingSize - 4f, housingSize - 4f))

@@ -5,6 +5,7 @@ import com.chromadmx.agent.config.AgentConfig
 import com.chromadmx.core.model.FixtureProfile
 import com.chromadmx.networking.discovery.NodeDiscovery
 import com.chromadmx.simulation.fixtures.RigPreset
+import com.chromadmx.ui.theme.PixelColorTheme
 
 /**
  * DMX protocol type.
@@ -60,6 +61,9 @@ data class SettingsUiState(
 
     // Export / Import
     val dataTransferStatus: DataTransferStatus = DataTransferStatus.Idle,
+
+    // Theme
+    val themePreference: PixelColorTheme = PixelColorTheme.MatchaDark,
 )
 
 /**
@@ -84,4 +88,5 @@ sealed interface SettingsEvent {
     data object ExportAppData : SettingsEvent
     data class ImportAppData(val json: String) : SettingsEvent
     data object DismissDataTransferStatus : SettingsEvent
+    data class SetThemePreference(val theme: PixelColorTheme) : SettingsEvent
 }

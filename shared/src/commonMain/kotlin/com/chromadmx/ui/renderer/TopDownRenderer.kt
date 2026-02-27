@@ -17,10 +17,10 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 object TopDownRenderer {
 
     /** Standardized dark fixture housing color. */
-    val HousingColor = Color(0xFF222236)
+    val HousingColor = Color(0xFF1A1A2E)
 
     /** Lighter border for fixture housing — bright enough to contrast against dark backdrops. */
-    val HousingBorderColor = Color(0xFF484868)
+    val HousingBorderColor = Color(0xFF2A2A3E)
 
     /**
      * Draw a PAR fixture: square housing with colored lens, radial glow, mount brackets.
@@ -32,6 +32,8 @@ object TopDownRenderer {
         isSelected: Boolean,
         selectionColor: Color,
         scale: Float = 1f,
+        housingColor: Color = HousingColor,
+        housingBorderColor: Color = HousingBorderColor,
     ) {
         val housingSize = 16f * scale
         val half = housingSize / 2f
@@ -51,13 +53,13 @@ object TopDownRenderer {
         )
         // Housing border
         drawRect(
-            color = HousingBorderColor,
+            color = housingBorderColor,
             topLeft = Offset(cx - half - 1f, cy - half - 1f),
             size = Size(housingSize + 2f, housingSize + 2f),
         )
         // Housing body
         drawRect(
-            color = HousingColor,
+            color = housingColor,
             topLeft = Offset(cx - half, cy - half),
             size = Size(housingSize, housingSize),
         )
@@ -68,8 +70,8 @@ object TopDownRenderer {
             size = Size(lensSize, lensSize),
         )
         // Mount brackets (two ticks on top edge)
-        drawRect(HousingBorderColor, Offset(cx - 4f * scale, cy - half - 3f * scale), Size(2f * scale, 3f * scale))
-        drawRect(HousingBorderColor, Offset(cx + 2f * scale, cy - half - 3f * scale), Size(2f * scale, 3f * scale))
+        drawRect(housingBorderColor, Offset(cx - 4f * scale, cy - half - 3f * scale), Size(2f * scale, 3f * scale))
+        drawRect(housingBorderColor, Offset(cx + 2f * scale, cy - half - 3f * scale), Size(2f * scale, 3f * scale))
 
         if (isSelected) drawSelectionBorder(cx, cy, half + 2f, selectionColor)
     }
@@ -84,6 +86,8 @@ object TopDownRenderer {
         isSelected: Boolean,
         selectionColor: Color,
         scale: Float = 1f,
+        housingColor: Color = HousingColor,
+        housingBorderColor: Color = HousingBorderColor,
     ) {
         val width = 22f * scale
         val height = 10f * scale
@@ -103,13 +107,13 @@ object TopDownRenderer {
         )
         // Housing border
         drawRect(
-            color = HousingBorderColor,
+            color = housingBorderColor,
             topLeft = Offset(cx - halfW - 1f, cy - halfH - 1f),
             size = Size(width + 2f, height + 2f),
         )
         // Housing body
         drawRect(
-            color = HousingColor,
+            color = housingColor,
             topLeft = Offset(cx - halfW, cy - halfH),
             size = Size(width, height),
         )
@@ -138,6 +142,8 @@ object TopDownRenderer {
         isSelected: Boolean,
         selectionColor: Color,
         scale: Float = 1f,
+        housingColor: Color = HousingColor,
+        housingBorderColor: Color = HousingBorderColor,
     ) {
         val housingSize = 20f * scale
         val half = housingSize / 2f
@@ -156,13 +162,13 @@ object TopDownRenderer {
         )
         // Housing border
         drawRect(
-            color = HousingBorderColor,
+            color = housingBorderColor,
             topLeft = Offset(cx - half - 1f, cy - half - 1f),
             size = Size(housingSize + 2f, housingSize + 2f),
         )
         // Housing body
         drawRect(
-            color = HousingColor,
+            color = housingColor,
             topLeft = Offset(cx - half, cy - half),
             size = Size(housingSize, housingSize),
         )
@@ -173,8 +179,8 @@ object TopDownRenderer {
             center = Offset(cx, cy),
         )
         // Mount brackets
-        drawRect(HousingBorderColor, Offset(cx - 5f * scale, cy - half - 3f * scale), Size(2f * scale, 3f * scale))
-        drawRect(HousingBorderColor, Offset(cx + 3f * scale, cy - half - 3f * scale), Size(2f * scale, 3f * scale))
+        drawRect(housingBorderColor, Offset(cx - 5f * scale, cy - half - 3f * scale), Size(2f * scale, 3f * scale))
+        drawRect(housingBorderColor, Offset(cx + 3f * scale, cy - half - 3f * scale), Size(2f * scale, 3f * scale))
 
         if (isSelected) drawSelectionBorder(cx, cy, half + 2f, selectionColor)
     }
@@ -190,6 +196,8 @@ object TopDownRenderer {
         isSelected: Boolean,
         selectionColor: Color,
         scale: Float = 1f,
+        housingColor: Color = HousingColor,
+        housingBorderColor: Color = HousingBorderColor,
     ) {
         val segmentW = 8f * scale
         val segmentH = 12f * scale
@@ -211,7 +219,7 @@ object TopDownRenderer {
 
         // Bar housing background
         drawRect(
-            color = HousingColor,
+            color = housingColor,
             topLeft = Offset(startX - 3f, startY - 3f),
             size = Size(totalW + 6f, segmentH + 6f),
         )
@@ -245,6 +253,8 @@ object TopDownRenderer {
         reusablePath: Path,
         selectionColor: Color,
         scale: Float = 1f,
+        housingColor: Color = HousingColor,
+        housingBorderColor: Color = HousingBorderColor,
     ) {
         // Beam cone (downward triangle-like glow)
         val beamLength = 30f * scale
@@ -263,12 +273,12 @@ object TopDownRenderer {
         val housingSize = 14f * scale
         val hh = housingSize / 2f
         drawRect(
-            color = HousingBorderColor,
+            color = housingBorderColor,
             topLeft = Offset(cx - hh - 1f, cy - hh - 1f),
             size = Size(housingSize + 2f, housingSize + 2f),
         )
         drawRect(
-            color = HousingColor,
+            color = housingColor,
             topLeft = Offset(cx - hh, cy - hh),
             size = Size(housingSize, housingSize),
         )

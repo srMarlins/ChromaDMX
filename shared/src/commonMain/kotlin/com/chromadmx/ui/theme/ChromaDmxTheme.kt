@@ -42,11 +42,7 @@ fun ChromaDmxTheme(
     )
 
     // Choose dark or light Material3 color scheme based on theme
-    val isDark = when (colorTheme) {
-        PixelColorTheme.MatchaDark -> true
-        PixelColorTheme.MatchaLight -> false
-        PixelColorTheme.HighContrast -> true
-    }
+    val isDark = colorTheme != PixelColorTheme.MatchaLight
 
     val colorScheme = if (isDark) {
         darkColorScheme(
