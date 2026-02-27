@@ -229,14 +229,6 @@ class StageViewModelV2(
     }
 
     fun onCleared() {
-        syncJob.cancel()
-        colorSyncJob.cancel()
-        beatSyncJob.cancel()
-        runningSyncJob.cancel()
-        beatPhaseSyncJob.cancel()
-        discoverySyncJob.cancel()
-        repoSyncJob?.cancel()
-        groupSyncJob?.cancel()
         scope.coroutineContext[Job]?.cancel()
     }
 

@@ -79,6 +79,7 @@ fun ChromaDmxApp() {
                 when (currentScreen) {
                     AppScreen.Setup -> {
                         if (setupVm != null) {
+                            DisposableEffect(setupVm) { onDispose { setupVm.onCleared() } }
                             SetupScreen(
                                 viewModel = setupVm,
                                 onComplete = {
@@ -105,6 +106,7 @@ fun ChromaDmxApp() {
                     }
                     AppScreen.Stage -> {
                         if (stageVm != null) {
+                            DisposableEffect(stageVm) { onDispose { stageVm.onCleared() } }
                             // Repeat-launch topology check:
                             // When we land on Stage directly (setup was previously completed),
                             // trigger a quick network scan and compare against saved topology.
@@ -147,6 +149,7 @@ fun ChromaDmxApp() {
                     }
                     AppScreen.Settings -> {
                         if (settingsVm != null) {
+                            DisposableEffect(settingsVm) { onDispose { settingsVm.onCleared() } }
                             SettingsScreen(
                                 viewModel = settingsVm,
                                 onBack = { appStateManager?.navigateBack() },
@@ -179,6 +182,7 @@ fun ChromaDmxApp() {
 
                 // Pixel mascot overlay — always visible on top of all screens
                 if (mascotVm != null) {
+                    DisposableEffect(mascotVm) { onDispose { mascotVm.onCleared() } }
                     MascotOverlay(
                         viewModel = mascotVm,
                         onMascotTap = { mascotVm.onEvent(MascotEvent.ToggleChat) },

@@ -380,6 +380,11 @@ class SetupViewModel(
         }
     }
 
+    fun onCleared() {
+        scanJob?.cancel()
+        scope.coroutineContext[Job]?.cancel()
+    }
+
     companion object {
         /** Splash auto-advance delay. */
         const val SPLASH_DURATION_MS = 2_500L
