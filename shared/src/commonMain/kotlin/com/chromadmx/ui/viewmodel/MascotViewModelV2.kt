@@ -1,6 +1,6 @@
 package com.chromadmx.ui.viewmodel
 
-import com.chromadmx.agent.LightingAgent
+import com.chromadmx.agent.LightingAgentInterface
 import com.chromadmx.core.model.KnownNode
 import com.chromadmx.networking.discovery.currentTimeMillis
 import com.chromadmx.tempo.clock.BeatClock
@@ -40,7 +40,7 @@ import kotlinx.coroutines.launch
 class MascotViewModelV2(
     private val beatClock: BeatClock,
     private val knownNodesFlow: Flow<List<KnownNode>>,
-    private val lightingAgent: LightingAgent? = null,
+    private val lightingAgent: LightingAgentInterface? = null,
     private val scope: CoroutineScope,
 ) {
     internal val animationController = AnimationController(scope)
@@ -234,11 +234,13 @@ class MascotViewModelV2(
 
         scope.launch {
             val responseText = try {
-                if (lightingAgent != null && lightingAgent.isAvailable) {
+                // SimulatedLightingAgent is always provided when no API key is set,
+                // so lightingAgent should never be null. Safety fallback just in case.
+                if (lightingAgent != null) {
                     lightingAgent.send(text)
                 } else {
                     delay(500)
-                    "I'll help you with that! (Agent not configured — set an API key in Settings.)"
+                    "Something went wrong — no agent available. Please restart the app."
                 }
             } catch (e: Exception) {
                 "Sorry, something went wrong: ${e.message ?: "unknown error"}"

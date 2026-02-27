@@ -1,6 +1,6 @@
 package com.chromadmx.ui.viewmodel
 
-import com.chromadmx.agent.LightingAgent
+import com.chromadmx.agent.LightingAgentInterface
 import com.chromadmx.core.model.BeatState
 import com.chromadmx.core.model.KnownNode
 import com.chromadmx.tempo.clock.BeatClock
@@ -42,7 +42,7 @@ class MascotViewModelV2Test {
     private fun createVm(
         beatClock: BeatClock = fakeBeatClock(),
         knownNodesFlow: MutableStateFlow<List<KnownNode>> = MutableStateFlow(emptyList()),
-        lightingAgent: LightingAgent? = null,
+        lightingAgent: LightingAgentInterface? = null,
         scope: kotlinx.coroutines.CoroutineScope,
     ): MascotViewModelV2 = MascotViewModelV2(
         beatClock = beatClock,

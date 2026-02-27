@@ -29,17 +29,17 @@ import kotlinx.serialization.json.Json
 class LightingAgent(
     private val config: AgentConfig,
     val toolRegistry: ToolRegistry,
-) {
+) : LightingAgentInterface {
     private val _conversationHistory = MutableStateFlow<List<ChatMessage>>(emptyList())
-    val conversationHistory: StateFlow<List<ChatMessage>> = _conversationHistory.asStateFlow()
+    override val conversationHistory: StateFlow<List<ChatMessage>> = _conversationHistory.asStateFlow()
 
     private val _isProcessing = MutableStateFlow(false)
-    val isProcessing: StateFlow<Boolean> = _isProcessing.asStateFlow()
+    override val isProcessing: StateFlow<Boolean> = _isProcessing.asStateFlow()
 
     private val _toolCallsInFlight = MutableStateFlow<List<ToolCallRecord>>(emptyList())
     val toolCallsInFlight: StateFlow<List<ToolCallRecord>> = _toolCallsInFlight.asStateFlow()
 
-    val isAvailable: Boolean get() = config.isAvailable
+    override val isAvailable: Boolean get() = config.isAvailable
 
     private fun resolveModel(): LLModel = when (config.modelId) {
         // Google Gemini
@@ -119,7 +119,7 @@ class LightingAgent(
         }
     }
 
-    suspend fun send(userMessage: String): String {
+    override suspend fun send(userMessage: String): String {
         if (!config.isAvailable) {
             return "Agent unavailable - no API key configured. Set GOOGLE_API_KEY or ANTHROPIC_API_KEY."
         }
