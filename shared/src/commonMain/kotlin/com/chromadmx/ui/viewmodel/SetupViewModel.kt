@@ -2,7 +2,9 @@ package com.chromadmx.ui.viewmodel
 
 import com.chromadmx.agent.pregen.PreGenerationService
 import com.chromadmx.core.model.Genre
+import com.chromadmx.core.model.toKnownNode
 import com.chromadmx.core.persistence.FixtureStore
+import com.chromadmx.core.persistence.NetworkStateStore
 import com.chromadmx.core.persistence.SettingsStore
 import com.chromadmx.networking.FixtureDiscovery
 import com.chromadmx.simulation.fixtures.RigPreset
@@ -19,6 +21,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -43,6 +46,7 @@ class SetupViewModel(
     private val fixtureDiscovery: FixtureDiscovery,
     private val fixtureStore: FixtureStore,
     private val settingsStore: SettingsStore,
+    private val networkStateRepository: NetworkStateStore? = null,
     private val preGenerationService: PreGenerationService? = null,
     private val scope: CoroutineScope,
 ) {
@@ -318,19 +322,56 @@ class SetupViewModel(
                 val rig = SimulatedFixtureRig(_state.value.selectedRigPreset)
                 fixtureStore.saveAll(rig.fixtures)
             }
+
+            // Persist the current node topology for comparison on next launch
+            val currentNodes = _state.value.discoveredNodes
+            if (networkStateRepository != null && currentNodes.isNotEmpty()) {
+                val knownNodes = currentNodes.take(MAX_PERSISTED_NODES).map { it.toKnownNode() }
+                networkStateRepository.saveKnownNodes(knownNodes)
+            }
         }
     }
 
     // -- Repeat Launch --
 
     /**
-     * Perform a quick network health check on repeat launches.
-     * Sets [SetupUiState.repeatLaunchCheckComplete] when done.
+     * Perform a topology comparison on repeat launches.
+     *
+     * Waits for the quick scan to settle, then compares discovered nodes
+     * against the persisted known nodes. If nodes were added or removed,
+     * sets [SetupUiState.networkChangedSinceLastLaunch] so the caller
+     * (typically [ChromaDmxApp]) can trigger a mascot alert.
+     *
+     * When no [NetworkStateRepository] is available the check completes
+     * immediately without flagging any change.
      */
     private fun performRepeatLaunchCheck() {
         scope.launch {
-            // Quick scan is already running from init, just mark check complete
-            _state.update { it.copy(repeatLaunchCheckComplete = true) }
+            if (networkStateRepository == null) {
+                _state.update { it.copy(repeatLaunchCheckComplete = true) }
+                return@launch
+            }
+
+            // Let the quick scan settle before comparing
+            delay(REPEAT_SCAN_DURATION_MS)
+            fixtureDiscovery.stopScan()
+
+            val currentNodes = _state.value.discoveredNodes
+            val diff = networkStateRepository.detectTopologyChanges(currentNodes)
+            val changed = diff.newNodes.isNotEmpty() || diff.lostNodes.isNotEmpty()
+
+            _state.update {
+                it.copy(
+                    networkChangedSinceLastLaunch = changed,
+                    addedNodeCount = diff.newNodes.size,
+                    removedNodeCount = diff.lostNodes.size,
+                    repeatLaunchCheckComplete = true,
+                )
+            }
+
+            // Update the persisted known nodes with the current scan result
+            val knownNodes = currentNodes.take(MAX_PERSISTED_NODES).map { it.toKnownNode() }
+            networkStateRepository.saveKnownNodes(knownNodes)
         }
     }
 

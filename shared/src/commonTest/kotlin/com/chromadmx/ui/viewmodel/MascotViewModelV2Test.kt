@@ -324,4 +324,72 @@ class MascotViewModelV2Test {
         val vm = createVm(scope = backgroundScope)
         assertEquals(0, vm.state.value.currentFrameIndex)
     }
+
+    // ── 7. Topology alert ────────────────────────────────────────────
+
+    @Test
+    fun showTopologyAlertSetsAlertStateAndActionBubble() = runTest {
+        val vm = createVm(scope = backgroundScope)
+
+        vm.showTopologyAlert(addedCount = 2, removedCount = 1)
+
+        assertEquals(MascotAnimState.ALERT, vm.state.value.animState)
+        val bubble = vm.state.value.currentBubble
+        assertNotNull(bubble, "Expected a topology alert bubble")
+        assertTrue(bubble.text.contains("fixtures changed"), "Expected 'fixtures changed' in: ${bubble.text}")
+        assertTrue(bubble.text.contains("2 new"), "Expected '2 new' in: ${bubble.text}")
+        assertTrue(bubble.text.contains("1 missing"), "Expected '1 missing' in: ${bubble.text}")
+        assertEquals(BubbleType.ACTION, bubble.type)
+        assertEquals("RESCAN", bubble.actionLabel)
+        assertEquals("rescan_topology", bubble.actionId)
+        assertEquals(0L, bubble.autoDismissMs, "Topology alert should not auto-dismiss")
+    }
+
+    @Test
+    fun showTopologyAlertOnlyAddedNodes() = runTest {
+        val vm = createVm(scope = backgroundScope)
+
+        vm.showTopologyAlert(addedCount = 3, removedCount = 0)
+
+        val bubble = vm.state.value.currentBubble
+        assertNotNull(bubble)
+        assertTrue(bubble.text.contains("3 new"), "Expected '3 new' in: ${bubble.text}")
+        assertFalse(bubble.text.contains("missing"), "Should not mention 'missing' when none lost: ${bubble.text}")
+    }
+
+    @Test
+    fun showTopologyAlertOnlyRemovedNodes() = runTest {
+        val vm = createVm(scope = backgroundScope)
+
+        vm.showTopologyAlert(addedCount = 0, removedCount = 2)
+
+        val bubble = vm.state.value.currentBubble
+        assertNotNull(bubble)
+        assertFalse(bubble.text.contains("new"), "Should not mention 'new' when none added: ${bubble.text}")
+        assertTrue(bubble.text.contains("2 missing"), "Expected '2 missing' in: ${bubble.text}")
+    }
+
+    @Test
+    fun rescanTopologyActionInvokesCallback() = runTest {
+        val vm = createVm(scope = backgroundScope)
+        var rescanCalled = false
+        vm.onRescanRequested = { rescanCalled = true }
+
+        vm.showTopologyAlert(addedCount = 1, removedCount = 0)
+        vm.onEvent(MascotEvent.OnBubbleAction("rescan_topology"))
+
+        assertTrue(rescanCalled, "Expected onRescanRequested callback to be invoked")
+        assertEquals(MascotAnimState.THINKING, vm.state.value.animState)
+    }
+
+    @Test
+    fun dismissTopologyActionDismissesBubble() = runTest {
+        val vm = createVm(scope = backgroundScope)
+
+        vm.showTopologyAlert(addedCount = 1, removedCount = 0)
+        assertNotNull(vm.state.value.currentBubble)
+
+        vm.onEvent(MascotEvent.OnBubbleAction("dismiss_topology"))
+        assertNull(vm.state.value.currentBubble)
+    }
 }

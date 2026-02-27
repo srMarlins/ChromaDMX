@@ -5,7 +5,7 @@ import com.chromadmx.agent.controller.FixtureController
 import com.chromadmx.agent.pregen.PreGenerationService
 import com.chromadmx.core.persistence.FixtureRepository
 import com.chromadmx.core.persistence.FixtureStore
-import com.chromadmx.core.persistence.NetworkStateRepository
+import com.chromadmx.core.persistence.NetworkStateStore
 import com.chromadmx.networking.ble.BleProvisioningService
 import com.chromadmx.ui.navigation.AppStateManager
 import com.chromadmx.ui.viewmodel.MascotViewModelV2
@@ -60,6 +60,7 @@ val uiModule = module {
             fixtureDiscovery = get(),
             fixtureStore = get(),
             settingsStore = get(),
+            networkStateRepository = getOrNull<NetworkStateStore>(),
             preGenerationService = getOrNull<PreGenerationService>(),
             scope = vmScope,
         )
@@ -102,10 +103,10 @@ val uiModule = module {
         val parentScope: CoroutineScope = get()
         val childJob = SupervisorJob(parentScope.coroutineContext[Job])
         val vmScope = CoroutineScope(Dispatchers.Default + childJob)
-        val networkStateRepo = getOrNull<NetworkStateRepository>()
+        val networkStateStore = getOrNull<NetworkStateStore>()
         MascotViewModelV2(
             beatClock = get(),
-            knownNodesFlow = networkStateRepo?.knownNodes() ?: flowOf(emptyList()),
+            knownNodesFlow = networkStateStore?.knownNodes() ?: flowOf(emptyList()),
             lightingAgent = getOrNull<LightingAgent>(),
             scope = vmScope,
         )

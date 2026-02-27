@@ -6,6 +6,7 @@ import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.core.persistence.FixtureRepository
 import com.chromadmx.core.persistence.FixtureStore
 import com.chromadmx.core.persistence.NetworkStateRepository
+import com.chromadmx.core.persistence.NetworkStateStore
 import com.chromadmx.core.persistence.PresetRepository
 import com.chromadmx.core.persistence.SettingsRepository
 import com.chromadmx.core.persistence.SettingsStore
@@ -130,7 +131,7 @@ val chromaDiModule = module {
     single { get<DriverFactory>().createDriver() }
     single { ChromaDmxDatabase(get()) }
     single { FixtureRepository(get()) } bind FixtureStore::class
-    single { NetworkStateRepository(get()) }
+    single { NetworkStateRepository(get()) } bind NetworkStateStore::class
     single { PresetRepository(get()) }
     single { SettingsRepository(get()) } bind SettingsStore::class
 

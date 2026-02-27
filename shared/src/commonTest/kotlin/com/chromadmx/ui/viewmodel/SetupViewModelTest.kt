@@ -4,8 +4,11 @@ import com.chromadmx.agent.pregen.PreGenerationService
 import com.chromadmx.core.model.DmxNode
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.core.model.Genre
+import com.chromadmx.core.model.KnownNode
+import com.chromadmx.core.model.TopologyDiff
 import com.chromadmx.core.persistence.FileStorage
 import com.chromadmx.core.persistence.FixtureStore
+import com.chromadmx.core.persistence.NetworkStateStore
 import com.chromadmx.core.persistence.SettingsStore
 import com.chromadmx.engine.effect.EffectRegistry
 import com.chromadmx.engine.effect.EffectStack
@@ -142,6 +145,39 @@ class SetupViewModelTest {
     }
 
     /**
+     * Fake implementation of [NetworkStateStore] for testing.
+     * Maintains an in-memory list of known nodes for topology comparison.
+     */
+    private class FakeNetworkStateStore : NetworkStateStore {
+        private val _knownNodes = MutableStateFlow<List<KnownNode>>(emptyList())
+        var savedNodes: List<KnownNode> = emptyList()
+            private set
+
+        override fun knownNodes(): Flow<List<KnownNode>> = _knownNodes
+
+        override suspend fun saveKnownNodes(nodes: List<KnownNode>) {
+            savedNodes = nodes
+            _knownNodes.value = nodes
+        }
+
+        override suspend fun detectTopologyChanges(currentNodes: List<DmxNode>): TopologyDiff {
+            val known = _knownNodes.value
+            val knownKeys = known.map { it.nodeKey }.toSet()
+            val currentKeys = currentNodes.map { it.nodeKey }.toSet()
+
+            val newNodes = currentNodes.filter { it.nodeKey !in knownKeys }
+            val lostNodes = known.filter { it.nodeKey !in currentKeys }
+
+            return TopologyDiff(newNodes = newNodes, lostNodes = lostNodes)
+        }
+
+        /** Pre-populate known nodes (simulates previous launch). */
+        fun setKnownNodes(nodes: List<KnownNode>) {
+            _knownNodes.value = nodes
+        }
+    }
+
+    /**
      * Simple in-memory [FileStorage] for tests that need [PresetLibrary].
      */
     private class TestFileStorage : FileStorage {
@@ -173,6 +209,7 @@ class SetupViewModelTest {
         discovery: FakeFixtureDiscovery = FakeFixtureDiscovery(),
         fixtureStore: FakeFixtureStore = FakeFixtureStore(),
         settingsStore: FakeSettingsStore = FakeSettingsStore(),
+        networkStateStore: FakeNetworkStateStore? = null,
         preGenerationService: PreGenerationService? = null,
         scope: CoroutineScope,
     ): SetupViewModel {
@@ -180,6 +217,7 @@ class SetupViewModelTest {
             fixtureDiscovery = discovery,
             fixtureStore = fixtureStore,
             settingsStore = settingsStore,
+            networkStateRepository = networkStateStore,
             preGenerationService = preGenerationService,
             scope = scope,
         )
@@ -399,6 +437,33 @@ class SetupViewModelTest {
         assertTrue(settingsStore.isSimulationValue)
     }
 
+    @Test
+    fun persistSetupCompleteSavesNodeTopology() = runTest {
+        val discovery = FakeFixtureDiscovery()
+        val networkStore = FakeNetworkStateStore()
+        val nodes = listOf(
+            DmxNode(ipAddress = "192.168.1.10", shortName = "Par1"),
+        )
+        discovery.nodesToEmit = nodes
+
+        val vm = createVm(
+            discovery = discovery,
+            networkStateStore = networkStore,
+            scope = unconfinedScope(testScheduler),
+        )
+
+        // Navigate through to COMPLETE
+        vm.onEvent(SetupEvent.Advance) // -> NETWORK_DISCOVERY
+        vm.onEvent(SetupEvent.Advance) // -> FIXTURE_SCAN
+        vm.onEvent(SetupEvent.Advance) // -> VIBE_CHECK
+        vm.onEvent(SetupEvent.Advance) // -> STAGE_PREVIEW
+        vm.onEvent(SetupEvent.Advance) // -> COMPLETE (triggers persistSetupComplete)
+
+        // Node topology should have been saved for next launch
+        assertEquals(1, networkStore.savedNodes.size)
+        assertEquals("192.168.1.10", networkStore.savedNodes[0].ipAddress)
+    }
+
     // -- Scenario 5: retry scan restarts discovery --
 
     @Test
@@ -552,6 +617,147 @@ class SetupViewModelTest {
         vm.onEvent(SetupEvent.PerformRepeatLaunchCheck)
 
         assertTrue(vm.state.value.repeatLaunchCheckComplete)
+    }
+
+    @Test
+    fun repeatLaunchCheckDetectsNewNodes() = runTest {
+        val discovery = FakeFixtureDiscovery()
+        val networkStore = FakeNetworkStateStore()
+        // No known nodes from previous launch
+
+        // Current scan finds nodes
+        val nodes = listOf(DmxNode(ipAddress = "192.168.1.10", shortName = "Par1"))
+        discovery.nodesToEmit = nodes
+
+        val scope = CoroutineScope(StandardTestDispatcher(testScheduler) + SupervisorJob())
+        val vm = createVm(
+            discovery = discovery,
+            networkStateStore = networkStore,
+            scope = scope,
+        )
+        testScheduler.runCurrent()
+
+        vm.onEvent(SetupEvent.PerformRepeatLaunchCheck)
+        testScheduler.advanceTimeBy(SetupViewModel.REPEAT_SCAN_DURATION_MS + 1)
+        testScheduler.runCurrent()
+
+        assertTrue(vm.state.value.repeatLaunchCheckComplete)
+        assertTrue(vm.state.value.networkChangedSinceLastLaunch)
+        assertEquals(1, vm.state.value.addedNodeCount)
+        assertEquals(0, vm.state.value.removedNodeCount)
+    }
+
+    @Test
+    fun repeatLaunchCheckDetectsLostNodes() = runTest {
+        val discovery = FakeFixtureDiscovery()
+        val networkStore = FakeNetworkStateStore()
+        // Previous launch had nodes
+        networkStore.setKnownNodes(listOf(
+            KnownNode(
+                nodeKey = "192.168.1.10",
+                ipAddress = "192.168.1.10",
+                shortName = "Par1",
+                longName = "Par1",
+                lastSeenMs = 1000L,
+            ),
+        ))
+        // Current scan finds no nodes
+        discovery.nodesToEmit = emptyList()
+
+        val scope = CoroutineScope(StandardTestDispatcher(testScheduler) + SupervisorJob())
+        val vm = createVm(
+            discovery = discovery,
+            networkStateStore = networkStore,
+            scope = scope,
+        )
+        testScheduler.runCurrent()
+
+        vm.onEvent(SetupEvent.PerformRepeatLaunchCheck)
+        testScheduler.advanceTimeBy(SetupViewModel.REPEAT_SCAN_DURATION_MS + 1)
+        testScheduler.runCurrent()
+
+        assertTrue(vm.state.value.repeatLaunchCheckComplete)
+        assertTrue(vm.state.value.networkChangedSinceLastLaunch)
+        assertEquals(0, vm.state.value.addedNodeCount)
+        assertEquals(1, vm.state.value.removedNodeCount)
+    }
+
+    @Test
+    fun repeatLaunchCheckNoChangeWhenTopologyMatches() = runTest {
+        val discovery = FakeFixtureDiscovery()
+        val networkStore = FakeNetworkStateStore()
+        // Same node in both previous and current
+        networkStore.setKnownNodes(listOf(
+            KnownNode(
+                nodeKey = "192.168.1.10",
+                ipAddress = "192.168.1.10",
+                shortName = "Par1",
+                longName = "Par1",
+                lastSeenMs = 1000L,
+            ),
+        ))
+        val nodes = listOf(DmxNode(ipAddress = "192.168.1.10", shortName = "Par1"))
+        discovery.nodesToEmit = nodes
+
+        val scope = CoroutineScope(StandardTestDispatcher(testScheduler) + SupervisorJob())
+        val vm = createVm(
+            discovery = discovery,
+            networkStateStore = networkStore,
+            scope = scope,
+        )
+        testScheduler.runCurrent()
+
+        vm.onEvent(SetupEvent.PerformRepeatLaunchCheck)
+        testScheduler.advanceTimeBy(SetupViewModel.REPEAT_SCAN_DURATION_MS + 1)
+        testScheduler.runCurrent()
+
+        assertTrue(vm.state.value.repeatLaunchCheckComplete)
+        assertFalse(vm.state.value.networkChangedSinceLastLaunch)
+        assertEquals(0, vm.state.value.addedNodeCount)
+        assertEquals(0, vm.state.value.removedNodeCount)
+    }
+
+    @Test
+    fun repeatLaunchCheckSavesCurrentTopology() = runTest {
+        val discovery = FakeFixtureDiscovery()
+        val networkStore = FakeNetworkStateStore()
+        val nodes = listOf(
+            DmxNode(ipAddress = "192.168.1.10", shortName = "Par1"),
+            DmxNode(ipAddress = "192.168.1.11", shortName = "Par2"),
+        )
+        discovery.nodesToEmit = nodes
+
+        val scope = CoroutineScope(StandardTestDispatcher(testScheduler) + SupervisorJob())
+        val vm = createVm(
+            discovery = discovery,
+            networkStateStore = networkStore,
+            scope = scope,
+        )
+        testScheduler.runCurrent()
+
+        vm.onEvent(SetupEvent.PerformRepeatLaunchCheck)
+        testScheduler.advanceTimeBy(SetupViewModel.REPEAT_SCAN_DURATION_MS + 1)
+        testScheduler.runCurrent()
+
+        // Should have saved the current nodes for next launch comparison
+        assertEquals(2, networkStore.savedNodes.size)
+        assertEquals("192.168.1.10", networkStore.savedNodes[0].ipAddress)
+        assertEquals("192.168.1.11", networkStore.savedNodes[1].ipAddress)
+    }
+
+    @Test
+    fun repeatLaunchCheckCompletesWithoutNetworkStore() = runTest {
+        // No network state store — should still complete without error
+        val discovery = FakeFixtureDiscovery()
+        val nodes = listOf(DmxNode(ipAddress = "10.0.0.1", shortName = "Node1"))
+        discovery.nodesToEmit = nodes
+
+        val vm = createVm(discovery = discovery, scope = unconfinedScope(testScheduler))
+
+        vm.onEvent(SetupEvent.PerformRepeatLaunchCheck)
+
+        assertTrue(vm.state.value.repeatLaunchCheckComplete)
+        assertFalse(vm.state.value.networkChangedSinceLastLaunch)
     }
 
     // -- Scan timeout --
