@@ -1,9 +1,11 @@
 package com.chromadmx.ui.viewmodel
 
+import com.chromadmx.core.persistence.FixtureStore
 import com.chromadmx.core.persistence.SettingsStore
 import com.chromadmx.networking.DmxTransportRouter
 import com.chromadmx.networking.FixtureDiscovery
 import com.chromadmx.networking.TransportMode
+import com.chromadmx.simulation.fixtures.SimulatedFixtureRig
 import com.chromadmx.ui.state.AgentStatus
 import com.chromadmx.ui.state.SettingsEvent
 import com.chromadmx.ui.state.SettingsUiState
@@ -32,6 +34,7 @@ class SettingsViewModelV2(
     private val transportRouter: DmxTransportRouter,
     private val fixtureDiscovery: FixtureDiscovery,
     private val scope: CoroutineScope,
+    private val fixtureStore: FixtureStore? = null,
 ) {
     private val _state = MutableStateFlow(SettingsUiState())
     val state: StateFlow<SettingsUiState> = _state.asStateFlow()
@@ -81,7 +84,7 @@ class SettingsViewModelV2(
                 toggleSimulation(event.enabled)
 
             is SettingsEvent.SetRigPreset ->
-                _state.update { it.copy(selectedRigPreset = event.preset) }
+                handleSetRigPreset(event.preset)
 
             is SettingsEvent.ResetSimulation ->
                 resetSimulation()
@@ -102,6 +105,16 @@ class SettingsViewModelV2(
 
     private fun forceRescan() {
         fixtureDiscovery.startScan()
+    }
+
+    private fun handleSetRigPreset(preset: com.chromadmx.simulation.fixtures.RigPreset) {
+        _state.update { it.copy(selectedRigPreset = preset) }
+        val store = fixtureStore ?: return
+        scope.launch {
+            val rig = SimulatedFixtureRig(preset)
+            store.deleteAll()
+            store.saveAll(rig.fixtures)
+        }
     }
 
     private fun toggleSimulation(enabled: Boolean) {

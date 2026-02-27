@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
@@ -53,19 +52,14 @@ import com.chromadmx.ui.components.PixelButtonVariant
 import com.chromadmx.ui.components.PixelCard
 import com.chromadmx.ui.components.PixelChip
 import com.chromadmx.ui.components.PixelDropdown
-import com.chromadmx.ui.components.PixelIconButton
 import com.chromadmx.ui.components.PixelScaffold
 import com.chromadmx.ui.components.PixelSlider
-import com.chromadmx.ui.components.PresetStrip
 import com.chromadmx.ui.components.SimulationBadge
 import com.chromadmx.ui.components.VenueCanvas
 import com.chromadmx.ui.components.beat.BeatBar
-import com.chromadmx.ui.components.toComposeColor
 import com.chromadmx.ui.components.pixelBorder
-import com.chromadmx.ui.renderer.IsometricRenderer
 import com.chromadmx.ui.screen.network.NodeListOverlay
 import com.chromadmx.ui.state.FixtureState
-import com.chromadmx.ui.state.IsoAngle
 import com.chromadmx.ui.state.NetworkState
 import com.chromadmx.ui.state.PerformanceState
 import com.chromadmx.ui.state.PresetState
@@ -125,7 +119,11 @@ fun StageScreen(
             )
         },
         bottomBar = {
-            PresetStripBar(presetState = presetState, onEvent = viewModel::onEvent)
+            PresetStripBar(
+                presetState = presetState,
+                performanceState = perfState,
+                onEvent = viewModel::onEvent,
+            )
         },
     ) { padding ->
         Box(
@@ -148,15 +146,6 @@ fun StageScreen(
                     onDragEnd = { idx ->
                         viewModel.onEvent(StageEvent.PersistFixturePosition(idx))
                     },
-                    modifier = Modifier.fillMaxSize(),
-                )
-
-                ViewMode.ISO -> IsometricRenderer(
-                    fixtureState = fixtureState,
-                    viewState = viewState,
-                    fixtureColors = fixtureColors.map { it.toComposeColor() },
-                    onFixtureTapped = { viewModel.onEvent(StageEvent.SelectFixture(it)) },
-                    onBackgroundTapped = { viewModel.onEvent(StageEvent.SelectFixture(null)) },
                     modifier = Modifier.fillMaxSize(),
                 )
 
@@ -478,15 +467,31 @@ private fun StageTopBar(
 @Composable
 private fun PresetStripBar(
     presetState: PresetState,
+    performanceState: PerformanceState,
     onEvent: (StageEvent) -> Unit,
 ) {
-    PresetStrip(
-        scenes = presetState.allScenes,
-        activeSceneName = null, // Active scene tracked elsewhere; strip shows all
-        onSceneTap = { name -> onEvent(StageEvent.ApplyScene(name)) },
-        onSceneLongPress = { name -> onEvent(StageEvent.PreviewScene(name)) },
-        modifier = Modifier.fillMaxWidth(),
-    )
+    androidx.compose.foundation.lazy.LazyRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(PixelDesign.colors.surface.copy(alpha = 0.95f))
+            .pixelBorder(
+                width = 1.dp,
+                color = PixelDesign.colors.outlineVariant,
+                pixelSize = 1.dp,
+            )
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        items(presetState.allScenes.size) { index ->
+            val scene = presetState.allScenes[index]
+            PixelChip(
+                text = scene.name,
+                selected = scene.name == performanceState.activeSceneName,
+                onClick = { onEvent(StageEvent.ApplyScene(scene.name)) },
+            )
+        }
+    }
 }
 
 // ============================================================================
@@ -505,21 +510,11 @@ private fun CameraControls(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // View mode chips: "2D" "3D" "Front"
         PixelChip(
             text = "2D",
             selected = viewState.mode == ViewMode.TOP_DOWN,
             onClick = {
                 if (viewState.mode != ViewMode.TOP_DOWN) {
-                    onEvent(StageEvent.ToggleViewMode)
-                }
-            },
-        )
-        PixelChip(
-            text = "3D",
-            selected = viewState.mode == ViewMode.ISO,
-            onClick = {
-                if (viewState.mode != ViewMode.ISO) {
                     onEvent(StageEvent.ToggleViewMode)
                 }
             },
@@ -533,32 +528,6 @@ private fun CameraControls(
                 }
             },
         )
-
-        // Iso angle control (only visible in ISO mode)
-        if (viewState.mode == ViewMode.ISO) {
-            Spacer(Modifier.width(4.dp))
-            Text(
-                text = viewState.isoAngle.name,
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontFamily = PixelFontFamily,
-                    fontSize = 8.sp,
-                ),
-                color = PixelDesign.colors.onSurface,
-            )
-            PixelIconButton(
-                onClick = {
-                    onEvent(StageEvent.SetIsoAngle(nextAngle(viewState.isoAngle)))
-                },
-            ) {
-                Text(
-                    text = "\u21BB", // ↻ rotation symbol
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 14.sp,
-                    ),
-                    color = PixelDesign.colors.onSurface,
-                )
-            }
-        }
     }
 }
 
@@ -798,10 +767,4 @@ private fun InfoLabel(label: String, value: String) {
 // Utility functions
 // ============================================================================
 
-/** Cycle to the next isometric angle. */
-private fun nextAngle(current: IsoAngle): IsoAngle = when (current) {
-    IsoAngle.ZERO -> IsoAngle.FORTY_FIVE
-    IsoAngle.FORTY_FIVE -> IsoAngle.NINETY
-    IsoAngle.NINETY -> IsoAngle.ZERO
-}
 

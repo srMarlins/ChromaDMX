@@ -415,36 +415,24 @@ class StageViewModelSlicedTest {
     // ── ViewState tests ────────────────────────────────────────────────
 
     @Test
-    fun toggleViewModeCyclesToIso() = runTest {
+    fun toggleViewModeCyclesToAudience() = runTest {
         val (vm, _, _) = createVm(scope = backgroundScope)
         assertEquals(ViewMode.TOP_DOWN, vm.viewState.value.mode)
 
         vm.onEvent(StageEvent.ToggleViewMode)
-        assertEquals(ViewMode.ISO, vm.viewState.value.mode)
+        assertEquals(ViewMode.AUDIENCE, vm.viewState.value.mode)
     }
 
     @Test
-    fun toggleViewModeCyclesThrough() = runTest {
+    fun toggleViewModeCyclesBackToTopDown() = runTest {
         val (vm, _, _) = createVm(scope = backgroundScope)
         assertEquals(ViewMode.TOP_DOWN, vm.viewState.value.mode)
-
-        vm.onEvent(StageEvent.ToggleViewMode)
-        assertEquals(ViewMode.ISO, vm.viewState.value.mode)
 
         vm.onEvent(StageEvent.ToggleViewMode)
         assertEquals(ViewMode.AUDIENCE, vm.viewState.value.mode)
 
         vm.onEvent(StageEvent.ToggleViewMode)
         assertEquals(ViewMode.TOP_DOWN, vm.viewState.value.mode)
-    }
-
-    @Test
-    fun setIsoAngleUpdatesViewState() = runTest {
-        val (vm, _, _) = createVm(scope = backgroundScope)
-        assertEquals(IsoAngle.FORTY_FIVE, vm.viewState.value.isoAngle)
-
-        vm.onEvent(StageEvent.SetIsoAngle(IsoAngle.NINETY))
-        assertEquals(IsoAngle.NINETY, vm.viewState.value.isoAngle)
     }
 
     @Test
@@ -491,7 +479,6 @@ class StageViewModelSlicedTest {
         val netBefore = vm.networkState.value
 
         vm.onEvent(StageEvent.ToggleViewMode)
-        vm.onEvent(StageEvent.SetIsoAngle(IsoAngle.NINETY))
 
         // Network state should not change
         assertEquals(netBefore, vm.networkState.value)

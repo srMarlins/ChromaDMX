@@ -152,6 +152,15 @@ class StageViewModelV2(
             repo.allFixtures().collect { dbFixtures ->
                 _fixtureState.update { it.copy(fixtures = dbFixtures) }
                 engine.updateFixtures(dbFixtures)
+                // Keep simulation badge in sync when rig preset changes via Settings
+                if (_viewState.value.isSimulationMode) {
+                    _viewState.update {
+                        it.copy(
+                            simulationFixtureCount = dbFixtures.size,
+                            simulationPresetName = null,
+                        )
+                    }
+                }
             }
         }
     }
@@ -197,7 +206,6 @@ class StageViewModelV2(
 
             // View controls
             is StageEvent.ToggleViewMode -> handleToggleViewMode()
-            is StageEvent.SetIsoAngle -> handleSetIsoAngle(event.angle)
             is StageEvent.ToggleEditMode -> handleToggleEditMode()
             is StageEvent.ToggleNodeList -> handleToggleNodeList()
             is StageEvent.DiagnoseNode -> handleDiagnoseNode(event.node)
@@ -440,16 +448,11 @@ class StageViewModelV2(
     private fun handleToggleViewMode() {
         _viewState.update { state ->
             val nextMode = when (state.mode) {
-                ViewMode.TOP_DOWN -> ViewMode.ISO
-                ViewMode.ISO -> ViewMode.AUDIENCE
+                ViewMode.TOP_DOWN -> ViewMode.AUDIENCE
                 ViewMode.AUDIENCE -> ViewMode.TOP_DOWN
             }
             state.copy(mode = nextMode)
         }
-    }
-
-    private fun handleSetIsoAngle(angle: IsoAngle) {
-        _viewState.update { it.copy(isoAngle = angle) }
     }
 
     private fun handleToggleEditMode() {

@@ -63,7 +63,6 @@ data class NetworkState(
 @Immutable
 data class ViewState(
     val mode: ViewMode = ViewMode.TOP_DOWN,
-    val isoAngle: IsoAngle = IsoAngle.FORTY_FIVE,
     val isSimulationMode: Boolean = false,
     val simulationPresetName: String? = null,
     val simulationFixtureCount: Int = 0
@@ -74,17 +73,7 @@ data class ViewState(
  */
 enum class ViewMode {
     TOP_DOWN,
-    ISO,
     AUDIENCE
-}
-
-/**
- * Isometric viewing angles.
- */
-enum class IsoAngle {
-    ZERO,
-    FORTY_FIVE,
-    NINETY
 }
 
 /**
@@ -119,7 +108,6 @@ sealed interface StageEvent {
 
     // View controls
     data object ToggleViewMode : StageEvent
-    data class SetIsoAngle(val angle: IsoAngle) : StageEvent
     data object ToggleEditMode : StageEvent
     data object ToggleNodeList : StageEvent
     data class DiagnoseNode(val node: DmxNode) : StageEvent
