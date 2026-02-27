@@ -2,6 +2,7 @@ package com.chromadmx.simulation.fixtures
 
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.simulation.rigs.FestivalStageRig
+import com.chromadmx.simulation.rigs.PixelBarVRig
 import com.chromadmx.simulation.rigs.SmallDjRig
 import com.chromadmx.simulation.rigs.TrussRig
 
@@ -28,6 +29,7 @@ class SimulatedFixtureRig(val preset: RigPreset) {
         RigPreset.SMALL_DJ -> SmallDjRig.createFixtures()
         RigPreset.TRUSS_RIG -> TrussRig.createFixtures()
         RigPreset.FESTIVAL_STAGE -> FestivalStageRig.createFixtures()
+        RigPreset.PIXEL_BAR_V -> PixelBarVRig.createFixtures()
     }
 
     /** Total number of fixtures in the rig. */

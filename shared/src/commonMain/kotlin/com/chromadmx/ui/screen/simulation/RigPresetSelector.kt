@@ -262,6 +262,7 @@ private fun RigPreviewCanvas(
             RigPreset.SMALL_DJ -> 4f
             RigPreset.TRUSS_RIG -> 3f
             RigPreset.FESTIVAL_STAGE -> 2f
+            RigPreset.PIXEL_BAR_V -> 2.5f
         }
 
         for (fixture in fixtures) {

@@ -22,8 +22,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.DropdownMenu
@@ -202,8 +200,7 @@ fun PixelDropdown(
                     .pixelBorderGlowing(chamfer = 9.dp)
                     .clip(PixelShape.Large)
                     .background(PixelDesign.colors.surface, PixelShape.Large)
-                    .heightIn(max = 220.dp) // ~5 items worth of height
-                    .verticalScroll(rememberScrollState()),
+                    .heightIn(max = 220.dp),
             ) {
                 items.forEachIndexed { index, item ->
                     val isSelected = index == selectedIndex

@@ -35,7 +35,10 @@ data class SetupUiState(
     val generationProgress: Float = 0f,
     val generationError: String? = null,
     val networkChangedSinceLastLaunch: Boolean = false,
-    val repeatLaunchCheckComplete: Boolean = false
+    val repeatLaunchCheckComplete: Boolean = false,
+    val isScanningFixtures: Boolean = false,
+    val scanActiveFixtures: Set<String> = emptySet(),
+    val scanComplete: Boolean = false,
 )
 
 /**
@@ -64,4 +67,5 @@ sealed interface SetupEvent {
     data object ConfirmGenre : SetupEvent
     data object SkipStagePreview : SetupEvent
     data object PerformRepeatLaunchCheck : SetupEvent
+    data object StartFixtureScan : SetupEvent
 }

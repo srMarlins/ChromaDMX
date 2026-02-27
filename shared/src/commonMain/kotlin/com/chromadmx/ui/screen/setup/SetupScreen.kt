@@ -19,6 +19,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import com.chromadmx.core.model.DmxNode
 import com.chromadmx.simulation.fixtures.RigPreset
 import com.chromadmx.simulation.fixtures.SimulatedFixtureRig
+import com.chromadmx.simulation.rigs.PixelBarVRig
 import com.chromadmx.ui.components.PixelButton
 import com.chromadmx.ui.components.PixelButtonVariant
 import com.chromadmx.ui.components.PixelCard
@@ -43,6 +47,7 @@ import com.chromadmx.ui.components.PixelLoadingSpinner
 import com.chromadmx.ui.components.PixelProgressBar
 import com.chromadmx.ui.components.PixelScaffold
 import com.chromadmx.ui.components.SpinnerSize
+import com.chromadmx.ui.state.GenreOption
 import com.chromadmx.ui.state.SetupEvent
 import com.chromadmx.ui.state.SetupStep
 import com.chromadmx.ui.state.SetupUiState
@@ -56,15 +61,11 @@ import com.chromadmx.ui.util.presetDisplayName
 import com.chromadmx.ui.viewmodel.SetupViewModel
 
 /**
- * Consolidated setup screen that replaces the multi-screen onboarding flow.
+ * Consolidated setup screen managing the full onboarding flow.
  *
  * Two phases with animated crossfade:
- * 1. **Discovery** — scanning animation, discovered nodes list, simulation fallback
- * 2. **Fixture Config** — fixture preview, rig preset selector, "Start Show" button
- *
- * @param viewModel The [SetupViewModel] managing the setup state.
- * @param onComplete Called when the user taps "Start Show" to enter the main app.
- * @param modifier Optional [Modifier] for the root layout.
+ * 1. **Discovery** — SPLASH + NETWORK_DISCOVERY: scanning animation, discovered nodes, simulation fallback
+ * 2. **Config** — FIXTURE_SCAN → VIBE_CHECK → STAGE_PREVIEW: step-specific content per step
  */
 @Composable
 fun SetupScreen(
@@ -99,7 +100,7 @@ fun SetupScreen(
                         onEvent = viewModel::onEvent,
                     )
                 } else {
-                    FixtureConfigPhase(
+                    ConfigPhase(
                         state = state,
                         onEvent = viewModel::onEvent,
                         onComplete = onComplete,
@@ -113,13 +114,10 @@ fun SetupScreen(
 // ── Phase Detection ─────────────────────────────────────────────────
 
 private fun isDiscoveryPhase(step: SetupStep): Boolean =
-    step in setOf(SetupStep.SPLASH, SetupStep.NETWORK_DISCOVERY, SetupStep.FIXTURE_SCAN)
+    step in setOf(SetupStep.SPLASH, SetupStep.NETWORK_DISCOVERY)
 
 // ── Top Bar ─────────────────────────────────────────────────────────
 
-/**
- * Simple centered title with step indicator dots.
- */
 @Composable
 private fun SetupTopBar(
     currentStep: SetupStep,
@@ -146,7 +144,6 @@ private fun SetupTopBar(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Step indicator dots
         Row(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -169,9 +166,6 @@ private fun SetupTopBar(
 
 // ── Phase 1: Discovery ──────────────────────────────────────────────
 
-/**
- * Discovery phase content: scanning animation, node list, and simulation fallback.
- */
 @Composable
 private fun DiscoveryPhase(
     state: SetupUiState,
@@ -184,16 +178,13 @@ private fun DiscoveryPhase(
         verticalArrangement = Arrangement.Center,
     ) {
         if (state.isScanning) {
-            // Scanning state
             ScanningContent()
         } else if (state.discoveredNodes.isNotEmpty()) {
-            // Nodes found
             NodesFoundContent(
                 nodes = state.discoveredNodes,
                 onEvent = onEvent,
             )
         } else {
-            // No nodes found / idle
             NoNodesContent(
                 state = state,
                 onEvent = onEvent,
@@ -202,9 +193,6 @@ private fun DiscoveryPhase(
     }
 }
 
-/**
- * Active scanning state: spinner, status text, and indeterminate progress bar.
- */
 @Composable
 private fun ScanningContent(
     modifier: Modifier = Modifier,
@@ -237,9 +225,6 @@ private fun ScanningContent(
     }
 }
 
-/**
- * Nodes discovered: count header + scrollable node list + advance button.
- */
 @Composable
 private fun NodesFoundContent(
     nodes: List<DmxNode>,
@@ -281,9 +266,6 @@ private fun NodesFoundContent(
     }
 }
 
-/**
- * No nodes found: prompt to retry or enter simulation mode.
- */
 @Composable
 private fun NoNodesContent(
     state: SetupUiState,
@@ -316,59 +298,233 @@ private fun NoNodesContent(
 
         Spacer(modifier = Modifier.height(PixelDesign.spacing.large))
 
-        // Simulation mode rig preset selector (visible when in simulation mode)
-        if (state.isSimulationMode) {
-            RigPresetSelector(
-                selectedPreset = state.selectedRigPreset,
-                onEvent = onEvent,
-            )
-
-            Spacer(modifier = Modifier.height(PixelDesign.spacing.medium))
-
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
             PixelButton(
-                onClick = { onEvent(SetupEvent.Advance) },
-                variant = PixelButtonVariant.Primary,
-                modifier = Modifier.fillMaxWidth(),
+                onClick = { onEvent(SetupEvent.RetryNetworkScan) },
+                variant = PixelButtonVariant.Surface,
+                modifier = Modifier.weight(1f),
             ) {
-                Text("CONTINUE WITH SIMULATION")
+                Text("RETRY SCAN")
             }
-        } else {
-            // Action buttons: Retry + Enter Simulation
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth(),
+            PixelButton(
+                onClick = { onEvent(SetupEvent.EnterSimulationMode) },
+                variant = PixelButtonVariant.Secondary,
+                modifier = Modifier.weight(1f),
             ) {
-                PixelButton(
-                    onClick = { onEvent(SetupEvent.RetryNetworkScan) },
-                    variant = PixelButtonVariant.Surface,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text("RETRY SCAN")
-                }
-                PixelButton(
-                    onClick = { onEvent(SetupEvent.EnterSimulationMode) },
-                    variant = PixelButtonVariant.Secondary,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text("VIRTUAL STAGE")
-                }
+                Text("VIRTUAL STAGE")
             }
         }
     }
 }
 
-// ── Phase 2: Fixture Config ─────────────────────────────────────────
+// ── Phase 2: Config (step-specific content) ─────────────────────────
 
-/**
- * Fixture configuration phase: preview canvas, fixture count, rig selector, and start button.
- */
 @Composable
-private fun FixtureConfigPhase(
+private fun ConfigPhase(
     state: SetupUiState,
     onEvent: (SetupEvent) -> Unit,
     onComplete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    AnimatedContent(
+        targetState = state.currentStep,
+        transitionSpec = { fadeIn() togetherWith fadeOut() },
+        label = "config-step-crossfade",
+        modifier = modifier.fillMaxSize(),
+    ) { step ->
+        when (step) {
+            SetupStep.FIXTURE_SCAN -> FixtureScanContent(state = state, onEvent = onEvent)
+            SetupStep.VIBE_CHECK -> VibeCheckContent(state = state, onEvent = onEvent)
+            SetupStep.STAGE_PREVIEW -> StagePreviewContent(
+                state = state,
+                onEvent = onEvent,
+                onComplete = onComplete,
+            )
+            else -> { /* SPLASH, NETWORK_DISCOVERY, COMPLETE handled elsewhere */ }
+        }
+    }
+}
+
+// ── FIXTURE_SCAN Step ───────────────────────────────────────────────
+
+@Composable
+private fun FixtureScanContent(
+    state: SetupUiState,
+    onEvent: (SetupEvent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val fixtureCount = if (state.isSimulationMode) {
+        state.simulationFixtureCount
+    } else {
+        state.fixturesLoadedCount
+    }
+
+    Column(
+        modifier = modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = "YOUR RIG",
+            style = MaterialTheme.typography.headlineSmall.copy(
+                fontFamily = PixelFontFamily,
+                letterSpacing = 2.sp,
+            ),
+            color = NeonCyan,
+        )
+
+        Spacer(modifier = Modifier.height(PixelDesign.spacing.small))
+
+        Text(
+            text = "$fixtureCount fixture${if (fixtureCount != 1) "s" else ""} configured",
+            style = MaterialTheme.typography.bodyMedium.copy(fontFamily = PixelFontFamily),
+            color = PixelDesign.colors.onSurfaceVariant,
+        )
+
+        Spacer(modifier = Modifier.height(PixelDesign.spacing.large))
+
+        // Stage preview — V-formation for PIXEL_BAR_V, generic grid otherwise
+        PixelCard(borderColor = NeonCyan.copy(alpha = 0.4f)) {
+            if (state.selectedRigPreset == RigPreset.PIXEL_BAR_V) {
+                VFormationCanvas(
+                    activeFixtures = state.scanActiveFixtures,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(220.dp),
+                )
+            } else {
+                FixturePreviewCanvas(
+                    fixtureCount = fixtureCount,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp),
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(PixelDesign.spacing.large))
+
+        // Rig preset selector (simulation mode only)
+        if (state.isSimulationMode) {
+            RigPresetDropdown(
+                selectedPreset = state.selectedRigPreset,
+                onEvent = onEvent,
+            )
+            Spacer(modifier = Modifier.height(PixelDesign.spacing.medium))
+        }
+
+        // Scan button for V-rig
+        if (state.isSimulationMode && state.selectedRigPreset == RigPreset.PIXEL_BAR_V && !state.scanComplete) {
+            PixelButton(
+                onClick = { onEvent(SetupEvent.StartFixtureScan) },
+                variant = PixelButtonVariant.Secondary,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !state.isScanningFixtures,
+            ) {
+                Text(if (state.isScanningFixtures) "SCANNING..." else "SCAN FIXTURES")
+            }
+            Spacer(modifier = Modifier.height(PixelDesign.spacing.small))
+        }
+
+        // Continue button
+        PixelButton(
+            onClick = { onEvent(SetupEvent.Advance) },
+            variant = PixelButtonVariant.Primary,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("CONTINUE")
+        }
+    }
+}
+
+// ── VIBE_CHECK Step ─────────────────────────────────────────────────
+
+@Composable
+private fun VibeCheckContent(
+    state: SetupUiState,
+    onEvent: (SetupEvent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = "VIBE CHECK",
+            style = MaterialTheme.typography.headlineSmall.copy(
+                fontFamily = PixelFontFamily,
+                letterSpacing = 2.sp,
+            ),
+            color = NeonMagenta,
+        )
+
+        Spacer(modifier = Modifier.height(PixelDesign.spacing.small))
+
+        Text(
+            text = "Pick your sound",
+            style = MaterialTheme.typography.bodyMedium.copy(fontFamily = PixelFontFamily),
+            color = PixelDesign.colors.onSurfaceVariant,
+        )
+
+        Spacer(modifier = Modifier.height(PixelDesign.spacing.large))
+
+        // Genre grid (2 columns)
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.heightIn(max = 340.dp),
+        ) {
+            items(state.availableGenres) { genre ->
+                val isSelected = state.selectedGenre?.id == genre.id
+                PixelCard(
+                    borderColor = Color(genre.color).copy(alpha = if (isSelected) 0.9f else 0.3f),
+                    glowing = isSelected,
+                    onClick = { onEvent(SetupEvent.SelectGenre(genre)) },
+                ) {
+                    Text(
+                        text = genre.displayName,
+                        style = MaterialTheme.typography.titleSmall.copy(fontFamily = PixelFontFamily),
+                        color = if (isSelected) Color(genre.color) else PixelDesign.colors.onSurface,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(PixelDesign.spacing.large))
+
+        PixelButton(
+            onClick = { onEvent(SetupEvent.ConfirmGenre) },
+            variant = PixelButtonVariant.Primary,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = state.selectedGenre != null,
+        ) {
+            Text("CONTINUE")
+        }
+    }
+}
+
+// ── STAGE_PREVIEW Step ──────────────────────────────────────────────
+
+@Composable
+private fun StagePreviewContent(
+    state: SetupUiState,
+    onEvent: (SetupEvent) -> Unit,
+    onComplete: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val fixtureCount = if (state.isSimulationMode) {
+        state.simulationFixtureCount
+    } else {
+        state.fixturesLoadedCount
+    }
+
     Column(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -383,46 +539,27 @@ private fun FixtureConfigPhase(
             color = NeonCyan,
         )
 
-        Spacer(modifier = Modifier.height(PixelDesign.spacing.small))
-
-        // Fixture count indicator
-        val fixtureCount = if (state.isSimulationMode) {
-            state.simulationFixtureCount
-        } else {
-            state.fixturesLoadedCount
-        }
-        Text(
-            text = "$fixtureCount fixture${if (fixtureCount != 1) "s" else ""} configured",
-            style = MaterialTheme.typography.bodyMedium.copy(fontFamily = PixelFontFamily),
-            color = PixelDesign.colors.onSurfaceVariant,
-        )
-
         Spacer(modifier = Modifier.height(PixelDesign.spacing.large))
 
-        // Stage preview canvas — simplified fixture dot visualization
-        PixelCard(
-            borderColor = NeonCyan.copy(alpha = 0.4f),
-        ) {
-            FixturePreviewCanvas(
-                fixtureCount = fixtureCount,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(180.dp),
-            )
+        PixelCard(borderColor = NeonCyan.copy(alpha = 0.4f)) {
+            if (state.selectedRigPreset == RigPreset.PIXEL_BAR_V) {
+                VFormationCanvas(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(220.dp),
+                )
+            } else {
+                FixturePreviewCanvas(
+                    fixtureCount = fixtureCount,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp),
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(PixelDesign.spacing.large))
 
-        // Rig preset selector (simulation mode only)
-        if (state.isSimulationMode) {
-            RigPresetSelector(
-                selectedPreset = state.selectedRigPreset,
-                onEvent = onEvent,
-            )
-            Spacer(modifier = Modifier.height(PixelDesign.spacing.medium))
-        }
-
-        // Start Show button
         PixelButton(
             onClick = {
                 onEvent(SetupEvent.SkipToComplete)
@@ -436,11 +573,90 @@ private fun FixtureConfigPhase(
     }
 }
 
-// ── Shared Sub-composables ──────────────────────────────────────────
+// ── V-Formation Canvas ──────────────────────────────────────────────
 
 /**
- * A PixelCard displaying a discovered DMX node's name, IP, and universe info.
+ * V-formation fixture preview showing 8 vertical pixel bars.
+ * Active bars (from scan) glow brightly; inactive bars are dim.
  */
+@Composable
+private fun VFormationCanvas(
+    activeFixtures: Set<String> = emptySet(),
+    modifier: Modifier = Modifier,
+) {
+    // Derive bar IDs and x-positions from the rig definition
+    val barPositions = remember {
+        PixelBarVRig.createFixtures().map { it.fixture.fixtureId to it.position.x }
+    }
+
+    Canvas(
+        modifier = modifier.background(PixelDesign.colors.background.copy(alpha = 0.8f)),
+    ) {
+        val pad = 24f
+        val canvasW = size.width - 2 * pad
+        val canvasH = size.height - 2 * pad
+        if (canvasW <= 0f || canvasH <= 0f) return@Canvas
+
+        // CRT scanlines
+        var scanY = 0f
+        while (scanY < size.height) {
+            drawLine(
+                color = Color.White.copy(alpha = 0.03f),
+                start = Offset(0f, scanY),
+                end = Offset(size.width, scanY),
+                strokeWidth = 1f,
+            )
+            scanY += 4f
+        }
+
+        // World-space ranges matching SimulatedFrameCapture
+        val xMin = -3f
+        val xMax = 3f
+        val zMin = 0f
+        val zMax = 2.5f
+        val barBottomZ = 0.5f
+        val barTopZ = 1.7f
+
+        for ((barId, worldX) in barPositions) {
+            val isActive = barId in activeFixtures
+            val xFrac = (worldX - xMin) / (xMax - xMin)
+            val screenX = pad + xFrac * canvasW
+
+            // Draw 24 pixels bottom to top
+            for (px in 0 until 24) {
+                val t = px.toFloat() / 23f
+                val worldZ = barBottomZ + t * (barTopZ - barBottomZ)
+                val zFrac = (worldZ - zMin) / (zMax - zMin)
+                val screenY = pad + (1f - zFrac) * canvasH
+
+                val baseColor = when (px % 3) {
+                    0 -> Color(0xFF00FBFF)
+                    1 -> Color(0xFFFF00FF)
+                    else -> Color(0xFF00FF00)
+                }
+
+                val alpha = if (isActive) 0.95f else 0.25f
+                val glowAlpha = if (isActive) 0.3f else 0.05f
+
+                // Outer glow
+                drawCircle(
+                    color = baseColor.copy(alpha = glowAlpha),
+                    radius = if (isActive) 10f else 6f,
+                    center = Offset(screenX, screenY),
+                )
+                // Inner dot
+                drawCircle(
+                    color = baseColor.copy(alpha = alpha),
+                    radius = 3f,
+                    center = Offset(screenX, screenY),
+                )
+            }
+        }
+    }
+}
+
+// ── Shared Sub-composables ──────────────────────────────────────────
+
 @Composable
 private fun NodeCard(
     node: DmxNode,
@@ -477,11 +693,8 @@ private fun NodeCard(
     }
 }
 
-/**
- * Dropdown selector for rig presets (Small DJ, Truss Rig, Festival Stage).
- */
 @Composable
-private fun RigPresetSelector(
+private fun RigPresetDropdown(
     selectedPreset: RigPreset,
     onEvent: (SetupEvent) -> Unit,
     modifier: Modifier = Modifier,
@@ -514,7 +727,6 @@ private fun RigPresetSelector(
             modifier = Modifier.fillMaxWidth(0.6f),
         )
 
-        // Fixture count for selected preset
         val rig = remember(selectedPreset) { SimulatedFixtureRig(selectedPreset) }
         Spacer(modifier = Modifier.height(PixelDesign.spacing.extraSmall))
         Text(
@@ -525,11 +737,6 @@ private fun RigPresetSelector(
     }
 }
 
-/**
- * Simplified fixture preview canvas showing fixture dots in a grid layout.
- * This serves as the top-down fixture preview for setup; the full interactive
- * VenueCanvas is used on the main stage screen.
- */
 @Composable
 private fun FixturePreviewCanvas(
     fixtureCount: Int,
@@ -543,7 +750,6 @@ private fun FixturePreviewCanvas(
         val canvasH = size.height - 2 * pad
         if (canvasW <= 0f || canvasH <= 0f || fixtureCount <= 0) return@Canvas
 
-        // CRT scanlines for pixel aesthetic
         val scanLineSpacing = 4f
         var y = 0f
         while (y < size.height) {
@@ -556,7 +762,6 @@ private fun FixturePreviewCanvas(
             y += scanLineSpacing
         }
 
-        // Grid layout for fixtures
         val cols = when {
             fixtureCount <= 8 -> fixtureCount
             fixtureCount <= 30 -> 10
@@ -577,13 +782,11 @@ private fun FixturePreviewCanvas(
                 else -> Color(0xFF00FF00)
             }
 
-            // Outer glow
             drawCircle(
                 color = fixtureColor.copy(alpha = 0.2f),
                 radius = 14f,
                 center = Offset(cx, cy),
             )
-            // Inner bright point
             drawCircle(
                 color = fixtureColor.copy(alpha = 0.8f),
                 radius = 5f,

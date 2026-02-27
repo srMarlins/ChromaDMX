@@ -327,4 +327,38 @@ class SimulatedFixtureRigTest {
                 "$preset has duplicate fixture IDs: ${ids.groupBy { it }.filter { it.value.size > 1 }.keys}")
         }
     }
+
+    @Test
+    fun allPresets_noChannelExceeds512() {
+        for (preset in RigPreset.entries) {
+            val rig = SimulatedFixtureRig(preset)
+            for (fixture in rig.fixtures) {
+                val end = fixture.fixture.channelStart + fixture.fixture.channelCount
+                assertTrue(end <= 512,
+                    "$preset: ${fixture.fixture.name} on universe ${fixture.fixture.universeId} " +
+                        "exceeds 512 channels: ends at $end")
+            }
+        }
+    }
+
+    @Test
+    fun allPresets_noChannelOverlapWithinUniverse() {
+        for (preset in RigPreset.entries) {
+            val rig = SimulatedFixtureRig(preset)
+            for (universeId in rig.universeIds) {
+                val uniFixtures = rig.fixturesOnUniverse(universeId)
+                val ranges = uniFixtures.map {
+                    it.fixture.channelStart until (it.fixture.channelStart + it.fixture.channelCount)
+                }
+                for (i in ranges.indices) {
+                    for (j in i + 1 until ranges.size) {
+                        val overlap = ranges[i].first < ranges[j].last && ranges[j].first < ranges[i].last
+                        assertTrue(!overlap,
+                            "$preset: universe $universeId has overlapping channels: " +
+                                "${ranges[i]} and ${ranges[j]}")
+                    }
+                }
+            }
+        }
+    }
 }
