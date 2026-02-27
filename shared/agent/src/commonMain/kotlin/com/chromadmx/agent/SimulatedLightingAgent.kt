@@ -172,7 +172,7 @@ class SimulatedLightingAgent(
 
     private fun handleColor(lower: String): String {
         val (hex, name) = when {
-            lower.contains("blue") && !lower.contains("ice") -> "#0000FF" to "blue"
+            lower.contains("blue") -> "#0000FF" to "blue"
             lower.contains("red") -> "#FF0000" to "red"
             lower.contains("green") -> "#00FF00" to "green"
             lower.contains("white") -> "#FFFFFF" to "white"

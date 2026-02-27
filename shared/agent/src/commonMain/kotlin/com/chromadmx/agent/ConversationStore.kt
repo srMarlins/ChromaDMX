@@ -57,7 +57,7 @@ class ConversationStore(
         _messages.update { current ->
             val updated = current + message
             if (updated.size > maxMessages) {
-                updated.drop(updated.size - maxMessages)
+                updated.takeLast(maxMessages)
             } else {
                 updated
             }

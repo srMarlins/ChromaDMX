@@ -81,7 +81,12 @@ class LightingAgentService(
                 }
                 onToolCallCompleted { event ->
                     _toolCallsInFlight.update { inflight ->
-                        inflight.filterNot { it.toolName == event.toolName }
+                        val index = inflight.indexOfFirst { it.toolName == event.toolName }
+                        if (index != -1) {
+                            inflight.toMutableList().apply { removeAt(index) }
+                        } else {
+                            inflight
+                        }
                     }
                     conversationStore.addSystemMessage(
                         "Tool ${event.toolName}: ${event.toolResult}"
@@ -104,10 +109,10 @@ class LightingAgentService(
 
         return sendMutex.withLock {
             _isProcessing.value = true
-            conversationStore.addUserMessage(userMessage)
 
             try {
                 val contextPrompt = buildContextualPrompt(userMessage)
+                conversationStore.addUserMessage(userMessage)
                 val response = withTimeout(TIMEOUT_MS) {
                     agentService.createAgentAndRun(contextPrompt)
                 }
@@ -144,14 +149,13 @@ class LightingAgentService(
     /**
      * Build the input for the agent, including recent conversation context.
      *
+     * Must be called BEFORE the current user message is added to the store.
      * The agent sees the last N messages formatted as a preamble before the
      * current user message, giving it continuity without relying on a
      * persistent LLM session.
      */
     private fun buildContextualPrompt(userMessage: String): String {
-        val recent = conversationStore.getRecent(CONTEXT_MESSAGE_COUNT)
-        // Exclude the current user message (just added) from context
-        val context = recent.dropLast(1)
+        val context = conversationStore.getRecent(CONTEXT_MESSAGE_COUNT)
         if (context.isEmpty()) return userMessage
 
         val contextBlock = context.joinToString("\n") { msg ->
