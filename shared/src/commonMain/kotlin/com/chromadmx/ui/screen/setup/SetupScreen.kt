@@ -560,6 +560,53 @@ private fun StagePreviewContent(
 
         Spacer(modifier = Modifier.height(PixelDesign.spacing.large))
 
+        // Genre preset generation progress
+        if (state.isGenerating || state.generationProgress > 0f) {
+            val genreName = state.selectedGenre?.displayName ?: "Custom"
+            val statusText = if (state.isGenerating) {
+                "Generating $genreName presets..."
+            } else {
+                "$genreName presets ready!"
+            }
+
+            Text(
+                text = statusText,
+                style = MaterialTheme.typography.bodyMedium.copy(fontFamily = PixelFontFamily),
+                color = if (state.isGenerating) NeonMagenta else NeonGreen,
+            )
+
+            Spacer(modifier = Modifier.height(PixelDesign.spacing.small))
+
+            PixelProgressBar(
+                progress = state.generationProgress,
+                indeterminate = false,
+                modifier = Modifier.fillMaxWidth(0.7f),
+                progressColor = if (state.isGenerating) NeonMagenta else NeonGreen,
+            )
+
+            Spacer(modifier = Modifier.height(PixelDesign.spacing.small))
+
+            Text(
+                text = "${state.matchingPresetCount} presets",
+                style = MaterialTheme.typography.bodySmall.copy(fontFamily = PixelFontFamily),
+                color = PixelDesign.colors.onSurfaceVariant,
+            )
+
+            Spacer(modifier = Modifier.height(PixelDesign.spacing.medium))
+        }
+
+        // Show generation error if any
+        if (state.generationError != null) {
+            Text(
+                text = state.generationError,
+                style = MaterialTheme.typography.bodySmall.copy(fontFamily = PixelFontFamily),
+                color = NeonYellow,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(modifier = Modifier.height(PixelDesign.spacing.small))
+        }
+
         PixelButton(
             onClick = {
                 onEvent(SetupEvent.SkipToComplete)

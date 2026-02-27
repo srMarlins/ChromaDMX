@@ -6,6 +6,7 @@ import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.core.persistence.FixtureRepository
 import com.chromadmx.core.persistence.FixtureStore
 import com.chromadmx.core.persistence.NetworkStateRepository
+import com.chromadmx.core.persistence.NetworkStateStore
 import com.chromadmx.core.persistence.PresetRepository
 import com.chromadmx.core.persistence.SettingsRepository
 import com.chromadmx.core.persistence.SettingsStore
@@ -23,6 +24,7 @@ import com.chromadmx.engine.effects.StrobeEffect
 import com.chromadmx.engine.effects.WaveEffect3DEffect
 import com.chromadmx.engine.pipeline.EffectEngine
 import com.chromadmx.engine.preset.PresetLibrary
+import com.chromadmx.service.DataExportService
 import com.chromadmx.networking.DmxTransport
 import com.chromadmx.networking.DmxTransportRouter
 import com.chromadmx.networking.FixtureDiscovery
@@ -129,12 +131,15 @@ val chromaDiModule = module {
     single { get<DriverFactory>().createDriver() }
     single { ChromaDmxDatabase(get()) }
     single { FixtureRepository(get()) } bind FixtureStore::class
-    single { NetworkStateRepository(get()) }
+    single { NetworkStateRepository(get()) } bind NetworkStateStore::class
     single { PresetRepository(get()) }
     single { SettingsRepository(get()) } bind SettingsStore::class
 
     // --- Presets ---
     single { PresetLibrary(get(), get(), get()) }
+
+    // --- Data Export/Import ---
+    single { DataExportService(get(), get(), get()) }
 
     // --- Fixture provider (empty default — StageViewModelV2 manages fixtures) ---
     single<() -> List<Fixture3D>> { { emptyList() } }

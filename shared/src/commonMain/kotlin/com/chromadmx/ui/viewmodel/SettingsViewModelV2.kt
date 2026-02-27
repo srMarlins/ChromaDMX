@@ -1,12 +1,16 @@
 package com.chromadmx.ui.viewmodel
 
+import com.chromadmx.core.model.BuiltInProfiles
 import com.chromadmx.core.persistence.FixtureStore
 import com.chromadmx.core.persistence.SettingsStore
 import com.chromadmx.networking.DmxTransportRouter
 import com.chromadmx.networking.FixtureDiscovery
 import com.chromadmx.networking.TransportMode
+import com.chromadmx.service.DataExportService
+import com.chromadmx.service.ImportResult
 import com.chromadmx.simulation.fixtures.SimulatedFixtureRig
 import com.chromadmx.ui.state.AgentStatus
+import com.chromadmx.ui.state.DataTransferStatus
 import com.chromadmx.ui.state.SettingsEvent
 import com.chromadmx.ui.state.SettingsUiState
 import kotlinx.coroutines.CoroutineScope
@@ -35,11 +39,15 @@ class SettingsViewModelV2(
     private val fixtureDiscovery: FixtureDiscovery,
     private val scope: CoroutineScope,
     private val fixtureStore: FixtureStore? = null,
+    private val dataExportService: DataExportService? = null,
 ) {
     private val _state = MutableStateFlow(SettingsUiState())
     val state: StateFlow<SettingsUiState> = _state.asStateFlow()
 
     init {
+        // Seed the built-in fixture profiles so they appear immediately.
+        _state.update { it.copy(fixtureProfiles = BuiltInProfiles.all()) }
+
         // Derive simulation state from the persisted repository value.
         scope.launch {
             settingsRepository.isSimulation.collect { sim ->
@@ -75,6 +83,15 @@ class SettingsViewModelV2(
             is SettingsEvent.AddFixtureProfile ->
                 _state.update { it.copy(fixtureProfiles = it.fixtureProfiles + event.profile) }
 
+            is SettingsEvent.UpdateFixtureProfile ->
+                _state.update { st ->
+                    st.copy(
+                        fixtureProfiles = st.fixtureProfiles.map { p ->
+                            if (p.profileId == event.profile.profileId) event.profile else p
+                        }
+                    )
+                }
+
             is SettingsEvent.DeleteFixtureProfile ->
                 _state.update {
                     it.copy(fixtureProfiles = it.fixtureProfiles.filter { p -> p.profileId != event.profileId })
@@ -98,8 +115,10 @@ class SettingsViewModelV2(
             is SettingsEvent.ResetOnboarding ->
                 resetOnboarding()
 
-            is SettingsEvent.ExportAppData -> { /* TODO */ }
-            is SettingsEvent.ImportAppData -> { /* TODO */ }
+            is SettingsEvent.ExportAppData -> handleExport()
+            is SettingsEvent.ImportAppData -> handleImport(event.json)
+            is SettingsEvent.DismissDataTransferStatus ->
+                _state.update { it.copy(dataTransferStatus = DataTransferStatus.Idle) }
         }
     }
 
@@ -150,6 +169,48 @@ class SettingsViewModelV2(
     private fun resetOnboarding() {
         scope.launch {
             settingsRepository.setSetupCompleted(false)
+        }
+    }
+
+    private fun handleExport() {
+        val service = dataExportService ?: run {
+            _state.update {
+                it.copy(dataTransferStatus = DataTransferStatus.Error("Export service not available"))
+            }
+            return
+        }
+        scope.launch {
+            _state.update { it.copy(dataTransferStatus = DataTransferStatus.InProgress) }
+            try {
+                val json = service.export()
+                _state.update { it.copy(dataTransferStatus = DataTransferStatus.ExportReady(json)) }
+            } catch (e: Exception) {
+                _state.update {
+                    it.copy(dataTransferStatus = DataTransferStatus.Error("Export failed: ${e.message}"))
+                }
+            }
+        }
+    }
+
+    private fun handleImport(json: String) {
+        val service = dataExportService ?: run {
+            _state.update {
+                it.copy(dataTransferStatus = DataTransferStatus.Error("Import service not available"))
+            }
+            return
+        }
+        scope.launch {
+            _state.update { it.copy(dataTransferStatus = DataTransferStatus.InProgress) }
+            when (val result = service.import(json)) {
+                is ImportResult.Success -> {
+                    _state.update { it.copy(dataTransferStatus = DataTransferStatus.ImportSuccess) }
+                }
+                is ImportResult.Error -> {
+                    _state.update {
+                        it.copy(dataTransferStatus = DataTransferStatus.Error(result.message))
+                    }
+                }
+            }
         }
     }
 

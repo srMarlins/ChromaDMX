@@ -3,7 +3,10 @@ package com.chromadmx.ui.viewmodel
 import com.chromadmx.agent.controller.FixtureController
 import com.chromadmx.agent.scene.Scene
 import com.chromadmx.core.EffectParams
+import com.chromadmx.core.model.EffectLayerConfig
 import com.chromadmx.core.model.Fixture3D
+import com.chromadmx.core.model.Genre
+import com.chromadmx.core.model.ScenePreset
 import com.chromadmx.core.model.Vec3
 import com.chromadmx.core.persistence.FixtureGroup
 import com.chromadmx.core.persistence.FixtureRepository
@@ -209,6 +212,12 @@ class StageViewModelV2(
             is StageEvent.ToggleEditMode -> handleToggleEditMode()
             is StageEvent.ToggleNodeList -> handleToggleNodeList()
             is StageEvent.DiagnoseNode -> handleDiagnoseNode(event.node)
+            is StageEvent.DismissDiagnostics -> handleDismissDiagnostics()
+
+            // Preset management
+            is StageEvent.SaveCurrentPreset -> handleSaveCurrentPreset(event.name, event.genre)
+            is StageEvent.DeletePreset -> handleDeletePreset(event.id)
+            is StageEvent.ToggleFavorite -> handleToggleFavorite(event.presetId)
 
             // Simulation controls
             is StageEvent.EnableSimulation -> handleEnableSimulation(event.presetName, event.fixtureCount)
@@ -463,10 +472,31 @@ class StageViewModelV2(
         _networkState.update { it.copy(isNodeListOpen = !it.isNodeListOpen) }
     }
 
-    @Suppress("UNUSED_PARAMETER")
     private fun handleDiagnoseNode(node: com.chromadmx.core.model.DmxNode) {
-        // Close the node list overlay; agent integration is handled elsewhere
-        _networkState.update { it.copy(isNodeListOpen = false) }
+        val currentTime = currentTimeMillis()
+        val diagnostics = NodeDiagnostics(
+            nodeName = node.shortName.ifEmpty { node.longName.ifEmpty { "Unknown Node" } },
+            ipAddress = node.ipAddress,
+            macAddress = node.macAddress,
+            firmwareVersion = "v${node.firmwareVersion}",
+            latencyMs = node.latencyMs,
+            universes = node.universes,
+            numPorts = node.numPorts,
+            uptimeMs = if (node.firstSeenMs > 0) currentTime - node.firstSeenMs else 0L,
+            isAlive = node.isAlive(currentTime),
+            lastError = if (!node.isAlive(currentTime)) "Node not responding" else null,
+            frameCount = 0L,
+        )
+        _networkState.update {
+            it.copy(
+                isNodeListOpen = false,
+                diagnosticsResult = diagnostics,
+            )
+        }
+    }
+
+    private fun handleDismissDiagnostics() {
+        _networkState.update { it.copy(diagnosticsResult = null) }
     }
 
     // ── Simulation control handlers ────────────────────────────────────
@@ -499,6 +529,56 @@ class StageViewModelV2(
         }
     }
 
+    // ── Preset management handlers ─────────────────────────────────────
+
+    private fun handleSaveCurrentPreset(name: String, genre: String) {
+        val genreEnum = try {
+            Genre.valueOf(genre.uppercase())
+        } catch (_: Exception) {
+            Genre.CUSTOM
+        }
+        val layers = effectStack.layers
+        val layerConfigs = layers.map { layer ->
+            EffectLayerConfig(
+                effectId = layer.effect.id,
+                params = layer.params,
+                blendMode = layer.blendMode,
+                opacity = layer.opacity,
+                enabled = layer.enabled,
+            )
+        }
+        val id = "user_${name.lowercase().replace(" ", "_")}_${currentTimeMillis()}"
+        val preset = ScenePreset(
+            id = id,
+            name = name,
+            genre = genreEnum,
+            layers = layerConfigs,
+            masterDimmer = effectStack.masterDimmer,
+            isBuiltIn = false,
+            createdAt = currentTimeMillis(),
+            thumbnailColors = emptyList(),
+        )
+        presetLibrary.savePreset(preset)
+        _performanceState.update { it.copy(activeSceneName = name) }
+        syncFromEngine()
+    }
+
+    private fun handleDeletePreset(id: String) {
+        presetLibrary.deletePreset(id)
+        syncFromEngine()
+    }
+
+    private fun handleToggleFavorite(presetId: String) {
+        val current = presetLibrary.getFavorites().toMutableList()
+        if (presetId in current) {
+            current.remove(presetId)
+        } else {
+            current.add(presetId)
+        }
+        presetLibrary.setFavorites(current)
+        _presetState.update { it.copy(favoriteIds = current) }
+    }
+
     // ── Sync helpers ───────────────────────────────────────────────────
 
     private fun syncFromEngine() {
@@ -508,9 +588,13 @@ class StageViewModelV2(
                 layers = effectStack.layers,
             )
         }
+        val presets = presetLibrary.listPresets()
+        val favorites = presetLibrary.getFavorites()
         _presetState.update { state ->
             state.copy(
-                allScenes = presetLibrary.listPresets().map { preset ->
+                allPresets = presets,
+                favoriteIds = favorites,
+                allScenes = presets.map { preset ->
                     Scene(
                         name = preset.name,
                         layers = preset.layers.map { config ->
@@ -538,10 +622,29 @@ class StageViewModelV2(
         }
     }
 
+    /**
+     * Read the latest color frame from the engine's triple buffer and
+     * emit it to the UI.
+     *
+     * Only emits when the engine has published new data (swapRead returns true)
+     * or when the buffer reference has changed (after updateFixtures), which
+     * avoids flooding the SharedFlow with stale BLACK frames that overwrite
+     * the last good colors.
+     */
+    private var lastColorBuffer: Any? = null  // identity tracking for buffer replacement
+
     private fun syncColorsFromEngine() {
         val buffer = engine.colorOutput
-        buffer.swapRead()
-        val colors = buffer.readSlot()
-        _fixtureColors.tryEmit(colors.toList())
+        val bufferChanged = buffer !== lastColorBuffer
+        lastColorBuffer = buffer
+
+        val hasNewData = buffer.swapRead()
+
+        // Emit when the engine has published a new frame, or when the buffer
+        // reference changed (e.g. after updateFixtures) so the UI gets the
+        // correct count even if the engine hasn't ticked yet.
+        if (hasNewData || bufferChanged) {
+            _fixtureColors.tryEmit(buffer.readSlot().toList())
+        }
     }
 }

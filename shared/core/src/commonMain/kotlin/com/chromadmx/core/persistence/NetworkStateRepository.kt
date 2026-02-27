@@ -12,16 +12,30 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 /**
- * Repository for persisting network state and detecting topology changes.
+ * Abstraction for network state persistence, enabling fake implementations in tests.
  */
-class NetworkStateRepository(private val db: ChromaDmxDatabase) {
+interface NetworkStateStore {
+    /** Returns a flow of all known nodes. */
+    fun knownNodes(): Flow<List<KnownNode>>
+
+    /** Saves the list of currently discovered nodes as known nodes. */
+    suspend fun saveKnownNodes(nodes: List<KnownNode>)
+
+    /** Compares the current network topology against the persisted known nodes. */
+    suspend fun detectTopologyChanges(currentNodes: List<DmxNode>): TopologyDiff
+}
+
+/**
+ * SQLDelight-backed repository for persisting network state and detecting topology changes.
+ */
+class NetworkStateRepository(private val db: ChromaDmxDatabase) : NetworkStateStore {
 
     private val queries = db.networkQueries
 
     /**
      * Returns a flow of all known nodes, ordered by last seen time.
      */
-    fun knownNodes(): Flow<List<KnownNode>> {
+    override fun knownNodes(): Flow<List<KnownNode>> {
         return queries.selectAllKnownNodes()
             .asFlow()
             .mapToList(Dispatchers.Default)
@@ -41,7 +55,7 @@ class NetworkStateRepository(private val db: ChromaDmxDatabase) {
     /**
      * Saves the list of currently discovered nodes as known nodes.
      */
-    suspend fun saveKnownNodes(nodes: List<KnownNode>) {
+    override suspend fun saveKnownNodes(nodes: List<KnownNode>) {
         db.transaction {
             nodes.forEach { node ->
                 queries.insertOrReplaceKnownNode(
@@ -59,7 +73,7 @@ class NetworkStateRepository(private val db: ChromaDmxDatabase) {
      * Compares the current network topology against the persisted known nodes.
      * Returns a [TopologyDiff] containing new and lost nodes.
      */
-    suspend fun detectTopologyChanges(currentNodes: List<DmxNode>): TopologyDiff {
+    override suspend fun detectTopologyChanges(currentNodes: List<DmxNode>): TopologyDiff {
         val known = knownNodes().first()
         val knownKeys = known.map { it.nodeKey }.toSet()
         val currentKeys = currentNodes.map { it.nodeKey }.toSet()

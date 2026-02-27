@@ -9,6 +9,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -23,6 +24,7 @@ import com.chromadmx.ui.screen.settings.SettingsScreen
 import com.chromadmx.ui.screen.setup.SetupScreen
 import com.chromadmx.ui.screen.stage.StageScreen
 import com.chromadmx.ui.state.MascotEvent
+import com.chromadmx.ui.state.SetupEvent
 import com.chromadmx.ui.state.StageEvent
 import com.chromadmx.ui.theme.ChromaDmxTheme
 import com.chromadmx.ui.theme.PixelDesign
@@ -32,6 +34,8 @@ import com.chromadmx.ui.viewmodel.SettingsViewModelV2
 import com.chromadmx.ui.viewmodel.SetupViewModel
 import com.chromadmx.ui.viewmodel.StageViewModelV2
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import org.koin.compose.getKoin
 
 /**
@@ -90,6 +94,33 @@ fun ChromaDmxApp() {
                     }
                     AppScreen.Stage -> {
                         if (stageVm != null) {
+                            // Repeat-launch topology check:
+                            // When we land on Stage directly (setup was previously completed),
+                            // trigger a quick network scan and compare against saved topology.
+                            // If changes are detected, show a mascot alert.
+                            if (setupVm != null && mascotVm != null) {
+                                LaunchedEffect(Unit) {
+                                    setupVm.onEvent(SetupEvent.PerformRepeatLaunchCheck)
+
+                                    // Wait for the check to complete
+                                    val result = setupVm.state
+                                        .filter { it.repeatLaunchCheckComplete }
+                                        .first()
+
+                                    if (result.networkChangedSinceLastLaunch) {
+                                        mascotVm.showTopologyAlert(
+                                            addedCount = result.addedNodeCount,
+                                            removedCount = result.removedNodeCount,
+                                        )
+                                    }
+
+                                    // Wire rescan action back to setup
+                                    mascotVm.onRescanRequested = {
+                                        setupVm.onEvent(SetupEvent.RetryNetworkScan)
+                                    }
+                                }
+                            }
+
                             StageScreen(
                                 viewModel = stageVm,
                                 onSettings = {

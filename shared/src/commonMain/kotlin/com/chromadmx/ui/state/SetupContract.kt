@@ -35,6 +35,8 @@ data class SetupUiState(
     val generationProgress: Float = 0f,
     val generationError: String? = null,
     val networkChangedSinceLastLaunch: Boolean = false,
+    val addedNodeCount: Int = 0,
+    val removedNodeCount: Int = 0,
     val repeatLaunchCheckComplete: Boolean = false,
     val isScanningFixtures: Boolean = false,
     val scanActiveFixtures: Set<String> = emptySet(),
