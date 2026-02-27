@@ -2,6 +2,7 @@ package com.chromadmx.ui.di
 
 import com.chromadmx.agent.LightingAgent
 import com.chromadmx.agent.controller.FixtureController
+import com.chromadmx.agent.pregen.PreGenerationService
 import com.chromadmx.core.persistence.FixtureRepository
 import com.chromadmx.core.persistence.FixtureStore
 import com.chromadmx.core.persistence.NetworkStateRepository
@@ -59,6 +60,7 @@ val uiModule = module {
             fixtureDiscovery = get(),
             fixtureStore = get(),
             settingsStore = get(),
+            preGenerationService = getOrNull<PreGenerationService>(),
             scope = vmScope,
         )
     }

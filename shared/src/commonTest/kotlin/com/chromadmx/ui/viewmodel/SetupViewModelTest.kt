@@ -1,10 +1,15 @@
 package com.chromadmx.ui.viewmodel
 
+import com.chromadmx.agent.pregen.PreGenerationService
 import com.chromadmx.core.model.DmxNode
 import com.chromadmx.core.model.Fixture3D
 import com.chromadmx.core.model.Genre
+import com.chromadmx.core.persistence.FileStorage
 import com.chromadmx.core.persistence.FixtureStore
 import com.chromadmx.core.persistence.SettingsStore
+import com.chromadmx.engine.effect.EffectRegistry
+import com.chromadmx.engine.effect.EffectStack
+import com.chromadmx.engine.preset.PresetLibrary
 import com.chromadmx.networking.FixtureDiscovery
 import com.chromadmx.simulation.fixtures.RigPreset
 import com.chromadmx.ui.state.GenreOption
@@ -136,7 +141,29 @@ class SetupViewModelTest {
         val isSimulationValue get() = _isSimulation
     }
 
+    /**
+     * Simple in-memory [FileStorage] for tests that need [PresetLibrary].
+     */
+    private class TestFileStorage : FileStorage {
+        private val files = mutableMapOf<String, String>()
+        override fun saveFile(path: String, content: String) { files[path] = content }
+        override fun readFile(path: String): String? = files[path]
+        override fun deleteFile(path: String): Boolean = files.remove(path) != null
+        override fun listFiles(directory: String): List<String> =
+            files.keys.filter { it.startsWith(directory) }.map { it.substringAfterLast("/") }
+        override fun exists(path: String): Boolean = files.containsKey(path)
+        override fun mkdirs(directory: String) {}
+    }
+
     // -- Test helpers --
+
+    /**
+     * Create a [PreGenerationService] backed by an in-memory [PresetLibrary].
+     */
+    private fun createPreGenService(): PreGenerationService {
+        val library = PresetLibrary(TestFileStorage(), EffectRegistry(), EffectStack())
+        return PreGenerationService(library)
+    }
 
     /**
      * Create a ViewModel with an UnconfinedTestDispatcher-based scope so
@@ -146,12 +173,14 @@ class SetupViewModelTest {
         discovery: FakeFixtureDiscovery = FakeFixtureDiscovery(),
         fixtureStore: FakeFixtureStore = FakeFixtureStore(),
         settingsStore: FakeSettingsStore = FakeSettingsStore(),
+        preGenerationService: PreGenerationService? = null,
         scope: CoroutineScope,
     ): SetupViewModel {
         return SetupViewModel(
             fixtureDiscovery = discovery,
             fixtureStore = fixtureStore,
             settingsStore = settingsStore,
+            preGenerationService = preGenerationService,
             scope = scope,
         )
     }
@@ -589,5 +618,98 @@ class SetupViewModelTest {
         testScheduler.advanceTimeBy(SetupViewModel.SCAN_DURATION_MS + 1)
         testScheduler.runCurrent()
         assertFalse(vm.state.value.isScanning)
+    }
+
+    // -- Genre generation wiring --
+
+    @Test
+    fun confirmGenreTriggersPresetGeneration() = runTest {
+        val preGenService = createPreGenService()
+        val vm = createVm(
+            preGenerationService = preGenService,
+            scope = unconfinedScope(testScheduler),
+        )
+
+        // Navigate to VIBE_CHECK
+        vm.onEvent(SetupEvent.Advance) // -> NETWORK_DISCOVERY
+        vm.onEvent(SetupEvent.Advance) // -> FIXTURE_SCAN
+        vm.onEvent(SetupEvent.Advance) // -> VIBE_CHECK
+
+        val genre = GenreOption("techno", "Techno", 0xFFFF0040, Genre.TECHNO)
+        vm.onEvent(SetupEvent.SelectGenre(genre))
+        vm.onEvent(SetupEvent.ConfirmGenre)
+
+        // Should have advanced to STAGE_PREVIEW
+        assertEquals(SetupStep.STAGE_PREVIEW, vm.state.value.currentStep)
+
+        // Generation should have completed (synchronous in unconfined dispatcher)
+        assertFalse(vm.state.value.isGenerating)
+        assertEquals(1f, vm.state.value.generationProgress)
+        assertEquals(SetupViewModel.GENRE_PRESET_COUNT, vm.state.value.matchingPresetCount)
+    }
+
+    @Test
+    fun confirmGenreWithoutServiceStillAdvances() = runTest {
+        // No preGenerationService — should not crash
+        val vm = createVm(scope = unconfinedScope(testScheduler))
+
+        // Navigate to VIBE_CHECK
+        vm.onEvent(SetupEvent.Advance) // -> NETWORK_DISCOVERY
+        vm.onEvent(SetupEvent.Advance) // -> FIXTURE_SCAN
+        vm.onEvent(SetupEvent.Advance) // -> VIBE_CHECK
+
+        val genre = GenreOption("techno", "Techno", 0xFFFF0040, Genre.TECHNO)
+        vm.onEvent(SetupEvent.SelectGenre(genre))
+        vm.onEvent(SetupEvent.ConfirmGenre)
+
+        // Should still advance to STAGE_PREVIEW
+        assertEquals(SetupStep.STAGE_PREVIEW, vm.state.value.currentStep)
+        // No generation progress since service is null
+        assertFalse(vm.state.value.isGenerating)
+        assertEquals(0f, vm.state.value.generationProgress)
+    }
+
+    @Test
+    fun confirmGenreWithoutSelectionSkipsGeneration() = runTest {
+        val preGenService = createPreGenService()
+        val vm = createVm(
+            preGenerationService = preGenService,
+            scope = unconfinedScope(testScheduler),
+        )
+
+        // Navigate to VIBE_CHECK without selecting a genre
+        vm.onEvent(SetupEvent.Advance) // -> NETWORK_DISCOVERY
+        vm.onEvent(SetupEvent.Advance) // -> FIXTURE_SCAN
+        vm.onEvent(SetupEvent.Advance) // -> VIBE_CHECK
+
+        vm.onEvent(SetupEvent.ConfirmGenre)
+
+        // Should advance but no generation
+        assertEquals(SetupStep.STAGE_PREVIEW, vm.state.value.currentStep)
+        assertEquals(0f, vm.state.value.generationProgress)
+    }
+
+    @Test
+    fun generationProgressMapsToUiState() = runTest {
+        val preGenService = createPreGenService()
+        val vm = createVm(
+            preGenerationService = preGenService,
+            scope = unconfinedScope(testScheduler),
+        )
+
+        // Navigate to VIBE_CHECK
+        vm.onEvent(SetupEvent.Advance) // -> NETWORK_DISCOVERY
+        vm.onEvent(SetupEvent.Advance) // -> FIXTURE_SCAN
+        vm.onEvent(SetupEvent.Advance) // -> VIBE_CHECK
+
+        val genre = GenreOption("ambient", "Ambient", 0xFF0044FF, Genre.AMBIENT)
+        vm.onEvent(SetupEvent.SelectGenre(genre))
+        vm.onEvent(SetupEvent.ConfirmGenre)
+
+        // After completion, progress should be 1.0 (4/4)
+        assertEquals(1f, vm.state.value.generationProgress)
+        assertEquals(SetupViewModel.GENRE_PRESET_COUNT, vm.state.value.matchingPresetCount)
+        assertFalse(vm.state.value.isGenerating)
+        assertNull(vm.state.value.generationError)
     }
 }

@@ -1,5 +1,6 @@
 package com.chromadmx.ui.viewmodel
 
+import com.chromadmx.agent.pregen.PreGenerationService
 import com.chromadmx.core.model.Genre
 import com.chromadmx.core.persistence.FixtureStore
 import com.chromadmx.core.persistence.SettingsStore
@@ -35,12 +36,14 @@ import kotlinx.coroutines.launch
  * @param fixtureDiscovery Abstracted discovery (real Art-Net or simulated).
  * @param fixtureStore Persistence for fixture data.
  * @param settingsStore Key-value settings persistence.
+ * @param preGenerationService Service for batch-generating genre presets.
  * @param scope Coroutine scope for async work.
  */
 class SetupViewModel(
     private val fixtureDiscovery: FixtureDiscovery,
     private val fixtureStore: FixtureStore,
     private val settingsStore: SettingsStore,
+    private val preGenerationService: PreGenerationService? = null,
     private val scope: CoroutineScope,
 ) {
     private val _state = MutableStateFlow(
@@ -73,6 +76,26 @@ class SetupViewModel(
         scope.launch {
             fixtureDiscovery.isScanning.collect { scanning ->
                 _state.update { it.copy(isScanning = scanning) }
+            }
+        }
+
+        // Collect generation progress into UI state
+        preGenerationService?.let { service ->
+            scope.launch {
+                service.progress.collect { progress ->
+                    val fraction = if (progress.total > 0) {
+                        progress.current.toFloat() / progress.total.toFloat()
+                    } else {
+                        0f
+                    }
+                    _state.update {
+                        it.copy(
+                            isGenerating = progress.isRunning,
+                            generationProgress = fraction,
+                            matchingPresetCount = progress.current,
+                        )
+                    }
+                }
             }
         }
     }
@@ -203,9 +226,28 @@ class SetupViewModel(
     }
 
     /**
-     * Confirm genre selection and advance to the next step.
+     * Confirm genre selection, launch preset generation, and advance to the next step.
+     *
+     * Generation runs asynchronously while the Stage Preview step is shown,
+     * so the user sees progress feedback as presets are created.
      */
     private fun confirmGenre() {
+        val genre = _state.value.selectedGenre
+        if (genre != null && preGenerationService != null) {
+            val genreName = genre.genre?.name ?: genre.id
+            scope.launch {
+                try {
+                    preGenerationService.generate(genreName, count = GENRE_PRESET_COUNT)
+                } catch (e: Exception) {
+                    _state.update {
+                        it.copy(
+                            isGenerating = false,
+                            generationError = e.message ?: "Generation failed",
+                        )
+                    }
+                }
+            }
+        }
         advance()
     }
 
@@ -313,6 +355,9 @@ class SetupViewModel(
 
         /** Maximum number of nodes to persist (DoS prevention). */
         const val MAX_PERSISTED_NODES = 50
+
+        /** Number of presets to generate per genre. */
+        const val GENRE_PRESET_COUNT = 4
 
         /**
          * All eight genre options matching the core [Genre] enum.
