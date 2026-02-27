@@ -12,7 +12,6 @@ kotlin {
         commonTest.dependencies {
             implementation(project(":shared:engine"))
             implementation(project(":shared:tempo"))
-            implementation(project(":shared:vision"))
         }
     }
 }
