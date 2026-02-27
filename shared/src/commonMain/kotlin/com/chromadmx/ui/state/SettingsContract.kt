@@ -25,6 +25,17 @@ sealed interface AgentStatus {
 }
 
 /**
+ * Status of an export or import operation.
+ */
+sealed interface DataTransferStatus {
+    data object Idle : DataTransferStatus
+    data object InProgress : DataTransferStatus
+    data class ExportReady(val json: String) : DataTransferStatus
+    data object ImportSuccess : DataTransferStatus
+    data class Error(val message: String) : DataTransferStatus
+}
+
+/**
  * UI State for the Settings screen.
  */
 @Immutable
@@ -45,7 +56,10 @@ data class SettingsUiState(
 
     // Agent Settings
     val agentConfig: AgentConfig = AgentConfig(),
-    val agentStatus: AgentStatus = AgentStatus.Idle
+    val agentStatus: AgentStatus = AgentStatus.Idle,
+
+    // Export / Import
+    val dataTransferStatus: DataTransferStatus = DataTransferStatus.Idle,
 )
 
 /**
@@ -68,5 +82,6 @@ sealed interface SettingsEvent {
     data object TestAgentConnection : SettingsEvent
     data object ResetOnboarding : SettingsEvent
     data object ExportAppData : SettingsEvent
-    data object ImportAppData : SettingsEvent
+    data class ImportAppData(val json: String) : SettingsEvent
+    data object DismissDataTransferStatus : SettingsEvent
 }

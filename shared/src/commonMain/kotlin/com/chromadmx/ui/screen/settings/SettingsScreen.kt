@@ -45,6 +45,7 @@ import com.chromadmx.ui.components.PixelSlider
 import com.chromadmx.ui.components.PixelSwitch
 import com.chromadmx.ui.components.PixelTextField
 import com.chromadmx.ui.state.AgentStatus
+import com.chromadmx.ui.state.DataTransferStatus
 import com.chromadmx.ui.state.ProtocolType
 import com.chromadmx.ui.state.SettingsEvent
 import com.chromadmx.ui.state.SettingsUiState
@@ -103,7 +104,13 @@ fun SettingsScreen(
             // Hardware section
             item { HardwareSection(onProvisioning) }
             // App section (destructive)
-            item { AppSection(viewModel::onEvent, onShowResetDialog = { showResetDialog = true }) }
+            item {
+                AppSection(
+                    state = state,
+                    onEvent = viewModel::onEvent,
+                    onShowResetDialog = { showResetDialog = true },
+                )
+            }
             // Version footer
             item { VersionFooter() }
         }
@@ -734,9 +741,15 @@ private fun HardwareSection(onProvisioning: () -> Unit) {
 
 @Composable
 private fun AppSection(
+    state: SettingsUiState,
     onEvent: (SettingsEvent) -> Unit,
     onShowResetDialog: () -> Unit,
 ) {
+    var showImportDialog by remember { mutableStateOf(false) }
+    var importText by remember { mutableStateOf("") }
+
+    val isTransferring = state.dataTransferStatus is DataTransferStatus.InProgress
+
     PixelCard(
         title = { PixelSectionTitle(title = "App") },
     ) {
@@ -752,26 +765,103 @@ private fun AppSection(
                 Text("Reset Onboarding")
             }
 
-            // Export / Import (disabled TODO)
+            // Export / Import
             Row(
                 horizontalArrangement = Arrangement.spacedBy(PixelDesign.spacing.small),
             ) {
                 PixelButton(
                     onClick = { onEvent(SettingsEvent.ExportAppData) },
                     variant = PixelButtonVariant.Secondary,
-                    enabled = false,
+                    enabled = !isTransferring,
                     modifier = Modifier.weight(1f),
                 ) {
-                    Text("Export Data")
+                    Text(if (isTransferring) "Exporting..." else "Export Data")
                 }
                 PixelButton(
-                    onClick = { onEvent(SettingsEvent.ImportAppData) },
+                    onClick = { showImportDialog = true },
                     variant = PixelButtonVariant.Secondary,
-                    enabled = false,
+                    enabled = !isTransferring,
                     modifier = Modifier.weight(1f),
                 ) {
-                    Text("Import Data")
+                    Text(if (isTransferring) "Importing..." else "Import Data")
                 }
+            }
+
+            // Status messages
+            when (val status = state.dataTransferStatus) {
+                is DataTransferStatus.ExportReady -> {
+                    Text(
+                        text = "Export ready (${status.json.length} chars)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = PixelDesign.colors.success,
+                    )
+                }
+                is DataTransferStatus.ImportSuccess -> {
+                    Text(
+                        text = "Import successful!",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = PixelDesign.colors.success,
+                    )
+                }
+                is DataTransferStatus.Error -> {
+                    Text(
+                        text = status.message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = PixelDesign.colors.error,
+                    )
+                }
+                else -> {} // Idle or InProgress — no extra text
+            }
+        }
+    }
+
+    // Import dialog
+    if (showImportDialog) {
+        PixelDialog(
+            onDismissRequest = {
+                showImportDialog = false
+                importText = ""
+            },
+            title = "Import Data",
+            confirmButton = {
+                PixelButton(
+                    onClick = {
+                        if (importText.isNotBlank()) {
+                            onEvent(SettingsEvent.ImportAppData(importText))
+                        }
+                        showImportDialog = false
+                        importText = ""
+                    },
+                    variant = PixelButtonVariant.Primary,
+                ) {
+                    Text("Import")
+                }
+            },
+            dismissButton = {
+                PixelButton(
+                    onClick = {
+                        showImportDialog = false
+                        importText = ""
+                    },
+                    variant = PixelButtonVariant.Secondary,
+                ) {
+                    Text("Cancel")
+                }
+            },
+        ) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(PixelDesign.spacing.small),
+            ) {
+                Text(
+                    text = "Paste your exported JSON data below:",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                PixelTextField(
+                    value = importText,
+                    onValueChange = { importText = it },
+                    label = "JSON Data",
+                    modifier = Modifier.fillMaxWidth().height(160.dp),
+                )
             }
         }
     }

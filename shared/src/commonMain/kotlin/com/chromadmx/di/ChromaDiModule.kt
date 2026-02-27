@@ -23,6 +23,7 @@ import com.chromadmx.engine.effects.StrobeEffect
 import com.chromadmx.engine.effects.WaveEffect3DEffect
 import com.chromadmx.engine.pipeline.EffectEngine
 import com.chromadmx.engine.preset.PresetLibrary
+import com.chromadmx.service.DataExportService
 import com.chromadmx.networking.DmxTransport
 import com.chromadmx.networking.DmxTransportRouter
 import com.chromadmx.networking.FixtureDiscovery
@@ -135,6 +136,9 @@ val chromaDiModule = module {
 
     // --- Presets ---
     single { PresetLibrary(get(), get(), get()) }
+
+    // --- Data Export/Import ---
+    single { DataExportService(get(), get(), get()) }
 
     // --- Fixture provider (empty default — StageViewModelV2 manages fixtures) ---
     single<() -> List<Fixture3D>> { { emptyList() } }
