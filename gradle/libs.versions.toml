@@ -30,6 +30,9 @@ ktor = "3.4.0"
 # Atomicfu
 kotlinx-atomicfu = "0.31.0"
 
+# Collections
+kotlinx-collections-immutable = "0.3.8"
+
 # Koog AI Agent
 koog = "0.6.3"
 
@@ -83,6 +86,9 @@ androidx-camera-view = { module = "androidx.camera:camera-view", version.ref = "
 
 # Atomicfu
 kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "kotlinx-atomicfu" }
+
+# Collections
+kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinx-collections-immutable" }
 
 # Koog AI Agent
 koog-agents = { module = "ai.koog:koog-agents", version.ref = "koog" }
