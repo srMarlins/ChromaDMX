@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.input.pointer.pointerInput
 import com.chromadmx.core.model.BuiltInProfiles
 import com.chromadmx.core.model.Fixture3D
+import com.chromadmx.core.model.FixtureType
 import com.chromadmx.core.model.RenderHint
 import com.chromadmx.core.model.Color as DmxColor
 
@@ -26,6 +27,12 @@ private val TrussColor = Color(0xFF2A2A3E)
 
 /** Floor color beneath the stage. */
 private val FloorColor = Color(0xFF0A0A14)
+
+/** Standardized dark fixture housing color. */
+private val HousingColor = Color(0xFF1A1A2E)
+
+/** Lighter border for fixture housing. */
+private val HousingBorderColor = Color(0xFF2A2A3E)
 
 /**
  * Front-facing audience perspective of the stage.
@@ -91,15 +98,38 @@ fun AudienceView(
         val maxX = fixtures.maxOf { it.position.x }
         val rangeX = (maxX - minX).coerceAtLeast(1f)
 
+        // Compute Z bounds for vertical placement
+        val minZ = fixtures.minOf { it.position.z }
+        val maxZ = fixtures.maxOf { it.position.z }
+        val rangeZ = maxZ - minZ
+
         val padding = 60f
         val availableW = size.width - 2 * padding
         val stageH = stageBottom - stageTop
 
-        // Draw truss bars (two horizontal bars across the stage)
-        val trussY1 = stageTop + stageH * 0.15f
-        val trussY2 = stageTop + stageH * 0.45f
-        drawTruss(padding - 20f, trussY1, availableW + 40f)
-        drawTruss(padding - 20f, trussY2, availableW + 40f)
+        // Place trusses based on actual fixture Z heights
+        val trussY1 = stageTop + stageH * 0.15f // upper truss
+        val trussY2 = stageTop + stageH * 0.45f // lower truss
+
+        // Collect distinct Z levels for truss drawing
+        val zLevels = mutableSetOf<Float>()
+        for (f in fixtures) {
+            // Round to nearest 0.1 to group nearby fixtures
+            zLevels.add((f.position.z * 10f).let { kotlin.math.round(it) } / 10f)
+        }
+
+        // Draw truss bars through actual fixture heights
+        if (rangeZ < 0.1f) {
+            // All fixtures at same height — one truss
+            drawTruss(padding - 20f, trussY1, availableW + 40f)
+        } else {
+            // Draw a truss for each distinct Z level
+            for (z in zLevels) {
+                val normZ = ((z - minZ) / rangeZ).coerceIn(0f, 1f)
+                val trussY = trussY2 + (trussY1 - trussY2) * normZ
+                drawTruss(padding - 20f, trussY, availableW + 40f)
+            }
+        }
 
         // Reusable Path to avoid allocations inside the fixture loop
         val reusablePath = Path()
@@ -115,18 +145,40 @@ fun AudienceView(
             val profile = BuiltInProfiles.findById(fixture.fixture.profileId)
             val renderHint = profile?.renderHint ?: RenderHint.POINT
 
-            // Place fixtures on trusses based on their Z position
-            // Higher Z (upstage) goes on the upper truss, lower Z on the lower truss
-            val fixtureY = if (fixture.position.z > 0.5f) trussY1 else trussY2
+            // Place fixtures based on actual Z position
+            val fixtureY = if (rangeZ < 0.1f) {
+                // All same height — place on single upper truss
+                trussY1
+            } else {
+                // Interpolate between trusses based on Z
+                val normZ = ((fixture.position.z - minZ) / rangeZ).coerceIn(0f, 1f)
+                trussY2 + (trussY1 - trussY2) * normZ
+            }
+
+            // Subtle depth scaling: further from audience (higher Y) = slightly smaller
+            val depthScale = if (fixtures.size > 1) {
+                val minY = fixtures.minOf { it.position.y }
+                val maxY = fixtures.maxOf { it.position.y }
+                val rangeY = (maxY - minY).coerceAtLeast(1f)
+                val normY = ((fixture.position.y - minY) / rangeY).coerceIn(0f, 1f)
+                1f - normY * 0.15f // 0.85x to 1x scale
+            } else 1f
 
             when (renderHint) {
-                RenderHint.POINT -> drawAudiencePoint(fx, fixtureY, composeColor, floorTop, reusablePath)
+                RenderHint.POINT -> {
+                    val fixtureType = profile?.type ?: FixtureType.PAR
+                    when (fixtureType) {
+                        FixtureType.STROBE -> drawAudienceStrobe(fx, fixtureY, composeColor, floorTop, depthScale)
+                        FixtureType.WASH -> drawAudienceWash(fx, fixtureY, composeColor, floorTop, reusablePath, depthScale)
+                        else -> drawAudiencePar(fx, fixtureY, composeColor, floorTop, reusablePath, depthScale)
+                    }
+                }
                 RenderHint.BAR -> {
                     val pixelCount = profile?.physical?.pixelCount ?: 8
-                    drawAudienceBar(fx, fixtureY, composeColor, pixelCount)
+                    drawAudienceBar(fx, fixtureY, composeColor, pixelCount, depthScale)
                 }
                 RenderHint.BEAM_CONE -> {
-                    drawAudienceBeamCone(fx, fixtureY, composeColor, floorTop, reusablePath)
+                    drawAudienceBeamCone(fx, fixtureY, composeColor, floorTop, reusablePath, depthScale)
                 }
             }
 
@@ -160,65 +212,162 @@ private fun DrawScope.drawTruss(x: Float, y: Float, width: Float) {
 }
 
 /**
- * Draw a POINT fixture from audience perspective — glowing dot on truss.
+ * Draw a PAR fixture from audience perspective — square housing with lens and downward wash.
  */
-private fun DrawScope.drawAudiencePoint(
+private fun DrawScope.drawAudiencePar(
     fx: Float,
     fy: Float,
     color: Color,
     floorY: Float,
     reusablePath: Path,
+    scale: Float = 1f,
 ) {
-    // Glow halo
+    val housingSize = 14f * scale
+    val half = housingSize / 2f
+    val lensInset = 2f * scale
+
+    // Radial glow
     drawCircle(
-        color = color.copy(alpha = 0.2f),
-        radius = 20f,
+        brush = Brush.radialGradient(
+            colors = listOf(color.copy(alpha = 0.3f), Color.Transparent),
+            center = Offset(fx, fy),
+            radius = 20f * scale,
+        ),
+        radius = 20f * scale,
         center = Offset(fx, fy),
     )
-    // Main circle
-    drawCircle(
-        color = color.copy(alpha = 0.7f),
-        radius = 12f,
-        center = Offset(fx, fy),
-    )
-    // Bright core
-    drawCircle(
-        color = color,
-        radius = 7f,
-        center = Offset(fx, fy),
-    )
+    // Housing
+    drawRect(HousingBorderColor, Offset(fx - half - 1f, fy - half - 1f), Size(housingSize + 2f, housingSize + 2f))
+    drawRect(HousingColor, Offset(fx - half, fy - half), Size(housingSize, housingSize))
+    // Lens
+    val lensSize = housingSize - 2 * lensInset
+    drawRect(color, Offset(fx - half + lensInset, fy - half + lensInset), Size(lensSize, lensSize))
 
     // Downward light wash
     reusablePath.reset()
-    reusablePath.moveTo(fx - 5f, fy + 10f)
-    reusablePath.lineTo(fx - 25f, floorY)
-    reusablePath.lineTo(fx + 25f, floorY)
-    reusablePath.lineTo(fx + 5f, fy + 10f)
+    reusablePath.moveTo(fx - 5f * scale, fy + half + 2f)
+    reusablePath.lineTo(fx - 25f * scale, floorY)
+    reusablePath.lineTo(fx + 25f * scale, floorY)
+    reusablePath.lineTo(fx + 5f * scale, fy + half + 2f)
     reusablePath.close()
-    drawPath(
-        path = reusablePath,
-        color = color.copy(alpha = 0.06f),
+    drawPath(reusablePath, color.copy(alpha = 0.06f))
+}
+
+/**
+ * Draw a STROBE fixture from audience perspective — wide rectangular flash panel.
+ */
+private fun DrawScope.drawAudienceStrobe(
+    fx: Float,
+    fy: Float,
+    color: Color,
+    floorY: Float,
+    scale: Float = 1f,
+) {
+    val width = 20f * scale
+    val height = 8f * scale
+    val halfW = width / 2f
+    val halfH = height / 2f
+
+    // Sharp flash glow
+    drawCircle(
+        brush = Brush.radialGradient(
+            colors = listOf(Color.White.copy(alpha = 0.25f), Color.Transparent),
+            center = Offset(fx, fy),
+            radius = 24f * scale,
+        ),
+        radius = 24f * scale,
+        center = Offset(fx, fy),
+    )
+    // Housing
+    drawRect(HousingBorderColor, Offset(fx - halfW - 1f, fy - halfH - 1f), Size(width + 2f, height + 2f))
+    drawRect(HousingColor, Offset(fx - halfW, fy - halfH), Size(width, height))
+    // Flash panel
+    val flashColor = Color(
+        red = (color.red + 1f) / 2f,
+        green = (color.green + 1f) / 2f,
+        blue = (color.blue + 1f) / 2f,
+    )
+    drawRect(flashColor, Offset(fx - halfW + 2f, fy - halfH + 2f), Size(width - 4f, height - 4f))
+
+    // Downward flash wash (wider, sharper)
+    drawRect(
+        brush = Brush.verticalGradient(
+            colors = listOf(Color.White.copy(alpha = 0.08f), Color.Transparent),
+            startY = fy + halfH,
+            endY = floorY,
+        ),
+        topLeft = Offset(fx - halfW, fy + halfH),
+        size = Size(width, floorY - fy - halfH),
     )
 }
 
 /**
- * Draw a BAR fixture from audience perspective — row of colored segments on truss.
+ * Draw a WASH fixture from audience perspective — larger housing with wide soft glow.
+ */
+private fun DrawScope.drawAudienceWash(
+    fx: Float,
+    fy: Float,
+    color: Color,
+    floorY: Float,
+    reusablePath: Path,
+    scale: Float = 1f,
+) {
+    val housingSize = 16f * scale
+    val half = housingSize / 2f
+    val lensRadius = 6f * scale
+
+    // Wide soft glow
+    drawCircle(
+        brush = Brush.radialGradient(
+            colors = listOf(color.copy(alpha = 0.2f), Color.Transparent),
+            center = Offset(fx, fy),
+            radius = 30f * scale,
+        ),
+        radius = 30f * scale,
+        center = Offset(fx, fy),
+    )
+    // Housing
+    drawRect(HousingBorderColor, Offset(fx - half - 1f, fy - half - 1f), Size(housingSize + 2f, housingSize + 2f))
+    drawRect(HousingColor, Offset(fx - half, fy - half), Size(housingSize, housingSize))
+    // Round lens
+    drawCircle(color, radius = lensRadius, center = Offset(fx, fy))
+
+    // Wide downward light wash (broader than par)
+    reusablePath.reset()
+    reusablePath.moveTo(fx - 8f * scale, fy + half + 2f)
+    reusablePath.lineTo(fx - 40f * scale, floorY)
+    reusablePath.lineTo(fx + 40f * scale, floorY)
+    reusablePath.lineTo(fx + 8f * scale, fy + half + 2f)
+    reusablePath.close()
+    drawPath(reusablePath, color.copy(alpha = 0.05f))
+}
+
+/**
+ * Draw a BAR fixture from audience perspective — row of colored segments with bidirectional glow.
  */
 private fun DrawScope.drawAudienceBar(
     fx: Float,
     fy: Float,
     color: Color,
     pixelCount: Int,
+    scale: Float = 1f,
 ) {
-    val segW = 6f
-    val segH = 10f
-    val gap = 1.5f
+    val segW = 6f * scale
+    val segH = 10f * scale
+    val gap = 1.5f * scale
     val totalW = pixelCount * segW + (pixelCount - 1) * gap
     val startX = fx - totalW / 2f
 
+    // Upward glow (LED tubes emit light upward too)
+    drawRect(
+        color = color.copy(alpha = 0.08f),
+        topLeft = Offset(startX - 4f, fy - segH / 2f - 14f * scale),
+        size = Size(totalW + 8f, 12f * scale),
+    )
+
     // Bar housing
     drawRect(
-        color = Color(0xFF1A1A2E),
+        color = HousingColor,
         topLeft = Offset(startX - 2f, fy - segH / 2f - 2f),
         size = Size(totalW + 4f, segH + 4f),
     )
@@ -237,12 +386,12 @@ private fun DrawScope.drawAudienceBar(
     drawRect(
         color = color.copy(alpha = 0.1f),
         topLeft = Offset(startX - 4f, fy + segH / 2f + 2f),
-        size = Size(totalW + 8f, 12f),
+        size = Size(totalW + 8f, 12f * scale),
     )
 }
 
 /**
- * Draw a BEAM_CONE fixture from audience perspective — circle with visible beam cone down.
+ * Draw a BEAM_CONE fixture from audience perspective — square housing with visible beam cone down.
  */
 private fun DrawScope.drawAudienceBeamCone(
     fx: Float,
@@ -250,42 +399,36 @@ private fun DrawScope.drawAudienceBeamCone(
     color: Color,
     floorY: Float,
     reusablePath: Path,
+    scale: Float = 1f,
 ) {
+    val housingSize = 12f * scale
+    val half = housingSize / 2f
     val beamLength = floorY - fy - 10f
-    val beamTopWidth = 6f
-    val beamBottomWidth = 35f
+    val beamTopWidth = 6f * scale
+    val beamBottomWidth = 35f * scale
 
     // Beam cone
     reusablePath.reset()
-    reusablePath.moveTo(fx - beamTopWidth, fy + 10f)
+    reusablePath.moveTo(fx - beamTopWidth, fy + half + 2f)
     reusablePath.lineTo(fx - beamBottomWidth, fy + beamLength)
     reusablePath.lineTo(fx + beamBottomWidth, fy + beamLength)
-    reusablePath.lineTo(fx + beamTopWidth, fy + 10f)
+    reusablePath.lineTo(fx + beamTopWidth, fy + half + 2f)
     reusablePath.close()
-    drawPath(
-        path = reusablePath,
-        color = color.copy(alpha = 0.08f),
-    )
+    drawPath(reusablePath, color.copy(alpha = 0.08f))
 
     // Beam center line (brighter)
     drawLine(
         color = color.copy(alpha = 0.15f),
-        start = Offset(fx, fy + 10f),
+        start = Offset(fx, fy + half + 2f),
         end = Offset(fx, fy + beamLength),
-        strokeWidth = 3f,
+        strokeWidth = 3f * scale,
     )
 
-    // Fixture body
-    drawCircle(
-        color = Color(0xFF2A2A3E),
-        radius = 10f,
-        center = Offset(fx, fy),
-    )
-    drawCircle(
-        color = color,
-        radius = 6f,
-        center = Offset(fx, fy),
-    )
+    // Square housing
+    drawRect(HousingBorderColor, Offset(fx - half - 1f, fy - half - 1f), Size(housingSize + 2f, housingSize + 2f))
+    drawRect(HousingColor, Offset(fx - half, fy - half), Size(housingSize, housingSize))
+    // Lens
+    drawRect(color, Offset(fx - half + 2f, fy - half + 2f), Size(housingSize - 4f, housingSize - 4f))
 }
 
 /**

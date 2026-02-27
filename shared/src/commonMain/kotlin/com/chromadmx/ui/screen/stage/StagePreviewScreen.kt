@@ -60,7 +60,9 @@ import com.chromadmx.ui.components.PresetStrip
 import com.chromadmx.ui.components.SimulationBadge
 import com.chromadmx.ui.components.VenueCanvas
 import com.chromadmx.ui.components.beat.BeatBar
+import com.chromadmx.ui.components.toComposeColor
 import com.chromadmx.ui.components.pixelBorder
+import com.chromadmx.ui.renderer.IsometricRenderer
 import com.chromadmx.ui.screen.network.NodeListOverlay
 import com.chromadmx.ui.state.FixtureState
 import com.chromadmx.ui.state.IsoAngle
@@ -146,9 +148,10 @@ fun StageScreen(
                     modifier = Modifier.fillMaxSize(),
                 )
 
-                ViewMode.ISO -> IsometricPlaceholder(
+                ViewMode.ISO -> IsometricRenderer(
                     fixtureState = fixtureState,
                     viewState = viewState,
+                    fixtureColors = fixtureState.fixtureColors.map { it.toComposeColor() },
                     onFixtureTapped = { viewModel.onEvent(StageEvent.SelectFixture(it)) },
                     onBackgroundTapped = { viewModel.onEvent(StageEvent.SelectFixture(null)) },
                     modifier = Modifier.fillMaxSize(),
@@ -653,52 +656,6 @@ private fun FixtureEditSheet(
             ) {
                 Text("DELETE", fontSize = 8.sp)
             }
-        }
-    }
-}
-
-// ============================================================================
-// IsometricPlaceholder — Placeholder for the isometric renderer.
-// Will be replaced by the full IsometricRenderer composable from the
-// renderer module once it lands (issue #92).
-// ============================================================================
-
-@Composable
-private fun IsometricPlaceholder(
-    fixtureState: FixtureState,
-    viewState: ViewState,
-    onFixtureTapped: (Int) -> Unit,
-    onBackgroundTapped: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    // Until the full IsometricRenderer composable is available, render
-    // the top-down VenueCanvas with a label overlay indicating ISO mode.
-    Box(modifier = modifier) {
-        VenueCanvas(
-            fixtures = fixtureState.fixtures,
-            fixtureColors = fixtureState.fixtureColors,
-            selectedFixtureIndex = fixtureState.selectedFixtureIndex,
-            isEditMode = fixtureState.isEditMode,
-            onFixtureTapped = onFixtureTapped,
-            onBackgroundTapped = onBackgroundTapped,
-            modifier = Modifier.fillMaxSize(),
-        )
-        // Overlay badge indicating isometric mode
-        PixelCard(
-            backgroundColor = PixelDesign.colors.surface.copy(alpha = 0.85f),
-            borderColor = PixelDesign.colors.primary.copy(alpha = 0.5f),
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(12.dp),
-        ) {
-            Text(
-                text = "ISO ${viewState.isoAngle.name}",
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontFamily = PixelFontFamily,
-                    fontSize = 8.sp,
-                ),
-                color = PixelDesign.colors.primary,
-            )
         }
     }
 }
