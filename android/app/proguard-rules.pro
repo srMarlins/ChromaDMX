@@ -1,11 +1,12 @@
 # ============================================================
 # ChromaDMX R8 / ProGuard Rules
 # ============================================================
-# Deliberately broad for v1 — correctness over APK size.
-# Tighten rules once release builds are stable.
 
-# --- App classes (Koin uses reflection for DI) ---
--keep class com.chromadmx.** { *; }
+# --- Koin DI (reflection-based injection) ---
+# Keep classes that Koin instantiates via reflection (modules, viewmodels)
+-keep class com.chromadmx.**.di.* { *; }
+-keep class com.chromadmx.**ViewModel { *; }
+-keep class com.chromadmx.**ViewModel$* { *; }
 
 # --- kotlinx-serialization ---
 -keepattributes *Annotation*, InnerClasses
@@ -24,20 +25,23 @@
     kotlinx.serialization.KSerializer serializer(...);
 }
 
-# --- Ktor / OkHttp ---
--keep class io.ktor.** { *; }
+# --- Ktor ---
+-keep class io.ktor.serialization.** { *; }
+-keep class io.ktor.client.engine.** { *; }
+-keep class io.ktor.server.engine.** { *; }
+-keep class io.ktor.utils.io.** { *; }
 -dontwarn io.ktor.**
--keep class okhttp3.** { *; }
+
+# --- OkHttp / Okio ---
 -dontwarn okhttp3.**
--keep class okio.** { *; }
 -dontwarn okio.**
 
-# --- Koog AI agent ---
+# --- Koog AI agent (uses reflection for tool dispatch) ---
 -keep class ai.koog.** { *; }
 -dontwarn ai.koog.**
 
 # --- SQLDelight ---
--keep class app.cash.sqldelight.** { *; }
+-keep class app.cash.sqldelight.driver.** { *; }
 -dontwarn app.cash.sqldelight.**
 
 # --- Coroutines ---
@@ -52,7 +56,6 @@
 
 # --- Netty (used by Ktor server) ---
 -dontwarn io.netty.**
--keep class io.netty.** { *; }
 
 # --- General ---
 -dontwarn org.slf4j.**

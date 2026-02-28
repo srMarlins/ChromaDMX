@@ -15,7 +15,7 @@ keytool -genkeypair \
   -keypass YOUR_KEY_PASSWORD \
   -alias chromadmx \
   -keystore chromadmx-release.jks \
-  -dname "CN=ChromaDMX, O=ChromaDMX, L=Unknown, ST=Unknown, C=US"
+  -dname "CN=<Common Name>, O=<Organization>, L=<City>, ST=<State>, C=<Country Code>"
 ```
 
 ### Base64 Encode for GitHub Secrets
