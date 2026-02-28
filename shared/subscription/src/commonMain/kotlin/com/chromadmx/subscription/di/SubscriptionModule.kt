@@ -2,6 +2,7 @@ package com.chromadmx.subscription.di
 
 import com.chromadmx.subscription.model.EntitlementConfig
 import com.chromadmx.subscription.model.SubscriptionTier
+import com.chromadmx.subscription.repository.EntitlementConfigLoader
 import com.chromadmx.subscription.repository.SubscriptionRepository
 import com.chromadmx.subscription.repository.SubscriptionStore
 import com.chromadmx.subscription.service.SubscriptionManager
@@ -17,8 +18,8 @@ val subscriptionModule = module {
     // Persistence
     single { SubscriptionRepository(get()) } bind SubscriptionStore::class
 
-    // Entitlement config (defaults)
-    single { EntitlementConfig() }
+    // Entitlement config — seeded from DB, falls back to defaults on first run
+    single { EntitlementConfigLoader(get()).load() }
 
     // SubscriptionManager — the main API
     single<SubscriptionManager> {
