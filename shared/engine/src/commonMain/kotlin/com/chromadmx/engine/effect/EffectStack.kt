@@ -8,6 +8,7 @@ import com.chromadmx.core.util.ColorBlending
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
+import com.chromadmx.core.model.BlendMode
 
 /**
  * A compositing stack of [EffectLayer]s and [MovementLayer]s with a master dimmer.
@@ -145,19 +146,28 @@ class EffectStack(
      */
     fun buildFrame(time: Float, beat: BeatState): FrameEvaluator {
         val colorSnapshot = _layersRef.value
+        val dimmer = _masterDimmer.value
+
         val colorContexts = colorSnapshot.map { layer ->
-            if (layer.enabled) layer.effect.prepare(layer.params, time, beat) else null
+            // Optimization: Skip preparing disabled or fully transparent layers.
+            // Also skip all color layer preparation if master dimmer is 0.
+            if (dimmer > 0f && layer.enabled && layer.opacity > 0f) {
+                layer.effect.prepare(layer.params, time, beat)
+            } else {
+                null
+            }
         }
 
         val movementSnapshot = _movementLayersRef.value
         val movementContexts = movementSnapshot.map { layer ->
-            if (layer.enabled) layer.effect.prepare(layer.params, time, beat) else null
+            // Optimization: Skip preparing disabled or transparent movement layers
+            if (layer.enabled && layer.opacity > 0f) layer.effect.prepare(layer.params, time, beat) else null
         }
 
         return FrameEvaluator(
             colorSnapshot, colorContexts,
             movementSnapshot, movementContexts,
-            _masterDimmer.value
+            dimmer
         )
     }
 
@@ -175,12 +185,16 @@ class EffectStack(
          * Evaluate the color stack only. Backward-compatible method.
          */
         fun evaluate(pos: Vec3): Color {
+            // Optimization: Skip all color calculations if output will just be black
+            if (masterDimmer <= 0f) return Color.BLACK
+
             var result = Color.BLACK
 
-            // Using indices loop to avoid iterator allocation
+            // Using indices loop to avoid iterator allocation.
             for (i in colorLayers.indices) {
                 val layer = colorLayers[i]
-                if (!layer.enabled) continue
+                // Optimization: Skip disabled or fully transparent layers
+                if (!layer.enabled || layer.opacity <= 0f) continue
 
                 val layerColor = layer.effect.compute(pos, colorContexts[i])
                 result = ColorBlending.blend(
@@ -191,8 +205,8 @@ class EffectStack(
                 )
             }
 
-            // Apply master dimmer
-            return (result * masterDimmer).clamped()
+            // Apply master dimmer. Optimization: avoid allocation if dimmer is 1.0
+            return if (masterDimmer >= 1f) result else (result * masterDimmer).clamped()
         }
 
         /**
@@ -211,7 +225,8 @@ class EffectStack(
             // Composite movement layers
             for (i in movementLayers.indices) {
                 val layer = movementLayers[i]
-                if (!layer.enabled) continue
+                // Optimization: Skip disabled or fully transparent movement layers
+                if (!layer.enabled || layer.opacity <= 0f) continue
 
                 val layerOutput = layer.effect.computeMovement(pos, movementContexts[i])
                 result = result.blendMovementOnly(
@@ -225,7 +240,7 @@ class EffectStack(
         }
 
         /** Whether this frame has any movement layers. */
-        val hasMovementLayers: Boolean get() = movementLayers.any { it.enabled }
+        val hasMovementLayers: Boolean get() = movementLayers.any { it.enabled && it.opacity > 0f }
     }
 
     /**

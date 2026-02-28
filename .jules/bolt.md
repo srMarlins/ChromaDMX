@@ -1,0 +1,3 @@
+## 2026-03-05 - [Alpha Compositing and Occlusion Culling Anti-pattern]
+**Learning:** Occlusion culling in `EffectStack.kt` cannot be implemented just by looking at `BlendMode.NORMAL` and `opacity >= 1f`. The spatial effects compute pixels dynamically and some pixels might be generated as sparse/transparent (e.g. chases, strobes). If lower layers are skipped, these transparent pixels will show the default black background instead of the correct underlying layers, causing visual bugs.
+**Action:** Do not implement occlusion culling in `EffectStack.kt` unless the `SpatialEffect` interface natively exposes a property like `isOpaque` to guarantee all generated pixels are fully opaque. Stick to simpler optimizations like skipping 0-opacity layers or checking `masterDimmer`.
