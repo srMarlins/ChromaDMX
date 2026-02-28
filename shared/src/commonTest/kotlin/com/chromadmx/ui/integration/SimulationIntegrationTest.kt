@@ -163,6 +163,7 @@ class SimulationIntegrationTest {
     @Test
     fun simulatedDiscoveryEmitsNodesStaggered() = runTest {
         val discovery = SimulatedDiscovery(
+            keepAliveIntervalMs = 0,
             coroutineContext = UnconfinedTestDispatcher(testScheduler),
         )
 
@@ -191,6 +192,7 @@ class SimulationIntegrationTest {
     fun discoveryRouterSwitchesToSimulated() = runTest {
         val realDiscovery = FakeRealDiscovery()
         val simDiscovery = SimulatedDiscovery(
+            keepAliveIntervalMs = 0,
             coroutineContext = UnconfinedTestDispatcher(testScheduler),
         )
         val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler) + SupervisorJob())
@@ -243,6 +245,7 @@ class SimulationIntegrationTest {
     fun discoveryRouterMixedModeMergesNodes() = runTest {
         val realDiscovery = FakeRealDiscovery()
         val simDiscovery = SimulatedDiscovery(
+            keepAliveIntervalMs = 0,
             coroutineContext = UnconfinedTestDispatcher(testScheduler),
         )
         val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler) + SupervisorJob())
