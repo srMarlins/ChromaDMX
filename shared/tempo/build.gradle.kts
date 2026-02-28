@@ -11,6 +11,7 @@ kotlin {
         target.compilations["main"].cinterops {
             create("abletonLink") {
                 defFile = file("src/nativeInterop/cinterop/ableton_link.def")
+                includeDirs("src/nativeInterop/cinterop/headers")
             }
         }
     }

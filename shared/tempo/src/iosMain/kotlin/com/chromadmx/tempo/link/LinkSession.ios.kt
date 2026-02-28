@@ -11,7 +11,8 @@ import abletonLink.ABLLinkNew
 import abletonLink.ABLLinkRef
 import abletonLink.ABLLinkSetActive
 import abletonLink.ABLLinkSetTempo
-import platform.darwin.mach_absolute_time
+import kotlinx.cinterop.ExperimentalForeignApi
+import abletonLink.mach_absolute_time
 
 /**
  * iOS actual for [LinkSession].
@@ -39,6 +40,7 @@ import platform.darwin.mach_absolute_time
  * All ABLLink functions are thread-safe. The capture/commit pattern provides
  * lock-free access suitable for audio-thread use.
  */
+@OptIn(ExperimentalForeignApi::class)
 actual class LinkSession actual constructor() : LinkSessionApi {
 
     /** Opaque reference to the native Link session, created at 120 BPM. */
