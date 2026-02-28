@@ -9,6 +9,7 @@ import com.chromadmx.core.persistence.FileStorage
 import com.chromadmx.di.chromaDiModule
 import com.chromadmx.networking.ble.BleProvisioner
 import com.chromadmx.networking.ble.BleScanner
+import com.chromadmx.subscription.di.subscriptionModule
 import com.chromadmx.ui.di.uiModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -45,7 +46,7 @@ class ChromaDMXApp : Application() {
             androidLogger(Level.ERROR)
             androidContext(this@ChromaDMXApp)
             allowOverride(true)
-            modules(chromaDiModule, agentModule, androidPlatformModule, uiModule)
+            modules(chromaDiModule, subscriptionModule, agentModule, androidPlatformModule, uiModule)
         }
     }
 }
