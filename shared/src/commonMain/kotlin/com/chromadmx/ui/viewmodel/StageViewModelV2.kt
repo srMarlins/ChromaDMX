@@ -90,7 +90,7 @@ class StageViewModelV2(
     ))
     val presetState: StateFlow<PresetState> = _presetState.asStateFlow()
 
-    private val _networkState = MutableStateFlow(NetworkState())
+    private val _networkState = MutableStateFlow(NetworkState(currentTimeMs = currentTimeMillis()))
     val networkState: StateFlow<NetworkState> = _networkState.asStateFlow()
 
     private val _viewState = MutableStateFlow(ViewState())
@@ -116,11 +116,13 @@ class StageViewModelV2(
 
     /** Syncs engine state (layers, scenes, dimmer) at a moderate rate. */
     private val syncJob: Job = scope.launch {
+        var tickCounter = 0
         while (isActive) {
             syncFromEngine()
-            // Only tick currentTimeMs when the node list overlay is visible,
-            // avoiding a full-screen recomposition every 500ms.
-            if (_networkState.value.isNodeListOpen) {
+            tickCounter++
+            // Tick currentTimeMs every 500ms when the overlay is open (for
+            // live latency display) or every 5s otherwise (for top-bar health).
+            if (_networkState.value.isNodeListOpen || tickCounter % 10 == 0) {
                 _networkState.update { it.copy(currentTimeMs = currentTimeMillis()) }
             }
             delay(500L)
