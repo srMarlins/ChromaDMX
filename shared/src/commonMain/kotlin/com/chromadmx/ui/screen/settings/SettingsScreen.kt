@@ -31,6 +31,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.chromadmx.core.model.BuiltInProfiles
@@ -730,25 +732,16 @@ private fun AgentSection(
         ) {
             // API Key (masked display — auto-unmask on edit)
             var showKey by remember { mutableStateOf(false) }
-            val displayValue = if (showKey || state.agentConfig.apiKey.isEmpty()) {
-                state.agentConfig.apiKey
-            } else {
-                "\u2022".repeat(state.agentConfig.apiKey.length.coerceAtMost(20))
-            }
             PixelTextField(
-                value = displayValue,
+                value = state.agentConfig.apiKey,
                 onValueChange = { newValue ->
-                    if (!showKey) {
-                        // First keystroke while masked: unmask and start fresh
-                        showKey = true
-                        onEvent(SettingsEvent.UpdateAgentConfig(state.agentConfig.copy(apiKey = newValue.filter { it != '\u2022' })))
-                    } else {
-                        onEvent(SettingsEvent.UpdateAgentConfig(state.agentConfig.copy(apiKey = newValue)))
-                    }
+                    showKey = true
+                    onEvent(SettingsEvent.UpdateAgentConfig(state.agentConfig.copy(apiKey = newValue)))
                 },
                 label = "API Key",
                 placeholder = "Enter API key...",
                 modifier = Modifier.fillMaxWidth(),
+                visualTransformation = if (showKey || state.agentConfig.apiKey.isEmpty()) VisualTransformation.None else PasswordVisualTransformation('\u2022'),
             )
 
             // Model selector
