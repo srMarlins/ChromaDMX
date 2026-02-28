@@ -29,8 +29,7 @@ platform :ios do
       output_directory: "./build",
       output_name: "ChromaDMX.ipa",
       include_bitcode: false,
-      xcargs: "DEVELOPMENT_TEAM='#{ENV["DEVELOPMENT_TEAM"]}' SKIP_GRADLE_BUILD='#{ENV["SKIP_GRADLE_BUILD"] || "0"}'",
-      skip_profile_detection: true
+      xcargs: "DEVELOPMENT_TEAM='#{ENV["DEVELOPMENT_TEAM"]}' SKIP_GRADLE_BUILD='#{ENV["SKIP_GRADLE_BUILD"] || "0"}'"
     )
   end
 

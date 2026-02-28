@@ -33,12 +33,14 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Resolve version
+        env:
+          REF: ${{ github.ref }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
         run: |
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            VERSION="${{ github.ref }}"
-            VERSION="${VERSION#refs/tags/v}"
-          elif [[ -n "${{ github.event.inputs.version }}" ]]; then
-            VERSION="${{ github.event.inputs.version }}"
+          if [[ "$REF" == refs/tags/v* ]]; then
+            VERSION="${REF#refs/tags/v}"
+          elif [[ -n "$INPUT_VERSION" ]]; then
+            VERSION="$INPUT_VERSION"
           else
             VERSION="0.0.0-SNAPSHOT"
           fi
@@ -47,7 +49,7 @@ jobs:
 
       - name: Generate versionCode
         run: |
-          VERSION_CODE=$(( $(date +%y%m%d) * 100 + (${{ github.run_number }} % 100) ))
+          VERSION_CODE=${{ github.run_number }}
           echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
           echo "Generated versionCode: $VERSION_CODE"
 
