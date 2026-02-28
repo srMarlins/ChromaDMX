@@ -1,7 +1,9 @@
 package com.chromadmx.ui.viewmodel
 
+import com.chromadmx.core.DebugFlags
 import com.chromadmx.subscription.model.Entitlement
 import com.chromadmx.subscription.model.SubscriptionTier
+import com.chromadmx.subscription.repository.SubscriptionStore
 import com.chromadmx.subscription.service.SubscriptionManager
 import com.chromadmx.core.model.BuiltInProfiles
 import com.chromadmx.core.persistence.FixtureStore
@@ -51,12 +53,15 @@ class SettingsViewModelV2(
     private val fixtureStore: FixtureStore? = null,
     private val dataExportService: DataExportService? = null,
     private val subscriptionManager: SubscriptionManager? = null,
+    private val subscriptionStore: SubscriptionStore? = null,
 ) {
     private val _state = MutableStateFlow(SettingsUiState())
     val state: StateFlow<SettingsUiState> = _state.asStateFlow()
 
     val subscriptionTier: StateFlow<SubscriptionTier> = subscriptionManager?.currentTier
         ?: MutableStateFlow(SubscriptionTier.FREE)
+
+    val isDebugMode: Boolean get() = DebugFlags.isDebugBuild
 
     val canExportData: Boolean
         get() = subscriptionManager?.hasEntitlement(Entitlement.DataExport) ?: false
@@ -159,6 +164,9 @@ class SettingsViewModelV2(
 
             is SettingsEvent.SetThemePreference ->
                 setThemePreference(event.theme)
+
+            is SettingsEvent.SetDebugTier ->
+                setDebugTier(event.tier)
         }
     }
 
@@ -216,6 +224,14 @@ class SettingsViewModelV2(
     private fun resetOnboarding() {
         scope.launch {
             withContext(Dispatchers.IO) { settingsRepository.setSetupCompleted(false) }
+        }
+    }
+
+    private fun setDebugTier(tier: SubscriptionTier) {
+        if (!DebugFlags.isDebugBuild) return
+        val store = subscriptionStore ?: return
+        scope.launch {
+            withContext(Dispatchers.IO) { store.setTier(tier) }
         }
     }
 

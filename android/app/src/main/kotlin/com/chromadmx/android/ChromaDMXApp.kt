@@ -3,6 +3,7 @@ package com.chromadmx.android
 import android.app.Application
 import com.chromadmx.agent.config.AgentConfig
 import com.chromadmx.agent.di.agentModule
+import com.chromadmx.core.DebugFlags
 import com.chromadmx.core.db.DriverFactory
 import com.chromadmx.core.persistence.AndroidFileStorage
 import com.chromadmx.core.persistence.FileStorage
@@ -25,6 +26,7 @@ import org.koin.dsl.module
 class ChromaDMXApp : Application() {
     override fun onCreate() {
         super.onCreate()
+        DebugFlags.isDebugBuild = BuildConfig.DEBUG
 
         val androidPlatformModule = module {
             single<FileStorage> { AndroidFileStorage(get()) }
