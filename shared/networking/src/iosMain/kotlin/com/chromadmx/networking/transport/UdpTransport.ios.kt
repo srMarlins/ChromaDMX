@@ -1,25 +1,21 @@
 package com.chromadmx.networking.transport
 
 import com.chromadmx.networking.model.UdpPacket
-import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.IntVar
 import kotlinx.cinterop.UIntVar
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.alloc
-import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.sizeOf
-import kotlinx.cinterop.toKString
 import kotlinx.cinterop.usePinned
 import kotlinx.cinterop.value
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import platform.posix.AF_INET
-import platform.posix.INET_ADDRSTRLEN
 import platform.posix.IPPROTO_UDP
 import platform.posix.SOCK_DGRAM
 import platform.posix.SOL_SOCKET
@@ -28,8 +24,6 @@ import platform.posix.SO_RCVTIMEO
 import platform.posix.SO_REUSEADDR
 import platform.posix.close
 import platform.posix.errno
-import platform.posix.inet_addr
-import platform.posix.inet_ntop
 import platform.posix.recvfrom
 import platform.posix.sendto
 import platform.posix.setsockopt
@@ -75,7 +69,7 @@ actual class PlatformUdpTransport actual constructor() {
                 val addr = alloc<sockaddr_in>()
                 addr.sin_family = AF_INET.convert()
                 addr.sin_port = hostToNetworkShort(port.toUShort())
-                addr.sin_addr.s_addr = inet_addr(address)
+                addr.sin_addr.s_addr = ipStringToUInt(address)
 
                 data.usePinned { pinned ->
                     sendto(
@@ -128,10 +122,7 @@ actual class PlatformUdpTransport actual constructor() {
                     // Timeout or error — return null (matches Android behavior)
                     null
                 } else {
-                    // Extract sender IP address using a C-allocated buffer
-                    val ipStr = allocArray<ByteVar>(INET_ADDRSTRLEN)
-                    inet_ntop(AF_INET, senderAddr.sin_addr.ptr, ipStr, INET_ADDRSTRLEN.convert())
-                    val addressStr = ipStr.toKString()
+                    val addressStr = uIntToIpString(senderAddr.sin_addr.s_addr)
                     val senderPort = networkToHostShort(senderAddr.sin_port).toInt()
 
                     UdpPacket(
@@ -185,3 +176,27 @@ private fun hostToNetworkShort(value: UShort): UShort {
  * Convert network byte order (big-endian) to host-order 16-bit.
  */
 private fun networkToHostShort(value: UShort): UShort = hostToNetworkShort(value)
+
+/**
+ * Convert a dotted-quad IPv4 string (e.g. "192.168.1.1") to a UInt in
+ * network byte order (big-endian), matching `inet_addr` semantics.
+ *
+ * On little-endian (all iOS targets), the first octet occupies the
+ * least-significant byte of the UInt.
+ */
+private fun ipStringToUInt(address: String): UInt {
+    val octets = address.split(".")
+    if (octets.size != 4) return 0u
+    return (octets[0].toUInt() and 0xFFu) or
+        ((octets[1].toUInt() and 0xFFu) shl 8) or
+        ((octets[2].toUInt() and 0xFFu) shl 16) or
+        ((octets[3].toUInt() and 0xFFu) shl 24)
+}
+
+/**
+ * Convert a UInt in network byte order back to a dotted-quad IPv4
+ * string, matching `inet_ntop` semantics.
+ */
+private fun uIntToIpString(addr: UInt): String {
+    return "${addr and 0xFFu}.${(addr shr 8) and 0xFFu}.${(addr shr 16) and 0xFFu}.${(addr shr 24) and 0xFFu}"
+}

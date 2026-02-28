@@ -1,5 +1,8 @@
 package com.chromadmx.networking.ble
 
+import kotlinx.cinterop.BetaInteropApi
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.ObjCSignatureOverride
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,6 +39,7 @@ import kotlin.coroutines.resume
  *
  * Requires `NSBluetoothAlwaysUsageDescription` in Info.plist.
  */
+@OptIn(ExperimentalForeignApi::class)
 actual class BleProvisioner actual constructor() {
 
     private val _state = MutableStateFlow(ProvisioningState.IDLE)
@@ -98,7 +102,7 @@ actual class BleProvisioner actual constructor() {
 
         try {
             // Step 1: Retrieve the peripheral by UUID
-            val nsuuid = NSUUID(UUIDString = deviceId)
+            val nsuuid = NSUUID(uUIDString = deviceId)
             val peripherals = centralManager.retrievePeripheralsWithIdentifiers(listOf(nsuuid))
             val peripheral = peripherals.firstOrNull() as? CBPeripheral
             if (peripheral == null) {
@@ -293,15 +297,17 @@ actual class BleProvisioner actual constructor() {
     /**
      * Convert an NSData value to a UTF-8 Kotlin String.
      */
+    @OptIn(BetaInteropApi::class)
     private fun NSData.toUtf8String(): String? {
-        return NSString.create(data = this, encoding = NSUTF8StringEncoding) as? String
+        return NSString.create(data = this, encoding = NSUTF8StringEncoding)?.toString()
     }
 
     /**
      * Convert a Kotlin String to NSData using UTF-8 encoding.
      */
+    @OptIn(BetaInteropApi::class)
     private fun stringToNSData(value: String): NSData? {
-        return (value as NSString).dataUsingEncoding(NSUTF8StringEncoding)
+        return NSString.create(string = value).dataUsingEncoding(NSUTF8StringEncoding)
     }
 
     /**
@@ -349,6 +355,7 @@ actual class BleProvisioner actual constructor() {
         /**
          * Called when a GATT connection attempt fails.
          */
+        @ObjCSignatureOverride
         override fun centralManager(
             central: CBCentralManager,
             didFailToConnectPeripheral: CBPeripheral,
@@ -361,6 +368,7 @@ actual class BleProvisioner actual constructor() {
         /**
          * Called when the peripheral disconnects (either requested or unexpected).
          */
+        @ObjCSignatureOverride
         override fun centralManager(
             central: CBCentralManager,
             didDisconnectPeripheral: CBPeripheral,
@@ -417,6 +425,7 @@ actual class BleProvisioner actual constructor() {
         /**
          * Called when a characteristic read completes.
          */
+        @ObjCSignatureOverride
         override fun peripheral(
             peripheral: CBPeripheral,
             didUpdateValueForCharacteristic: CBCharacteristic,
@@ -433,6 +442,7 @@ actual class BleProvisioner actual constructor() {
         /**
          * Called when a characteristic write (with response) completes.
          */
+        @ObjCSignatureOverride
         override fun peripheral(
             peripheral: CBPeripheral,
             didWriteValueForCharacteristic: CBCharacteristic,
