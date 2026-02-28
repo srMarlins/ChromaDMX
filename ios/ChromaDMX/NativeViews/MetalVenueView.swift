@@ -8,8 +8,8 @@ struct MetalVenueView: UIViewRepresentable {
         view.clearColor = MTLClearColor(red: 0.05, green: 0.05, blue: 0.08, alpha: 1.0)
         view.delegate = context.coordinator
         view.preferredFramesPerSecond = 60
-        view.enableSetNeedsDisplay = false
-        view.isPaused = false
+        view.enableSetNeedsDisplay = true
+        view.isPaused = true
         return view
     }
 

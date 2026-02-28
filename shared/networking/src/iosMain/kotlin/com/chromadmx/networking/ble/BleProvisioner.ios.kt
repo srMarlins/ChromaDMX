@@ -3,6 +3,7 @@ package com.chromadmx.networking.ble
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCSignatureOverride
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -71,12 +72,12 @@ actual class BleProvisioner actual constructor() {
 
     // --- Continuation slots for async delegate callbacks ---
 
-    private var connectContinuation: CancellableContinuation<Boolean>? = null
-    private var disconnectContinuation: CancellableContinuation<Unit>? = null
-    private var serviceDiscoveryContinuation: CancellableContinuation<Boolean>? = null
-    private var characteristicDiscoveryContinuation: CancellableContinuation<Boolean>? = null
-    private var readContinuation: CancellableContinuation<NSData?>? = null
-    private var writeContinuation: CancellableContinuation<Boolean>? = null
+    private val connectContinuation = atomic<CancellableContinuation<Boolean>?>(null)
+    private val disconnectContinuation = atomic<CancellableContinuation<Unit>?>(null)
+    private val serviceDiscoveryContinuation = atomic<CancellableContinuation<Boolean>?>(null)
+    private val characteristicDiscoveryContinuation = atomic<CancellableContinuation<Boolean>?>(null)
+    private val readContinuation = atomic<CancellableContinuation<NSData?>?>(null)
+    private val writeContinuation = atomic<CancellableContinuation<Boolean>?>(null)
 
     // --- Delegates ---
 
@@ -115,9 +116,9 @@ actual class BleProvisioner actual constructor() {
 
             // Step 2: Connect to the peripheral
             val connected = suspendCancellableCoroutine { cont ->
-                connectContinuation = cont
+                connectContinuation.value = cont
                 cont.invokeOnCancellation {
-                    connectContinuation = null
+                    connectContinuation.value = null
                     centralManager.cancelPeripheralConnection(peripheral)
                 }
                 centralManager.connectPeripheral(peripheral, options = null)
@@ -130,8 +131,8 @@ actual class BleProvisioner actual constructor() {
 
             // Step 3: Discover the ChromaDMX GATT service
             val servicesFound = suspendCancellableCoroutine { cont ->
-                serviceDiscoveryContinuation = cont
-                cont.invokeOnCancellation { serviceDiscoveryContinuation = null }
+                serviceDiscoveryContinuation.value = cont
+                cont.invokeOnCancellation { serviceDiscoveryContinuation.value = null }
                 peripheral.discoverServices(listOf(serviceUuid))
             }
             if (!servicesFound) {
@@ -153,8 +154,8 @@ actual class BleProvisioner actual constructor() {
             }
 
             val characteristicsFound = suspendCancellableCoroutine { cont ->
-                characteristicDiscoveryContinuation = cont
-                cont.invokeOnCancellation { characteristicDiscoveryContinuation = null }
+                characteristicDiscoveryContinuation.value = cont
+                cont.invokeOnCancellation { characteristicDiscoveryContinuation.value = null }
                 peripheral.discoverCharacteristics(
                     characteristicUuids.values.toList(),
                     service
@@ -229,8 +230,8 @@ actual class BleProvisioner actual constructor() {
 
         try {
             suspendCancellableCoroutine { cont ->
-                disconnectContinuation = cont
-                cont.invokeOnCancellation { disconnectContinuation = null }
+                disconnectContinuation.value = cont
+                cont.invokeOnCancellation { disconnectContinuation.value = null }
                 centralManager.cancelPeripheralConnection(peripheral)
             }
         } catch (_: Exception) {
@@ -260,8 +261,8 @@ actual class BleProvisioner actual constructor() {
         val characteristic = discoveredCharacteristics[name] ?: return null
 
         val data = suspendCancellableCoroutine { cont ->
-            readContinuation = cont
-            cont.invokeOnCancellation { readContinuation = null }
+            readContinuation.value = cont
+            cont.invokeOnCancellation { readContinuation.value = null }
             peripheral.readValueForCharacteristic(characteristic)
         }
 
@@ -288,8 +289,8 @@ actual class BleProvisioner actual constructor() {
         val data = stringToNSData(value) ?: return false
 
         return suspendCancellableCoroutine { cont ->
-            writeContinuation = cont
-            cont.invokeOnCancellation { writeContinuation = null }
+            writeContinuation.value = cont
+            cont.invokeOnCancellation { writeContinuation.value = null }
             peripheral.writeValue(data, characteristic, CBCharacteristicWriteWithResponse)
         }
     }
@@ -348,8 +349,7 @@ actual class BleProvisioner actual constructor() {
             central: CBCentralManager,
             didConnectPeripheral: CBPeripheral
         ) {
-            connectContinuation?.resume(true)
-            connectContinuation = null
+            connectContinuation.getAndSet(null)?.resume(true)
         }
 
         /**
@@ -361,8 +361,7 @@ actual class BleProvisioner actual constructor() {
             didFailToConnectPeripheral: CBPeripheral,
             error: platform.Foundation.NSError?
         ) {
-            connectContinuation?.resume(false)
-            connectContinuation = null
+            connectContinuation.getAndSet(null)?.resume(false)
         }
 
         /**
@@ -374,8 +373,7 @@ actual class BleProvisioner actual constructor() {
             didDisconnectPeripheral: CBPeripheral,
             error: platform.Foundation.NSError?
         ) {
-            disconnectContinuation?.resume(Unit)
-            disconnectContinuation = null
+            disconnectContinuation.getAndSet(null)?.resume(Unit)
         }
     }
 
@@ -399,8 +397,7 @@ actual class BleProvisioner actual constructor() {
             didDiscoverServices: platform.Foundation.NSError?
         ) {
             val success = didDiscoverServices == null && peripheral.services?.isNotEmpty() == true
-            serviceDiscoveryContinuation?.resume(success)
-            serviceDiscoveryContinuation = null
+            serviceDiscoveryContinuation.getAndSet(null)?.resume(success)
         }
 
         /**
@@ -418,8 +415,7 @@ actual class BleProvisioner actual constructor() {
                         ?: emptyList()
                 indexCharacteristics(characteristics)
             }
-            characteristicDiscoveryContinuation?.resume(error == null)
-            characteristicDiscoveryContinuation = null
+            characteristicDiscoveryContinuation.getAndSet(null)?.resume(error == null)
         }
 
         /**
@@ -431,12 +427,8 @@ actual class BleProvisioner actual constructor() {
             didUpdateValueForCharacteristic: CBCharacteristic,
             error: platform.Foundation.NSError?
         ) {
-            if (error != null) {
-                readContinuation?.resume(null)
-            } else {
-                readContinuation?.resume(didUpdateValueForCharacteristic.value)
-            }
-            readContinuation = null
+            val data = if (error != null) null else didUpdateValueForCharacteristic.value
+            readContinuation.getAndSet(null)?.resume(data)
         }
 
         /**
@@ -448,8 +440,7 @@ actual class BleProvisioner actual constructor() {
             didWriteValueForCharacteristic: CBCharacteristic,
             error: platform.Foundation.NSError?
         ) {
-            writeContinuation?.resume(error == null)
-            writeContinuation = null
+            writeContinuation.getAndSet(null)?.resume(error == null)
         }
     }
 }

@@ -32,13 +32,13 @@ jobs:
       - name: Run all unit tests (core, networking, tempo, engine, simulation, vision, agent)
         run: >-
           ./gradlew
-          :shared:core:allTests
-          :shared:networking:allTests
-          :shared:tempo:allTests
-          :shared:engine:allTests
-          :shared:simulation:allTests
-          :shared:vision:allTests
-          :shared:agent:allTests
+          :shared:core:testAndroidHostTest
+          :shared:networking:testAndroidHostTest
+          :shared:tempo:testAndroidHostTest
+          :shared:engine:testAndroidHostTest
+          :shared:simulation:testAndroidHostTest
+          :shared:vision:testAndroidHostTest
+          :shared:agent:testAndroidHostTest
 
       - name: Print test summary
         if: always()

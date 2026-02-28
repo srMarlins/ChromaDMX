@@ -4,6 +4,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.UByteVar
 import kotlinx.cinterop.get
 import kotlinx.cinterop.reinterpret
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.AVFoundation.AVCaptureConnection
@@ -83,7 +84,7 @@ actual class PlatformCameraSource {
      * [GrayscaleFrame]. If null, incoming frames are silently dropped
      * (the session remains running for preview purposes).
      */
-    private var frameContinuation: CancellableContinuation<GrayscaleFrame>? = null
+    private val frameContinuation = atomic<CancellableContinuation<GrayscaleFrame>?>(null)
 
     /**
      * Capture a single grayscale frame from the camera.
@@ -102,9 +103,9 @@ actual class PlatformCameraSource {
         }
 
         return suspendCancellableCoroutine { cont ->
-            frameContinuation = cont
+            frameContinuation.value = cont
             cont.invokeOnCancellation {
-                frameContinuation = null
+                frameContinuation.value = null
             }
         }
     }
@@ -142,6 +143,7 @@ actual class PlatformCameraSource {
     actual fun stopPreview() {
         if (captureSession.isRunning()) {
             captureSession.stopRunning()
+            frameContinuation.getAndSet(null)?.cancel()
         }
     }
 
@@ -297,13 +299,11 @@ actual class PlatformCameraSource {
             fromConnection: AVCaptureConnection
         ) {
             // Only process if someone is waiting for a frame
-            val continuation = frameContinuation ?: return
+            val continuation = frameContinuation.getAndSet(null) ?: return
             val buffer = didOutputSampleBuffer ?: return
 
             val frame = extractGrayscaleFrame(buffer) ?: return
 
-            // Clear the continuation before resuming to prevent double-resume
-            frameContinuation = null
             continuation.resume(frame)
         }
     }

@@ -13,6 +13,7 @@ import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.sizeOf
 import kotlinx.cinterop.usePinned
 import kotlinx.cinterop.value
+import kotlin.concurrent.Volatile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import platform.posix.AF_INET
@@ -47,6 +48,7 @@ import platform.posix.timeval
 actual class PlatformUdpTransport actual constructor() {
 
     /** File descriptor for the underlying UDP socket, or -1 if closed. */
+    @Volatile
     private var fd: Int = -1
 
     init {
