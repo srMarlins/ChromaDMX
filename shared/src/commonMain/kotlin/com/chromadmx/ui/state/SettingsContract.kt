@@ -5,6 +5,7 @@ import com.chromadmx.agent.config.AgentConfig
 import com.chromadmx.core.model.FixtureProfile
 import com.chromadmx.networking.discovery.NodeDiscovery
 import com.chromadmx.simulation.fixtures.RigPreset
+import com.chromadmx.subscription.model.SubscriptionTier
 import com.chromadmx.ui.theme.PixelColorTheme
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -91,4 +92,5 @@ sealed interface SettingsEvent {
     data class ImportAppData(val json: String) : SettingsEvent
     data object DismissDataTransferStatus : SettingsEvent
     data class SetThemePreference(val theme: PixelColorTheme) : SettingsEvent
+    data class SetDebugTier(val tier: SubscriptionTier) : SettingsEvent
 }

@@ -8,6 +8,7 @@ import com.chromadmx.core.persistence.FixtureStore
 import com.chromadmx.core.persistence.NetworkStateStore
 import com.chromadmx.networking.FixtureDiscoveryRouter
 import com.chromadmx.networking.ble.BleProvisioningService
+import com.chromadmx.subscription.repository.SubscriptionStore
 import com.chromadmx.subscription.service.SubscriptionManager
 import com.chromadmx.ui.navigation.AppStateManager
 import com.chromadmx.ui.viewmodel.MascotViewModelV2
@@ -100,6 +101,7 @@ val uiModule = module {
             scope = vmScope,
             fixtureStore = getOrNull<FixtureStore>(),
             subscriptionManager = getOrNull(),
+            subscriptionStore = getOrNull<SubscriptionStore>(),
         )
     }
 
