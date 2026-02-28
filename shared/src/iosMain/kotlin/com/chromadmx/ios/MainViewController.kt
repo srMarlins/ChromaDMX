@@ -1,7 +1,7 @@
 package com.chromadmx.ios
 
 import androidx.compose.ui.window.ComposeUIViewController
-import com.chromadmx.App
+import com.chromadmx.ui.ChromaDmxApp
 
 /**
  * Creates the main UIViewController that hosts the Compose Multiplatform UI on iOS.
@@ -28,4 +28,4 @@ import com.chromadmx.App
  * }
  * ```
  */
-fun MainViewController() = ComposeUIViewController { App() }
+fun MainViewController() = ComposeUIViewController { ChromaDmxApp() }

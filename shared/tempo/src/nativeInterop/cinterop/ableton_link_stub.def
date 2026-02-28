@@ -1,0 +1,4 @@
+package = abletonLink
+language = Objective-C
+headers = ABLLink.h ABLLinkSettingsViewController.h
+headerFilter = ABL* mach/**

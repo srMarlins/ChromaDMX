@@ -23,6 +23,7 @@ kotlin {
             api(project(":shared:tempo"))
             api(project(":shared:simulation"))
             api(project(":shared:agent"))
+            api(project(":shared:subscription"))
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.kotlinx.coroutines.core)

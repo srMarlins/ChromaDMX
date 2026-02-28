@@ -33,6 +33,9 @@ kotlinx-atomicfu = "0.31.0"
 # Collections
 kotlinx-collections-immutable = "0.3.8"
 
+# DateTime
+kotlinx-datetime = "0.6.2"
+
 # Koog AI Agent
 koog = "0.6.3"
 
@@ -89,6 +92,9 @@ kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "k
 
 # Collections
 kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinx-collections-immutable" }
+
+# DateTime
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 
 # Koog AI Agent
 koog-agents = { module = "ai.koog:koog-agents", version.ref = "koog" }

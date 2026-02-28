@@ -8,6 +8,7 @@ import com.chromadmx.core.persistence.FixtureStore
 import com.chromadmx.core.persistence.NetworkStateStore
 import com.chromadmx.networking.FixtureDiscoveryRouter
 import com.chromadmx.networking.ble.BleProvisioningService
+import com.chromadmx.subscription.service.SubscriptionManager
 import com.chromadmx.ui.navigation.AppStateManager
 import com.chromadmx.ui.viewmodel.MascotViewModelV2
 import com.chromadmx.ui.viewmodel.ProvisioningViewModel
@@ -64,6 +65,7 @@ val uiModule = module {
             networkStateRepository = getOrNull<NetworkStateStore>(),
             preGenerationService = getOrNull<PreGenerationService>(),
             scope = vmScope,
+            subscriptionManager = getOrNull(),
         )
     }
 
@@ -82,6 +84,7 @@ val uiModule = module {
             scope = vmScope,
             fixtureRepository = getOrNull<FixtureRepository>(),
             fixtureController = getOrNull<FixtureController>(),
+            subscriptionManager = getOrNull(),
         )
     }
 
@@ -96,6 +99,7 @@ val uiModule = module {
             discoveryRouter = get(),
             scope = vmScope,
             fixtureStore = getOrNull<FixtureStore>(),
+            subscriptionManager = getOrNull(),
         )
     }
 
@@ -110,6 +114,7 @@ val uiModule = module {
             knownNodesFlow = networkStateStore?.knownNodes() ?: flowOf(emptyList()),
             lightingAgent = getOrNull<LightingAgentInterface>(),
             scope = vmScope,
+            subscriptionManager = getOrNull(),
         )
     }
 

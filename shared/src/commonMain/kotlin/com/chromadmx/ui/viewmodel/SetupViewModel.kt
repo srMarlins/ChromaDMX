@@ -1,6 +1,8 @@
 package com.chromadmx.ui.viewmodel
 
 import com.chromadmx.agent.pregen.PreGenerationService
+import com.chromadmx.subscription.model.Entitlement
+import com.chromadmx.subscription.service.SubscriptionManager
 import com.chromadmx.core.model.Genre
 import com.chromadmx.core.model.toKnownNode
 import com.chromadmx.core.persistence.FixtureStore
@@ -55,6 +57,7 @@ class SetupViewModel(
     private val networkStateRepository: NetworkStateStore? = null,
     private val preGenerationService: PreGenerationService? = null,
     private val scope: CoroutineScope,
+    private val subscriptionManager: SubscriptionManager? = null,
 ) {
     private val _state = MutableStateFlow(
         SetupUiState(
@@ -62,6 +65,9 @@ class SetupViewModel(
         )
     )
     val state: StateFlow<SetupUiState> = _state.asStateFlow()
+
+    val canUseRealHardware: Boolean
+        get() = subscriptionManager?.hasEntitlement(Entitlement.RealHardware) ?: false
 
     private var scanJob: Job? = null
 

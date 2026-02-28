@@ -1,0 +1,98 @@
+name: ChromaDMX
+options:
+  bundleIdPrefix: com.chromadmx
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "16.0"
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.10"
+    DEVELOPMENT_TEAM: "$(DEVELOPMENT_TEAM)"
+    EXCLUDED_ARCHS[sdk=iphonesimulator*]: ""
+
+targets:
+  ChromaDMX:
+    type: application
+    platform: iOS
+    sources:
+      - path: ChromaDMX
+        excludes:
+          - "**/.DS_Store"
+    info:
+      path: ChromaDMX/Info.plist
+      properties:
+        LSRequiresIPhoneOS: true
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UIRequiresFullScreen: false
+        CADisableMinimumFrameDurationOnPhone: true
+        NSCameraUsageDescription: "ChromaDMX uses the camera to detect and map fixture positions in your venue."
+        NSLocalNetworkUsageDescription: "ChromaDMX communicates with DMX lighting nodes on your local network."
+        NSBonjourServices:
+          - _artnet._udp
+          - _sacn._udp
+        NSBluetoothAlwaysUsageDescription: "ChromaDMX uses Bluetooth to discover and configure ESP32 DMX nodes."
+    entitlements:
+      path: ChromaDMX/ChromaDMX.entitlements
+      properties:
+        com.apple.developer.networking.multicast: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.chromadmx.app
+        INFOPLIST_FILE: ChromaDMX/Info.plist
+        CODE_SIGN_ENTITLEMENTS: ChromaDMX/ChromaDMX.entitlements
+        FRAMEWORK_SEARCH_PATHS: "$(inherited)"
+        OTHER_LINKER_FLAGS:
+          - "$(inherited)"
+          - "-framework"
+          - "Shared"
+          - "-lsqlite3"
+      configs:
+        Debug:
+          FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]:
+            - "$(inherited)"
+            - "$(SRCROOT)/../shared/build/bin/iosX64/debugFramework"
+            - "$(SRCROOT)/../shared/build/bin/iosSimulatorArm64/debugFramework"
+          FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]:
+            - "$(inherited)"
+            - "$(SRCROOT)/../shared/build/bin/iosArm64/debugFramework"
+        Release:
+          FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]:
+            - "$(inherited)"
+            - "$(SRCROOT)/../shared/build/bin/iosArm64/releaseFramework"
+    dependencies:
+      - sdk: Network.framework
+      - sdk: AVFoundation.framework
+      - sdk: CoreMedia.framework
+      - sdk: CoreVideo.framework
+      - sdk: Metal.framework
+      - sdk: MetalKit.framework
+      - sdk: CoreBluetooth.framework
+      - sdk: libsqlite3.tbd
+    preBuildScripts:
+      - name: "Build KMP Shared Framework"
+        script: |
+          if [ "$SKIP_GRADLE_BUILD" = "1" ]; then
+            echo "Skipping Gradle build (CI pre-built framework)"
+            exit 0
+          fi
+          cd "$SRCROOT/.."
+          if [ "$PLATFORM_NAME" = "iphonesimulator" ]; then
+            if [ "$(uname -m)" = "arm64" ]; then
+              ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
+            else
+              ./gradlew :shared:linkDebugFrameworkIosX64
+            fi
+          elif [ "$CONFIGURATION" = "Release" ]; then
+            ./gradlew :shared:linkReleaseFrameworkIosArm64
+          else
+            ./gradlew :shared:linkDebugFrameworkIosArm64
+          fi
+        basedOnDependencyAnalysis: false
