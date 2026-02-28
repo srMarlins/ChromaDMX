@@ -1,0 +1,19 @@
+--- shared/src/commonMain/kotlin/com/chromadmx/ui/components/PixelCard.kt
++++ shared/src/commonMain/kotlin/com/chromadmx/ui/components/PixelCard.kt
+@@ -19,6 +19,7 @@
+ import androidx.compose.ui.graphics.Color
+ import androidx.compose.ui.graphics.graphicsLayer
+ import androidx.compose.ui.unit.Dp
++import androidx.compose.ui.semantics.Role
+ import androidx.compose.ui.unit.dp
+ import com.chromadmx.ui.theme.ChromaAnimations
+ import com.chromadmx.ui.theme.PixelDesign
+@@ -66,7 +67,8 @@
+                         mod.clickable(
+                             interactionSource = interactionSource,
+                             indication = null,
+                             onClick = onClick,
++                            role = Role.Button,
+                         )
+                     } else {
+                         mod

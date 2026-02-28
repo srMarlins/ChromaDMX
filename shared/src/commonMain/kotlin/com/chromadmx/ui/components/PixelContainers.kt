@@ -48,6 +48,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.chromadmx.ui.theme.ChromaAnimations
@@ -124,6 +125,7 @@ fun PixelIconButton(
                 indication = null,
                 enabled = enabled,
                 onClick = onClick,
+                role = Role.Button,
             ),
         contentAlignment = Alignment.Center,
     ) {
