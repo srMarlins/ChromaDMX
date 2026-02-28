@@ -1,39 +1,36 @@
 package com.chromadmx.di
 
+import com.chromadmx.agent.config.AgentConfig
+import com.chromadmx.agent.config.ApiKeyProvider
 import com.chromadmx.core.db.DriverFactory
 import com.chromadmx.core.persistence.FileStorage
 import com.chromadmx.core.persistence.IosFileStorage
+import com.chromadmx.networking.ble.BleProvisioner
+import com.chromadmx.networking.ble.BleScanner
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
 /**
  * iOS-specific Koin dependency injection module.
  *
- * Provides iOS platform implementations for shared interfaces:
- * - UDP transport via Network.framework
- * - Camera source via AVFoundation
- * - Ableton Link bridge via LinkKit cinterop
+ * Provides iOS platform implementations for shared interfaces,
+ * mirroring the Android platform module in ChromaDMXApp.kt.
  *
- * This module is combined with the shared common modules when
- * initializing Koin in IosApp.initialize().
- *
- * Usage:
- * ```kotlin
- * startKoin {
- *     modules(
- *         commonModule,     // Shared business logic
- *         iosPlatformModule // This module - iOS implementations
- *     )
- * }
- * ```
+ * Combined with shared common modules in IosApp.initialize().
  */
 val iosPlatformModule: Module = module {
     single<FileStorage> { IosFileStorage() }
     single { DriverFactory() }
-
-    // TODO: Register iOS platform implementations as modules are created
-    //
-    // single<UdpTransport> { IosUdpTransport() }
-    // single<CameraSource> { IosCameraSource() }
-    // single<BeatClock> { IosAbletonLinkBridge() }
+    single { BleScanner() }
+    single { BleProvisioner() }
+    single {
+        val provider = ApiKeyProvider()
+        val googleKey = provider.getGoogleKey() ?: ""
+        val anthropicKey = provider.getAnthropicKey() ?: ""
+        when {
+            googleKey.isNotBlank() -> AgentConfig(apiKey = googleKey, modelId = "gemini_2_5_flash")
+            anthropicKey.isNotBlank() -> AgentConfig(apiKey = anthropicKey, modelId = "sonnet_4_5")
+            else -> AgentConfig()
+        }
+    }
 }
