@@ -2,6 +2,8 @@ plugins {
     id("chromadmx.kmp.library")
 }
 
+val useStubs = findProperty("chromadmx.linkkit.stubs")?.toString()?.toBoolean() ?: false
+
 kotlin {
     listOf(
         iosX64(),
@@ -10,7 +12,11 @@ kotlin {
     ).forEach { target ->
         target.compilations["main"].cinterops {
             create("abletonLink") {
-                defFile = file("src/nativeInterop/cinterop/ableton_link.def")
+                defFile = if (useStubs) {
+                    file("src/nativeInterop/cinterop/ableton_link_stub.def")
+                } else {
+                    file("src/nativeInterop/cinterop/ableton_link.def")
+                }
                 includeDirs("src/nativeInterop/cinterop/headers")
             }
         }

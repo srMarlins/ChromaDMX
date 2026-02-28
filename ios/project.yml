@@ -78,6 +78,10 @@ targets:
     preBuildScripts:
       - name: "Build KMP Shared Framework"
         script: |
+          if [ "$SKIP_GRADLE_BUILD" = "1" ]; then
+            echo "Skipping Gradle build (CI pre-built framework)"
+            exit 0
+          fi
           cd "$SRCROOT/.."
           if [ "$PLATFORM_NAME" = "iphonesimulator" ]; then
             ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64

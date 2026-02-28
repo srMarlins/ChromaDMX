@@ -12,13 +12,31 @@ val localProps = Properties().apply {
 android {
     namespace = "com.chromadmx.android"
 
+    signingConfigs {
+        create("release") {
+            val storeFilePath = System.getenv("RELEASE_STORE_FILE")
+            if (storeFilePath != null) {
+                storeFile = file(storeFilePath)
+                storePassword = System.getenv("RELEASE_STORE_PASSWORD")
+                keyAlias = System.getenv("RELEASE_KEY_ALIAS")
+                keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     defaultConfig {
         applicationId = "com.chromadmx.android"
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = (findProperty("versionCode") as? String)?.toIntOrNull() ?: 1
+        versionName = (findProperty("versionName") as? String) ?: "0.1.0"
 
-        buildConfigField("String", "GOOGLE_API_KEY", "\"${localProps.getProperty("GOOGLE_API_KEY", "")}\"")
-        buildConfigField("String", "ANTHROPIC_API_KEY", "\"${localProps.getProperty("ANTHROPIC_API_KEY", "")}\"")
+        buildConfigField(
+            "String", "GOOGLE_API_KEY",
+            "\"${System.getenv("GOOGLE_API_KEY") ?: localProps.getProperty("GOOGLE_API_KEY", "")}\""
+        )
+        buildConfigField(
+            "String", "ANTHROPIC_API_KEY",
+            "\"${System.getenv("ANTHROPIC_API_KEY") ?: localProps.getProperty("ANTHROPIC_API_KEY", "")}\""
+        )
     }
 
     buildFeatures {
@@ -27,7 +45,16 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            val releaseSigning = signingConfigs.findByName("release")
+            if (releaseSigning?.storeFile != null) {
+                signingConfig = releaseSigning
+            }
         }
     }
 

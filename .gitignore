@@ -48,6 +48,11 @@ DerivedData/
 *.klib
 .kotlin/
 
+# Signing / keystores
+*.jks
+*.keystore
+keystore-base64.txt
+
 # Environment
 .env
 .env.local
