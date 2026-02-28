@@ -1,6 +1,8 @@
 package com.chromadmx.ui.viewmodel
 
 import com.chromadmx.agent.LightingAgentInterface
+import com.chromadmx.subscription.model.Entitlement
+import com.chromadmx.subscription.service.SubscriptionManager
 import com.chromadmx.core.model.KnownNode
 import com.chromadmx.networking.discovery.currentTimeMillis
 import com.chromadmx.tempo.clock.BeatClock
@@ -46,6 +48,7 @@ class MascotViewModelV2(
     private val knownNodesFlow: Flow<List<KnownNode>>,
     private val lightingAgent: LightingAgentInterface? = null,
     private val scope: CoroutineScope,
+    private val subscriptionManager: SubscriptionManager? = null,
 ) {
     internal val animationController = AnimationController(scope)
 
@@ -196,6 +199,11 @@ class MascotViewModelV2(
         }
     }
 
+    // ── Subscription helpers ────────────────────────────────────────
+
+    val canUseAiAgent: Boolean
+        get() = subscriptionManager?.hasEntitlement(Entitlement.AiAgent) ?: true
+
     // ── Chat integration ────────────────────────────────────────────
 
     private fun toggleChat() {
@@ -204,6 +212,11 @@ class MascotViewModelV2(
     }
 
     private fun sendChatMessage(text: String) {
+        val canChat = subscriptionManager?.hasEntitlement(Entitlement.AiAgent) ?: true
+        if (!canChat) {
+            // Don't process - user needs Ultimate tier
+            return
+        }
         val userMsg = ChatMessage(
             id = "user-${nextMessageId()}",
             text = text,

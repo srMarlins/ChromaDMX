@@ -20,6 +20,8 @@ import com.chromadmx.networking.discovery.NodeDiscovery
 import com.chromadmx.networking.discovery.currentTimeMillis
 import com.chromadmx.tempo.clock.BeatClock
 import com.chromadmx.tempo.tap.TapTempoClock
+import com.chromadmx.subscription.model.Entitlement
+import com.chromadmx.subscription.service.SubscriptionManager
 import com.chromadmx.core.model.Color as DmxColor
 import com.chromadmx.ui.state.*
 import kotlinx.collections.immutable.toImmutableList
@@ -68,6 +70,7 @@ class StageViewModelV2(
     private val scope: CoroutineScope,
     private val fixtureRepository: FixtureRepository? = null,
     private val fixtureController: FixtureController? = null,
+    private val subscriptionManager: SubscriptionManager? = null,
 ) {
     private val effectStack: EffectStack get() = engine.effectStack
 
@@ -581,6 +584,20 @@ class StageViewModelV2(
         }
         _presetState.update { it.copy(favoriteIds = current.toImmutableSet()) }
         scope.launch { withContext(Dispatchers.IO) { presetLibrary.setFavorites(current) } }
+    }
+
+    // ── Subscription helpers ────────────────────────────────────────────
+
+    /** Returns true if the given effect is available at the current subscription tier. */
+    fun isEffectAvailable(effectId: String): Boolean {
+        val mgr = subscriptionManager ?: return true
+        return mgr.hasEntitlement(Entitlement.Effect(effectId))
+    }
+
+    /** Returns true if the given genre pack is available at the current subscription tier. */
+    fun isGenrePackAvailable(genre: String): Boolean {
+        val mgr = subscriptionManager ?: return true
+        return mgr.getAvailableGenrePacks().contains(genre)
     }
 
     // ── Sync helpers ───────────────────────────────────────────────────

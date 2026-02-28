@@ -1,5 +1,8 @@
 package com.chromadmx.ui.viewmodel
 
+import com.chromadmx.subscription.model.Entitlement
+import com.chromadmx.subscription.model.SubscriptionTier
+import com.chromadmx.subscription.service.SubscriptionManager
 import com.chromadmx.core.model.BuiltInProfiles
 import com.chromadmx.core.persistence.FixtureStore
 import com.chromadmx.core.persistence.SettingsStore
@@ -47,9 +50,16 @@ class SettingsViewModelV2(
     private val scope: CoroutineScope,
     private val fixtureStore: FixtureStore? = null,
     private val dataExportService: DataExportService? = null,
+    private val subscriptionManager: SubscriptionManager? = null,
 ) {
     private val _state = MutableStateFlow(SettingsUiState())
     val state: StateFlow<SettingsUiState> = _state.asStateFlow()
+
+    val subscriptionTier: StateFlow<SubscriptionTier> = subscriptionManager?.currentTier
+        ?: MutableStateFlow(SubscriptionTier.FREE)
+
+    val canExportData: Boolean
+        get() = subscriptionManager?.hasEntitlement(Entitlement.DataExport) ?: true
 
     init {
         // Seed the built-in fixture profiles so they appear immediately.
