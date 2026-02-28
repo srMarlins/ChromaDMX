@@ -67,7 +67,7 @@ class SetupViewModel(
     val state: StateFlow<SetupUiState> = _state.asStateFlow()
 
     val canUseRealHardware: Boolean
-        get() = subscriptionManager?.hasEntitlement(Entitlement.RealHardware) ?: true
+        get() = subscriptionManager?.hasEntitlement(Entitlement.RealHardware) ?: false
 
     private var scanJob: Job? = null
 

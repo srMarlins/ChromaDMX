@@ -59,7 +59,7 @@ class SettingsViewModelV2(
         ?: MutableStateFlow(SubscriptionTier.FREE)
 
     val canExportData: Boolean
-        get() = subscriptionManager?.hasEntitlement(Entitlement.DataExport) ?: true
+        get() = subscriptionManager?.hasEntitlement(Entitlement.DataExport) ?: false
 
     init {
         // Seed the built-in fixture profiles so they appear immediately.

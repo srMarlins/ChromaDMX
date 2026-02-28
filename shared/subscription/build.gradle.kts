@@ -7,6 +7,7 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":shared:core"))
             implementation(libs.sqldelight.coroutines)
+            implementation(libs.kotlinx.datetime)
         }
         val androidHostTest by getting
         androidHostTest.dependencies {

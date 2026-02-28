@@ -8,6 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
 
 /**
  * SQLDelight-backed repository for subscription state persistence.
@@ -56,6 +57,5 @@ class SubscriptionRepository(private val db: ChromaDmxDatabase) : SubscriptionSt
         )
     }
 
-    /** Simple timestamp — avoids kotlinx-datetime dependency. */
-    private fun now(): String = ""
+    private fun now(): String = Clock.System.now().toString()
 }

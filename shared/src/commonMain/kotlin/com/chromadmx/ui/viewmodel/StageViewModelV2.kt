@@ -590,13 +590,13 @@ class StageViewModelV2(
 
     /** Returns true if the given effect is available at the current subscription tier. */
     fun isEffectAvailable(effectId: String): Boolean {
-        val mgr = subscriptionManager ?: return true
+        val mgr = subscriptionManager ?: return false
         return mgr.hasEntitlement(Entitlement.Effect(effectId))
     }
 
     /** Returns true if the given genre pack is available at the current subscription tier. */
     fun isGenrePackAvailable(genre: String): Boolean {
-        val mgr = subscriptionManager ?: return true
+        val mgr = subscriptionManager ?: return false
         return mgr.getAvailableGenrePacks().contains(genre)
     }
 

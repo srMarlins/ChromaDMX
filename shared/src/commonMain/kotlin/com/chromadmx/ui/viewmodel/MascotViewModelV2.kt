@@ -202,7 +202,7 @@ class MascotViewModelV2(
     // ── Subscription helpers ────────────────────────────────────────
 
     val canUseAiAgent: Boolean
-        get() = subscriptionManager?.hasEntitlement(Entitlement.AiAgent) ?: true
+        get() = subscriptionManager?.hasEntitlement(Entitlement.AiAgent) ?: false
 
     // ── Chat integration ────────────────────────────────────────────
 
@@ -212,7 +212,7 @@ class MascotViewModelV2(
     }
 
     private fun sendChatMessage(text: String) {
-        val canChat = subscriptionManager?.hasEntitlement(Entitlement.AiAgent) ?: true
+        val canChat = subscriptionManager?.hasEntitlement(Entitlement.AiAgent) ?: false
         if (!canChat) {
             // Don't process - user needs Ultimate tier
             return
