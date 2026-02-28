@@ -1,0 +1,47 @@
+CREATE TABLE subscription_status (
+    id INTEGER NOT NULL PRIMARY KEY DEFAULT 1,
+    tier TEXT NOT NULL DEFAULT 'FREE',
+    expires_at TEXT,
+    product_id TEXT,
+    is_trial INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE entitlement_config (
+    feature_id TEXT NOT NULL,
+    feature_type TEXT NOT NULL,
+    minimum_tier TEXT NOT NULL DEFAULT 'FREE',
+    PRIMARY KEY (feature_id, feature_type)
+);
+
+-- Ensure the single subscription row exists
+ensureDefaults:
+INSERT OR IGNORE INTO subscription_status (id, updated_at) VALUES (1, '');
+
+-- Read current subscription
+selectSubscription:
+SELECT * FROM subscription_status WHERE id = 1;
+
+-- Update tier
+updateTier:
+UPDATE subscription_status SET tier = ?, updated_at = ? WHERE id = 1;
+
+-- Update full subscription status
+updateSubscription:
+UPDATE subscription_status
+SET tier = ?, expires_at = ?, product_id = ?, is_trial = ?, updated_at = ?
+WHERE id = 1;
+
+-- Entitlement config queries
+selectAllEntitlements:
+SELECT * FROM entitlement_config;
+
+selectEntitlementsByType:
+SELECT * FROM entitlement_config WHERE feature_type = ?;
+
+upsertEntitlement:
+INSERT OR REPLACE INTO entitlement_config (feature_id, feature_type, minimum_tier)
+VALUES (?, ?, ?);
+
+deleteEntitlement:
+DELETE FROM entitlement_config WHERE feature_id = ? AND feature_type = ?;
