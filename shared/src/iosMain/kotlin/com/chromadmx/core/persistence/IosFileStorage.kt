@@ -11,15 +11,15 @@ class IosFileStorage : FileStorage {
     override fun saveFile(path: String, content: String) {
         val fullPath = "$rootDir/$path"
         val dirPath = if (fullPath.contains("/")) fullPath.substringBeforeLast("/") else null
-        if (dirPath != null && !exists(dirPath)) {
-            mkdirs(dirPath)
+        if (dirPath != null && !fileManager.fileExistsAtPath(dirPath)) {
+            fileManager.createDirectoryAtPath(dirPath, true, null, null)
         }
         (content as NSString).writeToFile(fullPath, true, NSUTF8StringEncoding, null)
     }
 
     override fun readFile(path: String): String? {
         val fullPath = "$rootDir/$path"
-        if (!exists(fullPath)) return null
+        if (!fileManager.fileExistsAtPath(fullPath)) return null
         return NSString.stringWithContentsOfFile(fullPath, NSUTF8StringEncoding, null)
     }
 
