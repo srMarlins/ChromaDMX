@@ -90,7 +90,7 @@ class StageViewModelV2(
     ))
     val presetState: StateFlow<PresetState> = _presetState.asStateFlow()
 
-    private val _networkState = MutableStateFlow(NetworkState())
+    private val _networkState = MutableStateFlow(NetworkState(currentTimeMs = currentTimeMillis()))
     val networkState: StateFlow<NetworkState> = _networkState.asStateFlow()
 
     private val _viewState = MutableStateFlow(ViewState())
