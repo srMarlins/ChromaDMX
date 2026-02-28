@@ -23,6 +23,7 @@ class SimulatedDiscoveryTest {
         val discovery = SimulatedDiscovery(
             baseDelayMs = 10,
             perNodeDelayMs = 10,
+            keepAliveIntervalMs = 0,
             coroutineContext = UnconfinedTestDispatcher(testScheduler),
         )
 
@@ -45,6 +46,7 @@ class SimulatedDiscoveryTest {
         val discovery = SimulatedDiscovery(
             baseDelayMs = 10,
             perNodeDelayMs = 10,
+            keepAliveIntervalMs = 0,
             coroutineContext = UnconfinedTestDispatcher(testScheduler),
         )
 
@@ -70,6 +72,7 @@ class SimulatedDiscoveryTest {
         val discovery = SimulatedDiscovery(
             baseDelayMs = 50,
             perNodeDelayMs = 100,
+            keepAliveIntervalMs = 0,
             coroutineContext = UnconfinedTestDispatcher(testScheduler),
         )
 
@@ -95,6 +98,7 @@ class SimulatedDiscoveryTest {
         val discovery = SimulatedDiscovery(
             baseDelayMs = 100,
             perNodeDelayMs = 200,
+            keepAliveIntervalMs = 0,
             coroutineContext = UnconfinedTestDispatcher(testScheduler),
         )
 
@@ -112,6 +116,7 @@ class SimulatedDiscoveryTest {
     @Test
     fun stopScan_setsIsScanningFalse() = runTest {
         val discovery = SimulatedDiscovery(
+            keepAliveIntervalMs = 0,
             coroutineContext = UnconfinedTestDispatcher(testScheduler),
         )
         discovery.startScan()
@@ -130,6 +135,7 @@ class SimulatedDiscoveryTest {
         val discovery = SimulatedDiscovery(
             baseDelayMs = 10,
             perNodeDelayMs = 10,
+            keepAliveIntervalMs = 0,
             coroutineContext = UnconfinedTestDispatcher(testScheduler),
         )
 
@@ -160,6 +166,7 @@ class SimulatedDiscoveryTest {
             nodes = customNodes,
             baseDelayMs = 10,
             perNodeDelayMs = 10,
+            keepAliveIntervalMs = 0,
             coroutineContext = UnconfinedTestDispatcher(testScheduler),
         )
 
@@ -183,6 +190,7 @@ class SimulatedDiscoveryTest {
         val discovery = SimulatedDiscovery(
             baseDelayMs = 10,
             perNodeDelayMs = 10,
+            keepAliveIntervalMs = 0,
             coroutineContext = UnconfinedTestDispatcher(testScheduler),
         )
 
