@@ -19,6 +19,7 @@ enum class HealthLevel {
 fun DmxNode.healthLevel(currentTimeMs: Long): HealthLevel {
     val timeSinceLastSeen = currentTimeMs - lastSeenMs
     return when {
+        timeSinceLastSeen < 0 -> HealthLevel.FULL // clock skew or init ordering
         timeSinceLastSeen >= DmxNode.LOST_TIMEOUT_MS -> HealthLevel.EMPTY
         latencyMs >= DmxNode.LATENCY_THRESHOLD_MS || timeSinceLastSeen >= DmxNode.DEGRADED_TIMEOUT_MS -> HealthLevel.HALF
         else -> HealthLevel.FULL

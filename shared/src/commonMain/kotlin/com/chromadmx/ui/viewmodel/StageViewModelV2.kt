@@ -116,15 +116,9 @@ class StageViewModelV2(
 
     /** Syncs engine state (layers, scenes, dimmer) at a moderate rate. */
     private val syncJob: Job = scope.launch {
-        var tickCounter = 0
         while (isActive) {
             syncFromEngine()
-            tickCounter++
-            // Tick currentTimeMs every 500ms when the overlay is open (for
-            // live latency display) or every 5s otherwise (for top-bar health).
-            if (_networkState.value.isNodeListOpen || tickCounter % 10 == 0) {
-                _networkState.update { it.copy(currentTimeMs = currentTimeMillis()) }
-            }
+            _networkState.update { it.copy(currentTimeMs = currentTimeMillis()) }
             delay(500L)
         }
     }
