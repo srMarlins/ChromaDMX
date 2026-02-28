@@ -1,42 +1,4 @@
-# ableton_link.def — Kotlin/Native cinterop definition for Ableton Link (iOS)
-#
-# This .def file tells the Kotlin/Native compiler how to generate Kotlin
-# bindings for the Ableton Link SDK on iOS.
-#
-# ## Setup
-#
-# Option A: LinkKit Framework (recommended)
-# 1. Add LinkKit.framework to the Xcode project via CocoaPods or SPM.
-# 2. Uncomment the configuration below.
-# 3. Add to build.gradle.kts:
-#    kotlin {
-#        listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { target ->
-#            target.compilations["main"].cinterops {
-#                create("abletonLink") {
-#                    defFile = file("src/nativeInterop/cinterop/ableton_link.def")
-#                }
-#            }
-#        }
-#    }
-#
-# Option B: Raw C wrapper
-# 1. Create a thin C wrapper (link_c_api.h/c) around the C++ Link SDK.
-# 2. Build as a static library for each iOS architecture.
-# 3. Point headers and staticLibraries to the wrapper.
-#
-# ## Current Status
-#
-# This file is a placeholder. Uncomment the appropriate section when
-# the Link SDK is available in the iOS build environment.
-
-# --- LinkKit ObjC Framework ---
-# language = Objective-C
-# headers = ABLLink.h ABLLinkSettingsViewController.h
-# headerFilter = ABL*
-# linkerOpts = -framework LinkKit
-
-# --- Raw C Wrapper ---
-# headers = link_c_api.h
-# headerFilter = link_*
-# staticLibraries = liblink_c_api.a
-# libraryPaths = /path/to/built/library
+language = Objective-C
+headers = ABLLink.h ABLLinkSettingsViewController.h
+headerFilter = ABL*
+linkerOpts = -framework LinkKit
