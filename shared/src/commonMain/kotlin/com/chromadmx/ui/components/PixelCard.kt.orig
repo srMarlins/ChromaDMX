@@ -18,7 +18,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.chromadmx.ui.theme.ChromaAnimations
 import com.chromadmx.ui.theme.PixelDesign
@@ -68,7 +67,6 @@ fun PixelCard(
                             interactionSource = interactionSource,
                             indication = null,
                             onClick = onClick,
-                            role = Role.Button,
                         )
                     } else {
                         mod
