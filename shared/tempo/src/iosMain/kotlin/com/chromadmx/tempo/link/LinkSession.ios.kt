@@ -1,109 +1,120 @@
 package com.chromadmx.tempo.link
 
+import abletonLink.ABLLinkCaptureAppSessionState
+import abletonLink.ABLLinkCommitAppSessionState
+import abletonLink.ABLLinkDelete
+import abletonLink.ABLLinkGetBeatAtTime
+import abletonLink.ABLLinkGetNumPeers
+import abletonLink.ABLLinkGetTempo
+import abletonLink.ABLLinkIsEnabled
+import abletonLink.ABLLinkNew
+import abletonLink.ABLLinkRef
+import abletonLink.ABLLinkSetActive
+import abletonLink.ABLLinkSetTempo
+import platform.darwin.mach_absolute_time
+
 /**
  * iOS actual for [LinkSession].
  *
- * Wraps Kotlin/Native cinterop calls to the Ableton Link SDK (via LinkKit
- * framework or raw C++ headers).
+ * Wraps Kotlin/Native cinterop calls to the Ableton LinkKit framework.
+ * The cinterop bindings are generated from `ableton_link.def` which
+ * references the LinkKit Objective-C headers (ABLLink.h).
  *
- * ## cinterop Setup (not yet implemented)
+ * ## LinkKit C API
  *
- * ### Option A: LinkKit ObjC Framework (recommended for iOS)
+ * LinkKit exposes a plain-C API (despite shipping as an ObjC framework):
+ * - `ABLLinkNew(bpm)` / `ABLLinkDelete(ref)` — lifecycle
+ * - `ABLLinkSetActive(ref, bool)` / `ABLLinkIsEnabled(ref)` — network
+ * - `ABLLinkCaptureAppSessionState(ref)` — snapshot timeline state
+ * - `ABLLinkCommitAppSessionState(ref, state)` — push changes to mesh
+ * - `ABLLinkGetTempo(state)` / `ABLLinkSetTempo(state, bpm, hostTime)`
+ * - `ABLLinkGetBeatAtTime(state, hostTime, quantum)` — beat position
+ * - `ABLLinkGetNumPeers(ref)` — connected peer count
  *
- * LinkKit provides an Objective-C wrapper around Link that Kotlin/Native
- * handles natively via ObjC interop:
+ * Host time is provided by `mach_absolute_time()` (ticks, not nanoseconds;
+ * LinkKit uses the same timebase internally on iOS).
  *
- * 1. Add LinkKit.framework to the Xcode project (CocoaPods or SPM).
- * 2. Create `src/nativeInterop/cinterop/ableton_link.def`:
- *    ```
- *    language = Objective-C
- *    headers = ABLLink.h ABLLinkSettingsViewController.h
- *    headerFilter = ABL*
- *    linkerOpts = -framework LinkKit
- *    ```
- * 3. Configure in `build.gradle.kts`:
- *    ```kotlin
- *    kotlin {
- *        listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { target ->
- *            target.compilations["main"].cinterops {
- *                create("abletonLink") {
- *                    defFile = file("src/nativeInterop/cinterop/ableton_link.def")
- *                }
- *            }
- *        }
- *    }
- *    ```
+ * ## Threading
  *
- * ### Option B: Raw C++ via cinterop
- *
- * If not using LinkKit, compile Link as a static C library with a thin C
- * wrapper (`link_c_api.h`) and reference that in the .def file.
- *
- * ## Usage pattern (once integrated)
- *
- * ```kotlin
- * actual class LinkSession actual constructor() : LinkSessionApi {
- *     private val ref = ABLLinkNew(120.0)  // Create Link session at 120 BPM
- *
- *     actual override fun enable() { ABLLinkSetActive(ref, true) }
- *     actual override fun disable() { ABLLinkSetActive(ref, false) }
- *
- *     actual override val bpm: Double get() {
- *         val state = ABLLinkCaptureAppSessionState(ref)
- *         return ABLLinkGetTempo(state)
- *     }
- *     // ... etc.
- * }
- * ```
- *
- * ## Current Status
- *
- * This is a **stub implementation**. All methods return safe defaults.
- * iOS compilation is not available on Windows (suppressed via
- * `kotlin.native.ignoreDisabledTargets=true`).
+ * All ABLLink functions are thread-safe. The capture/commit pattern provides
+ * lock-free access suitable for audio-thread use.
  */
 actual class LinkSession actual constructor() : LinkSessionApi {
 
-    private var _enabled = false
+    /** Opaque reference to the native Link session, created at 120 BPM. */
+    private var ref: ABLLinkRef? = ABLLinkNew(DEFAULT_BPM)
+
+    // ---- LinkSessionApi implementation ----
 
     actual override fun enable() {
-        _enabled = true
-        // TODO: ABLLinkSetActive(ref, true) when cinterop is configured
+        ref?.let { ABLLinkSetActive(it, true) }
     }
 
     actual override fun disable() {
-        _enabled = false
-        // TODO: ABLLinkSetActive(ref, false) when cinterop is configured
+        ref?.let { ABLLinkSetActive(it, false) }
     }
 
     actual override val isEnabled: Boolean
-        get() = _enabled
+        get() = ref?.let { ABLLinkIsEnabled(it) } ?: false
 
     actual override val peerCount: Int
-        get() = 0
-        // TODO: ABLLinkGetNumPeers(ref) when cinterop is configured
+        get() = ref?.let { ABLLinkGetNumPeers(it).toInt() } ?: 0
 
     actual override val bpm: Double
-        get() = 120.0
-        // TODO: Capture from ABLLink session state when cinterop is configured
+        get() {
+            val r = ref ?: return DEFAULT_BPM
+            val state = ABLLinkCaptureAppSessionState(r) ?: return DEFAULT_BPM
+            return ABLLinkGetTempo(state)
+        }
 
     actual override val beatPhase: Double
-        get() = 0.0
-        // TODO: ABLLinkGetBeatAtTime(state, hostTimeNanos, 1.0) % 1.0
+        get() {
+            val r = ref ?: return 0.0
+            val state = ABLLinkCaptureAppSessionState(r) ?: return 0.0
+            val hostTime = mach_absolute_time()
+            val beats = ABLLinkGetBeatAtTime(state, hostTime, BEAT_QUANTUM)
+            // Modulo to get fractional beat position [0.0, 1.0)
+            return beats % BEAT_QUANTUM
+        }
 
     actual override val barPhase: Double
-        get() = 0.0
-        // TODO: ABLLinkGetBeatAtTime(state, hostTimeNanos, 4.0) % 4.0 / 4.0
+        get() {
+            val r = ref ?: return 0.0
+            val state = ABLLinkCaptureAppSessionState(r) ?: return 0.0
+            val hostTime = mach_absolute_time()
+            val beats = ABLLinkGetBeatAtTime(state, hostTime, BAR_QUANTUM)
+            // Position within 4-beat bar, normalized to [0.0, 1.0)
+            return (beats % BAR_QUANTUM) / BAR_QUANTUM
+        }
 
     actual override fun requestBpm(bpm: Double) {
-        // TODO: ABLLinkSetTempo(state, bpm, hostTimeNanos) when cinterop is configured
+        val r = ref ?: return
+        val state = ABLLinkCaptureAppSessionState(r) ?: return
+        val hostTime = mach_absolute_time()
+        ABLLinkSetTempo(state, bpm, hostTime)
+        ABLLinkCommitAppSessionState(r, state)
     }
 
     /**
-     * Release native resources. No-op in stub mode.
+     * Release native Link session resources.
+     * After calling close, this instance must not be used.
      */
     actual override fun close() {
-        _enabled = false
-        // TODO: ABLLinkDelete(ref) when cinterop is configured
+        ref?.let { r ->
+            ABLLinkSetActive(r, false)
+            ABLLinkDelete(r)
+        }
+        ref = null
+    }
+
+    private companion object {
+        /** Default initial tempo. */
+        const val DEFAULT_BPM = 120.0
+
+        /** Quantum of 1 beat for beat-phase calculation. */
+        const val BEAT_QUANTUM = 1.0
+
+        /** Quantum of 4 beats for bar-phase calculation (4/4 time). */
+        const val BAR_QUANTUM = 4.0
     }
 }
