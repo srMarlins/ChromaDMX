@@ -1,5 +1,6 @@
 package com.chromadmx.ui.viewmodel
 
+import com.chromadmx.core.DebugFlags
 import com.chromadmx.subscription.model.Entitlement
 import com.chromadmx.subscription.model.SubscriptionTier
 import com.chromadmx.subscription.repository.SubscriptionStore
@@ -59,6 +60,8 @@ class SettingsViewModelV2(
 
     val subscriptionTier: StateFlow<SubscriptionTier> = subscriptionManager?.currentTier
         ?: MutableStateFlow(SubscriptionTier.FREE)
+
+    val isDebugMode: Boolean get() = DebugFlags.isDebugBuild
 
     val canExportData: Boolean
         get() = subscriptionManager?.hasEntitlement(Entitlement.DataExport) ?: false
@@ -225,6 +228,7 @@ class SettingsViewModelV2(
     }
 
     private fun setDebugTier(tier: SubscriptionTier) {
+        if (!DebugFlags.isDebugBuild) return
         val store = subscriptionStore ?: return
         scope.launch {
             withContext(Dispatchers.IO) { store.setTier(tier) }
