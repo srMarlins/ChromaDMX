@@ -192,7 +192,15 @@ class EffectStack(
             }
 
             // Apply master dimmer
-            return (result * masterDimmer).clamped()
+            if (masterDimmer <= 0f) return Color.BLACK
+            if (masterDimmer >= 1f) return result
+
+            // Bypass clamped() to avoid double allocation (components are already 0-1)
+            return Color(
+                result.r * masterDimmer,
+                result.g * masterDimmer,
+                result.b * masterDimmer
+            )
         }
 
         /**
