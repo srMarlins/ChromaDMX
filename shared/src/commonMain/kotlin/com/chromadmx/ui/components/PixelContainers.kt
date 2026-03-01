@@ -124,6 +124,7 @@ fun PixelIconButton(
                 indication = null,
                 enabled = enabled,
                 onClick = onClick,
+                role = androidx.compose.ui.semantics.Role.Button,
             ),
         contentAlignment = Alignment.Center,
     ) {

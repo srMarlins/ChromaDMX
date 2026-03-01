@@ -84,7 +84,8 @@ fun PixelButton(
                 interactionSource = interactionSource,
                 indication = null,
                 enabled = enabled,
-                onClick = onClick
+                onClick = onClick,
+                role = androidx.compose.ui.semantics.Role.Button
             )
             .padding(top = pressDepth) // Reserve space for the "up" state
     ) {
