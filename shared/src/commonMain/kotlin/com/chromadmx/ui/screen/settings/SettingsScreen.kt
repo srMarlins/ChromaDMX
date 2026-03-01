@@ -730,24 +730,19 @@ private fun AgentSection(
         ) {
             // API Key (masked display — auto-unmask on edit)
             var showKey by remember { mutableStateOf(false) }
-            val displayValue = if (showKey || state.agentConfig.apiKey.isEmpty()) {
-                state.agentConfig.apiKey
-            } else {
-                "\u2022".repeat(state.agentConfig.apiKey.length.coerceAtMost(20))
-            }
             PixelTextField(
-                value = displayValue,
+                value = state.agentConfig.apiKey,
                 onValueChange = { newValue ->
-                    if (!showKey) {
-                        // First keystroke while masked: unmask and start fresh
-                        showKey = true
-                        onEvent(SettingsEvent.UpdateAgentConfig(state.agentConfig.copy(apiKey = newValue.filter { it != '\u2022' })))
-                    } else {
-                        onEvent(SettingsEvent.UpdateAgentConfig(state.agentConfig.copy(apiKey = newValue)))
-                    }
+                    if (!showKey) showKey = true
+                    onEvent(SettingsEvent.UpdateAgentConfig(state.agentConfig.copy(apiKey = newValue)))
                 },
                 label = "API Key",
                 placeholder = "Enter API key...",
+                visualTransformation = if (showKey || state.agentConfig.apiKey.isEmpty()) {
+                    androidx.compose.ui.text.input.VisualTransformation.None
+                } else {
+                    androidx.compose.ui.text.input.PasswordVisualTransformation()
+                },
                 modifier = Modifier.fillMaxWidth(),
             )
 
