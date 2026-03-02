@@ -8,6 +8,8 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
+import io.ktor.http.URLBuilder
+import io.ktor.http.URLProtocol
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
@@ -25,6 +27,9 @@ interface WledApiClient {
 
     /** Set arbitrary state fields via POST /json/state */
     suspend fun setState(ip: String, state: WledState): Boolean
+
+    /** Set multiple segment colors in a single API call (batch update). */
+    suspend fun setSegmentsState(ip: String, segments: List<SegmentColorPayload>): Boolean
 
     /** Set the primary color of a specific segment */
     suspend fun setSegmentColor(ip: String, segmentId: Int, r: Int, g: Int, b: Int): Boolean
@@ -53,8 +58,10 @@ interface WledApiClient {
 class WledApiClientImpl(private val client: HttpClient) : WledApiClient {
 
     override suspend fun getFullState(ip: String): WledFullState? {
+        val host = validateHost(ip) ?: return null
         return try {
-            val response: HttpResponse = client.get("http://$ip/json")
+            val url = buildWledUrl(host, "json")
+            val response: HttpResponse = client.get(url)
             if (response.status.isSuccess()) {
                 response.body<WledFullState>()
             } else {
@@ -67,7 +74,11 @@ class WledApiClientImpl(private val client: HttpClient) : WledApiClient {
     }
 
     override suspend fun setState(ip: String, state: WledState): Boolean {
-        return postState(ip, state)
+        return postJson(ip, state)
+    }
+
+    override suspend fun setSegmentsState(ip: String, segments: List<SegmentColorPayload>): Boolean {
+        return postJson(ip, SetSegmentColorBody(seg = segments))
     }
 
     override suspend fun setSegmentColor(
@@ -109,9 +120,31 @@ class WledApiClientImpl(private val client: HttpClient) : WledApiClient {
 
     // -- Internal helpers --
 
+    /** Validate that the IP/host string contains only safe characters (no URL delimiters). */
+    private fun validateHost(ip: String): String? {
+        val trimmed = ip.trim()
+        if (trimmed.isEmpty()) return null
+        // Allow IPv4 addresses, IPv6 in brackets, and simple hostnames
+        val safe = trimmed.all { c ->
+            c.isLetterOrDigit() || c == '.' || c == ':' || c == '[' || c == ']' || c == '-'
+        }
+        return if (safe) trimmed else null
+    }
+
+    /** Build a WLED API URL safely using Ktor's URLBuilder. */
+    private fun buildWledUrl(host: String, vararg pathSegments: String): String {
+        return URLBuilder().apply {
+            protocol = URLProtocol.HTTP
+            this.host = host
+            pathSegments.forEach { segment -> this.pathSegments = this.pathSegments + segment }
+        }.buildString()
+    }
+
     private suspend inline fun <reified T> postJson(ip: String, body: T): Boolean {
+        val host = validateHost(ip) ?: return false
         return try {
-            val response: HttpResponse = client.post("http://$ip/json/state") {
+            val url = buildWledUrl(host, "json", "state")
+            val response: HttpResponse = client.post(url) {
                 contentType(ContentType.Application.Json)
                 setBody(body)
             }
@@ -121,16 +154,12 @@ class WledApiClientImpl(private val client: HttpClient) : WledApiClient {
             false
         }
     }
-
-    private suspend fun postState(ip: String, state: WledState): Boolean {
-        return postJson(ip, state)
-    }
 }
 
 // -- Internal payload DTOs for POST requests --
 
 @Serializable
-internal data class SegmentColorPayload(
+data class SegmentColorPayload(
     val id: Int,
     val col: List<List<Int>>,
 )

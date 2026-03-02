@@ -4,6 +4,7 @@ import com.chromadmx.networking.ConnectionState
 import com.chromadmx.networking.DmxTransport
 import kotlin.concurrent.Volatile
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -40,10 +41,10 @@ interface WledDeviceRegistry {
  * For each incoming DMX frame the transport:
  * 1. Looks up the [WledUniverseMapping] from the [WledDeviceRegistry].
  * 2. Extracts RGB values from the channel data for each mapped segment.
- * 3. Sends `setSegmentColor` calls through the [WledApiClient].
+ * 3. Batches all segment updates into a single API call per device.
  *
- * This is a "thin bridge" -- it does not buffer or rate-limit.  The engine's
- * 40 Hz output loop already provides pacing.
+ * Frame dropping: if the previous API call is still in flight, the new frame
+ * is dropped to prevent unbounded coroutine accumulation at 40 Hz.
  */
 class WledTransport(
     private val apiClient: WledApiClient,
@@ -58,6 +59,9 @@ class WledTransport(
     private var _isRunning = false
     override val isRunning: Boolean get() = _isRunning
 
+    /** Tracks in-flight requests per device IP. If still active, frames are dropped. */
+    private val inflightJobs = mutableMapOf<String, Job>()
+
     override fun start() {
         _isRunning = true
         val hasDevices = registry.adoptedDevices.value.isNotEmpty()
@@ -67,6 +71,8 @@ class WledTransport(
     override fun stop() {
         _isRunning = false
         _connectionState.value = ConnectionState.Disconnected
+        inflightJobs.values.forEach { it.cancel() }
+        inflightJobs.clear()
     }
 
     override fun sendFrame(universe: Int, channels: ByteArray) {
@@ -74,18 +80,24 @@ class WledTransport(
         val mapping = registry.getUniverseMapping(universe) ?: return
         val ip = mapping.deviceIp
 
-        for ((segmentId, channelRange) in mapping.segmentMappings) {
-            val startIndex = channelRange.first
-            // Need at least 3 bytes (R, G, B) starting at startIndex
-            if (startIndex + 2 >= channels.size) continue
+        // Drop frame if previous request to this device is still in flight
+        val existing = inflightJobs[ip]
+        if (existing != null && existing.isActive) return
 
+        // Batch all segment updates into a single payload
+        val segmentPayloads = mapping.segmentMappings.mapNotNull { (segmentId, channelRange) ->
+            val startIndex = channelRange.first
+            if (startIndex + 2 >= channels.size) return@mapNotNull null
             val r = channels[startIndex].toInt() and 0xFF
             val g = channels[startIndex + 1].toInt() and 0xFF
             val b = channels[startIndex + 2].toInt() and 0xFF
+            SegmentColorPayload(id = segmentId, col = listOf(listOf(r, g, b)))
+        }
 
-            scope.launch {
-                apiClient.setSegmentColor(ip, segmentId, r, g, b)
-            }
+        if (segmentPayloads.isEmpty()) return
+
+        inflightJobs[ip] = scope.launch {
+            apiClient.setSegmentsState(ip, segmentPayloads)
         }
     }
 

@@ -24,6 +24,7 @@ class FakeMdnsBrowser : WledMdnsBrowser {
 class FakeWledApiClient : WledApiClient {
     override suspend fun getFullState(ip: String): WledFullState? = null
     override suspend fun setState(ip: String, state: WledState): Boolean = false
+    override suspend fun setSegmentsState(ip: String, segments: List<SegmentColorPayload>): Boolean = false
     override suspend fun setSegmentColor(ip: String, segmentId: Int, r: Int, g: Int, b: Int): Boolean = false
     override suspend fun setSegmentEffect(ip: String, segmentId: Int, effectId: Int, speed: Int, intensity: Int): Boolean = false
     override suspend fun setPower(ip: String, on: Boolean): Boolean = false

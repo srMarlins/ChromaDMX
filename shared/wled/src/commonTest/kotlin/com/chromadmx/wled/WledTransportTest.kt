@@ -38,11 +38,18 @@ class FakeDeviceRegistry : WledDeviceRegistry {
 }
 
 class RecordingApiClient : WledApiClient {
+    /** Records (ip, segments) from batched calls. */
+    val batchCalls = mutableListOf<Pair<String, List<SegmentColorPayload>>>()
     val colorCalls = mutableListOf<Triple<String, Int, Triple<Int, Int, Int>>>()
 
     override suspend fun getFullState(ip: String): WledFullState? = null
 
     override suspend fun setState(ip: String, state: WledState): Boolean = true
+
+    override suspend fun setSegmentsState(ip: String, segments: List<SegmentColorPayload>): Boolean {
+        batchCalls.add(ip to segments)
+        return true
+    }
 
     override suspend fun setSegmentColor(ip: String, segmentId: Int, r: Int, g: Int, b: Int): Boolean {
         colorCalls.add(Triple(ip, segmentId, Triple(r, g, b)))
@@ -118,11 +125,12 @@ class WledTransportTest {
         // Let the launched coroutine complete
         advanceUntilIdle()
 
-        assertEquals(1, apiClient.colorCalls.size)
-        val (ip, segId, rgb) = apiClient.colorCalls.first()
+        assertEquals(1, apiClient.batchCalls.size, "Should batch into a single API call")
+        val (ip, segments) = apiClient.batchCalls.first()
         assertEquals("192.168.1.50", ip)
-        assertEquals(0, segId)
-        assertEquals(Triple(255, 128, 64), rgb)
+        assertEquals(1, segments.size)
+        assertEquals(0, segments[0].id)
+        assertEquals(listOf(listOf(255, 128, 64)), segments[0].col)
     }
 
     @Test

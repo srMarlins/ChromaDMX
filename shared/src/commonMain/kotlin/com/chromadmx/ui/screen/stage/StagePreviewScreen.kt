@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.chromadmx.core.model.BuiltInProfiles
 import com.chromadmx.core.model.Fixture3D
+import com.chromadmx.core.model.Vec3
 import com.chromadmx.core.persistence.FixtureGroup
 import com.chromadmx.ui.components.AudienceView
 import com.chromadmx.ui.components.NodeHealthCompact
@@ -184,8 +185,16 @@ fun StageScreen(
                         }.toMap()
                     }
 
+                    // Auto-place fixtures on room faces from their 3D positions
+                    val placedState = remember(fixtureState.fixtures, roomBoxState.rotationX, roomBoxState.rotationY, roomBoxState.zoom, roomBoxState.selectedFace) {
+                        val placements = fixtureState.fixtures.map { f ->
+                            fixtureToRoomPlacement(f)
+                        }
+                        roomBoxState.copy(placements = placements)
+                    }
+
                     RoomBoxView(
-                        state = roomBoxState,
+                        state = placedState,
                         fixtureColors = roomFixtureColorMap,
                         onRotate = { dx, dy ->
                             roomBoxState = roomBoxState.copy(
@@ -985,4 +994,76 @@ private fun InfoLabel(label: String, value: String) {
 // Utility functions
 // ============================================================================
 
+/**
+ * Maps a [Fixture3D] world position to a [RoomFixturePlacement] on the room box.
+ *
+ * Strategy: determine the closest room surface based on the fixture's position,
+ * then project the remaining two axes to normalized UV coordinates (0-1) on that face.
+ *
+ * Rig coordinates use real-world meters:
+ * - x = left/right, y = depth (front/back), z = height
+ *
+ * We compute bounding-box-relative positions so any rig maps into the room.
+ */
+private fun fixtureToRoomPlacement(fixture: Fixture3D): RoomFixturePlacement {
+    val pos = fixture.position
+    // Heuristic: assign face based on which room surface the fixture is closest to.
+    // Low z -> floor, high z -> ceiling, high y -> back wall, low y -> front wall,
+    // extreme x -> side walls.
+    val face: BoxFace
+    val u: Float
+    val v: Float
+
+    when {
+        // Ceiling: z above 2.0m
+        pos.z >= 2.0f -> {
+            face = BoxFace.CEILING
+            u = normalizeAxis(pos.x, -3f, 3f)
+            v = normalizeAxis(pos.y, 0f, 4f)
+        }
+        // Floor: z below 0.15m
+        pos.z <= 0.15f -> {
+            face = BoxFace.FLOOR
+            u = normalizeAxis(pos.x, -3f, 3f)
+            v = normalizeAxis(pos.y, 0f, 4f)
+        }
+        // Right wall: x >= 2.0
+        pos.x >= 2.0f -> {
+            face = BoxFace.RIGHT_WALL
+            u = normalizeAxis(pos.y, 0f, 4f)
+            v = normalizeAxis(pos.z, 0f, 2.5f)
+        }
+        // Left wall: x <= -2.0
+        pos.x <= -2.0f -> {
+            face = BoxFace.LEFT_WALL
+            u = normalizeAxis(pos.y, 0f, 4f)
+            v = normalizeAxis(pos.z, 0f, 2.5f)
+        }
+        // Back wall: high y
+        pos.y >= 2.0f -> {
+            face = BoxFace.BACK_WALL
+            u = normalizeAxis(pos.x, -3f, 3f)
+            v = normalizeAxis(pos.z, 0f, 2.5f)
+        }
+        // Default: back wall (most common for desk/wall setups)
+        else -> {
+            face = BoxFace.BACK_WALL
+            u = normalizeAxis(pos.x, -3f, 3f)
+            v = normalizeAxis(pos.z, 0f, 2.5f)
+        }
+    }
+
+    return RoomFixturePlacement(
+        fixtureId = fixture.fixture.fixtureId,
+        face = face,
+        positionOnFace = Vec3(u.coerceIn(0.05f, 0.95f), v.coerceIn(0.05f, 0.95f), 0f),
+    )
+}
+
+/** Normalize a value from [min, max] to [0, 1]. */
+private fun normalizeAxis(value: Float, min: Float, max: Float): Float {
+    val range = max - min
+    if (range <= 0f) return 0.5f
+    return (value - min) / range
+}
 

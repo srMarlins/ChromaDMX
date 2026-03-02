@@ -108,9 +108,9 @@ class SetWledBrightnessTool(
         if (devices.isEmpty()) {
             return "No WLED device found matching '${args.device}'. Use listWledDevices to see available devices."
         }
-        val results = devices.map { d ->
-            val ok = apiClient.setBrightness(d.ipAddress, args.brightness)
-            d.name to ok
+        val results = mutableListOf<Pair<String, Boolean>>()
+        for (d in devices) {
+            results.add(d.name to apiClient.setBrightness(d.ipAddress, args.brightness))
         }
         val successes = results.count { it.second }
         val failures = results.count { !it.second }
@@ -147,9 +147,9 @@ class SetWledColorTool(
         if (devices.isEmpty()) {
             return "No WLED device found matching '${args.device}'. Use listWledDevices to see available devices."
         }
-        val results = devices.map { d ->
-            val ok = apiClient.setSegmentColor(d.ipAddress, 0, rgb.first, rgb.second, rgb.third)
-            d.name to ok
+        val results = mutableListOf<Pair<String, Boolean>>()
+        for (d in devices) {
+            results.add(d.name to apiClient.setSegmentColor(d.ipAddress, 0, rgb.first, rgb.second, rgb.third))
         }
         val successes = results.count { it.second }
         val failures = results.count { !it.second }
@@ -184,9 +184,9 @@ class SetWledPowerTool(
             return "No WLED device found matching '${args.device}'. Use listWledDevices to see available devices."
         }
         val state = if (args.on) "on" else "off"
-        val results = devices.map { d ->
-            val ok = apiClient.setPower(d.ipAddress, args.on)
-            d.name to ok
+        val results = mutableListOf<Pair<String, Boolean>>()
+        for (d in devices) {
+            results.add(d.name to apiClient.setPower(d.ipAddress, args.on))
         }
         val successes = results.count { it.second }
         val failures = results.count { !it.second }

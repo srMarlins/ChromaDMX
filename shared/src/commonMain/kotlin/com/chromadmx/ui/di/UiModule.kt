@@ -102,6 +102,7 @@ val uiModule = module {
             fixtureStore = getOrNull<FixtureStore>(),
             subscriptionManager = getOrNull(),
             subscriptionStore = getOrNull<SubscriptionStore>(),
+            appStateManager = getOrNull(),
         )
     }
 
