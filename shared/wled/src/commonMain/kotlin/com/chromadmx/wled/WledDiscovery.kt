@@ -70,6 +70,7 @@ class WledDiscovery(
             totalLeds = fullState.info.leds.count,
             segments = fullState.state.seg,
             firmwareVersion = fullState.info.ver.ifEmpty { device.firmwareVersion },
+            isOnline = true,
         )
     }
 }

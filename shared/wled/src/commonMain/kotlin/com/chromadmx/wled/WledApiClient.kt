@@ -60,7 +60,8 @@ class WledApiClientImpl(private val client: HttpClient) : WledApiClient {
             } else {
                 null
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             null
         }
     }
@@ -115,7 +116,8 @@ class WledApiClientImpl(private val client: HttpClient) : WledApiClient {
                 setBody(body)
             }
             response.status.isSuccess()
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             false
         }
     }

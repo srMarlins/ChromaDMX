@@ -237,9 +237,9 @@ private fun RigPreviewCanvas(
 
         // Compute bounds from x/y positions
         var minX = Float.MAX_VALUE
-        var maxX = Float.MIN_VALUE
+        var maxX = -Float.MAX_VALUE
         var minY = Float.MAX_VALUE
-        var maxY = Float.MIN_VALUE
+        var maxY = -Float.MAX_VALUE
         for (f in fixtures) {
             if (f.position.x < minX) minX = f.position.x
             if (f.position.x > maxX) maxX = f.position.x

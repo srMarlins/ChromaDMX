@@ -6,6 +6,7 @@ import android.net.nsd.NsdServiceInfo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 /**
  * Android implementation of [WledMdnsBrowser] using [NsdManager].
@@ -42,7 +43,7 @@ class WledMdnsBrowserAndroid(context: Context) : WledMdnsBrowser {
 
         override fun onServiceLost(serviceInfo: NsdServiceInfo) {
             val name = serviceInfo.serviceName
-            _discoveredDevices.value = _discoveredDevices.value.filter { it.name != name }
+            _discoveredDevices.update { it.filter { d -> d.name != name } }
         }
 
         override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) {
@@ -68,14 +69,14 @@ class WledMdnsBrowserAndroid(context: Context) : WledMdnsBrowser {
                 isOnline = true,
                 lastSeenMs = currentTimeMillis(),
             )
-            val current = _discoveredDevices.value.toMutableList()
-            val existingIndex = current.indexOfFirst { it.ipAddress == ip }
-            if (existingIndex >= 0) {
-                current[existingIndex] = device
-            } else {
-                current.add(device)
+            _discoveredDevices.update { current ->
+                val existingIndex = current.indexOfFirst { it.ipAddress == ip }
+                if (existingIndex >= 0) {
+                    current.toMutableList().also { it[existingIndex] = device }
+                } else {
+                    current + device
+                }
             }
-            _discoveredDevices.value = current.toList()
         }
     }
 

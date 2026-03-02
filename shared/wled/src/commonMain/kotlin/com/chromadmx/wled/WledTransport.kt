@@ -2,6 +2,7 @@ package com.chromadmx.wled
 
 import com.chromadmx.networking.ConnectionState
 import com.chromadmx.networking.DmxTransport
+import kotlin.concurrent.Volatile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -53,6 +54,7 @@ class WledTransport(
     private val _connectionState = MutableStateFlow(ConnectionState.Disconnected)
     override val connectionState: StateFlow<ConnectionState> = _connectionState.asStateFlow()
 
+    @Volatile
     private var _isRunning = false
     override val isRunning: Boolean get() = _isRunning
 
@@ -68,6 +70,7 @@ class WledTransport(
     }
 
     override fun sendFrame(universe: Int, channels: ByteArray) {
+        if (!_isRunning) return
         val mapping = registry.getUniverseMapping(universe) ?: return
         val ip = mapping.deviceIp
 
