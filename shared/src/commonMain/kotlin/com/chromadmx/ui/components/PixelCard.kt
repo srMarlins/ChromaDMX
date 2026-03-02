@@ -67,6 +67,7 @@ fun PixelCard(
                             interactionSource = interactionSource,
                             indication = null,
                             onClick = onClick,
+                            role = androidx.compose.ui.semantics.Role.Button,
                         )
                     } else {
                         mod

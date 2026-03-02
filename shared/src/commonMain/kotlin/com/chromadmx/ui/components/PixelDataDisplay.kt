@@ -90,6 +90,7 @@ fun PixelListItem(
                             interactionSource = interactionSource,
                             indication = null,
                             onClick = onClick,
+                            role = androidx.compose.ui.semantics.Role.Button,
                         )
                     } else {
                         mod
@@ -190,6 +191,7 @@ fun PixelChip(
                 interactionSource = interactionSource,
                 indication = null,
                 onClick = onClick,
+                role = androidx.compose.ui.semantics.Role.Button,
             )
             .let { mod ->
                 if (selected) {
@@ -383,10 +385,13 @@ fun PixelToast(
                             fontFamily = PixelFontFamily,
                         ),
                         modifier = Modifier
-                            .clickable(onClick = {
-                                onAction()
-                                onDismiss()
-                            }),
+                            .clickable(
+                                onClick = {
+                                    onAction()
+                                    onDismiss()
+                                },
+                                role = androidx.compose.ui.semantics.Role.Button,
+                            ),
                     )
                 }
             }
