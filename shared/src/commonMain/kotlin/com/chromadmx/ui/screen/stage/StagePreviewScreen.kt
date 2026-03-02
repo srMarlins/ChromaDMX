@@ -70,6 +70,7 @@ import com.chromadmx.ui.state.NetworkState
 import com.chromadmx.ui.state.PerformanceState
 import com.chromadmx.ui.state.PresetState
 import com.chromadmx.ui.state.StageEvent
+import com.chromadmx.ui.state.StageViewMode
 import com.chromadmx.ui.state.ViewMode
 import com.chromadmx.ui.state.ViewState
 import com.chromadmx.ui.theme.PixelDesign
@@ -115,6 +116,9 @@ fun StageScreen(
     var showSimTooltip by remember { mutableStateOf(false) }
     var showPresetBrowser by remember { mutableStateOf(false) }
 
+    // Room box state (local to the composable, managed via remember)
+    var roomBoxState by remember { mutableStateOf(RoomBoxState()) }
+
     PixelScaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
@@ -135,30 +139,68 @@ fun StageScreen(
                 .fillMaxSize()
                 .padding(padding),
         ) {
-            // Main stage view — switches between modes
-            when (viewState.mode) {
-                ViewMode.TOP_DOWN -> VenueCanvas(
-                    fixtures = fixtureState.fixtures,
-                    fixtureColors = fixtureColors,
-                    selectedFixtureIndex = fixtureState.selectedFixtureIndex,
-                    isEditMode = fixtureState.isEditMode,
-                    onFixtureTapped = { viewModel.onEvent(StageEvent.SelectFixture(it)) },
-                    onBackgroundTapped = { viewModel.onEvent(StageEvent.SelectFixture(null)) },
-                    onFixtureDragged = { idx, pos ->
-                        viewModel.onEvent(StageEvent.UpdateFixturePosition(idx, pos))
-                    },
-                    onDragEnd = { idx ->
-                        viewModel.onEvent(StageEvent.PersistFixturePosition(idx))
-                    },
-                    modifier = Modifier.fillMaxSize(),
-                )
+            // Main stage view — switches between stage view mode and room box
+            when (viewState.stageViewMode) {
+                StageViewMode.STAGE -> {
+                    // Traditional stage views (top-down / audience)
+                    when (viewState.mode) {
+                        ViewMode.TOP_DOWN -> VenueCanvas(
+                            fixtures = fixtureState.fixtures,
+                            fixtureColors = fixtureColors,
+                            selectedFixtureIndex = fixtureState.selectedFixtureIndex,
+                            isEditMode = fixtureState.isEditMode,
+                            onFixtureTapped = { viewModel.onEvent(StageEvent.SelectFixture(it)) },
+                            onBackgroundTapped = { viewModel.onEvent(StageEvent.SelectFixture(null)) },
+                            onFixtureDragged = { idx, pos ->
+                                viewModel.onEvent(StageEvent.UpdateFixturePosition(idx, pos))
+                            },
+                            onDragEnd = { idx ->
+                                viewModel.onEvent(StageEvent.PersistFixturePosition(idx))
+                            },
+                            modifier = Modifier.fillMaxSize(),
+                        )
 
-                ViewMode.AUDIENCE -> AudienceView(
-                    fixtures = fixtureState.fixtures,
-                    fixtureColors = fixtureColors,
-                    onBackgroundTapped = { viewModel.onEvent(StageEvent.SelectFixture(null)) },
-                    modifier = Modifier.fillMaxSize(),
-                )
+                        ViewMode.AUDIENCE -> AudienceView(
+                            fixtures = fixtureState.fixtures,
+                            fixtureColors = fixtureColors,
+                            onBackgroundTapped = { viewModel.onEvent(StageEvent.SelectFixture(null)) },
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
+
+                StageViewMode.ROOM_BOX -> {
+                    // Build fixture color map: fixtureId -> Compose Color
+                    val roomFixtureColorMap = remember(fixtureState.fixtures, fixtureColors) {
+                        fixtureState.fixtures.mapIndexedNotNull { index, fixture3D ->
+                            fixtureColors.getOrNull(index)?.let { dmxColor ->
+                                fixture3D.fixture.fixtureId to Color(
+                                    red = dmxColor.r,
+                                    green = dmxColor.g,
+                                    blue = dmxColor.b,
+                                    alpha = 1f,
+                                )
+                            }
+                        }.toMap()
+                    }
+
+                    RoomBoxView(
+                        state = roomBoxState,
+                        fixtureColors = roomFixtureColorMap,
+                        onRotate = { dx, dy ->
+                            roomBoxState = roomBoxState.copy(
+                                rotationY = roomBoxState.rotationY + dx,
+                                rotationX = (roomBoxState.rotationX + dy).coerceIn(-89f, 89f),
+                            )
+                        },
+                        onTapFace = { face ->
+                            roomBoxState = roomBoxState.copy(
+                                selectedFace = if (roomBoxState.selectedFace == face) null else face,
+                            )
+                        },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
             }
 
             // --- Overlays ---
@@ -656,29 +698,54 @@ private fun CameraControls(
     onEvent: (StageEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
+    Column(
         modifier = modifier.padding(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        horizontalAlignment = Alignment.End,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        PixelChip(
-            text = "2D",
-            selected = viewState.mode == ViewMode.TOP_DOWN,
-            onClick = {
-                if (viewState.mode != ViewMode.TOP_DOWN) {
-                    onEvent(StageEvent.ToggleViewMode)
-                }
-            },
-        )
-        PixelChip(
-            text = "Front",
-            selected = viewState.mode == ViewMode.AUDIENCE,
-            onClick = {
-                if (viewState.mode != ViewMode.AUDIENCE) {
-                    onEvent(StageEvent.ToggleViewMode)
-                }
-            },
-        )
+        // Stage view mode toggle: Stage vs Room
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            PixelChip(
+                text = "Stage",
+                selected = viewState.stageViewMode == StageViewMode.STAGE,
+                onClick = { onEvent(StageEvent.SetStageViewMode(StageViewMode.STAGE)) },
+            )
+            PixelChip(
+                text = "Room",
+                selected = viewState.stageViewMode == StageViewMode.ROOM_BOX,
+                onClick = { onEvent(StageEvent.SetStageViewMode(StageViewMode.ROOM_BOX)) },
+            )
+        }
+
+        // Sub-mode chips (only shown in Stage mode)
+        if (viewState.stageViewMode == StageViewMode.STAGE) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                PixelChip(
+                    text = "2D",
+                    selected = viewState.mode == ViewMode.TOP_DOWN,
+                    onClick = {
+                        if (viewState.mode != ViewMode.TOP_DOWN) {
+                            onEvent(StageEvent.ToggleViewMode)
+                        }
+                    },
+                )
+                PixelChip(
+                    text = "Front",
+                    selected = viewState.mode == ViewMode.AUDIENCE,
+                    onClick = {
+                        if (viewState.mode != ViewMode.AUDIENCE) {
+                            onEvent(StageEvent.ToggleViewMode)
+                        }
+                    },
+                )
+            }
+        }
     }
 }
 

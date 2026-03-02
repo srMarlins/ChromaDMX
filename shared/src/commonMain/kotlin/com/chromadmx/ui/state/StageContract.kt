@@ -102,17 +102,28 @@ data class NodeDiagnostics(
 @Immutable
 data class ViewState(
     val mode: ViewMode = ViewMode.TOP_DOWN,
+    val stageViewMode: StageViewMode = StageViewMode.STAGE,
     val isSimulationMode: Boolean = false,
     val simulationPresetName: String? = null,
     val simulationFixtureCount: Int = 0
 )
 
 /**
- * Stage view mode options.
+ * Stage view mode options (2D top-down vs audience front view).
  */
 enum class ViewMode {
     TOP_DOWN,
     AUDIENCE
+}
+
+/**
+ * High-level stage view mode: traditional stage views or the 3D room box diorama.
+ */
+enum class StageViewMode {
+    /** Classic stage views (top-down / audience). */
+    STAGE,
+    /** 3D room box diorama with fixture glows on walls/ceiling/floor. */
+    ROOM_BOX
 }
 
 /**
@@ -147,6 +158,7 @@ sealed interface StageEvent {
 
     // View controls
     data object ToggleViewMode : StageEvent
+    data class SetStageViewMode(val mode: StageViewMode) : StageEvent
     data object ToggleEditMode : StageEvent
     data object ToggleNodeList : StageEvent
     data class DiagnoseNode(val node: DmxNode) : StageEvent
