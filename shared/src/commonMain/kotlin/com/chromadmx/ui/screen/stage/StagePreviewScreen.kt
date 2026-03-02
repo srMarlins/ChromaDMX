@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.chromadmx.core.model.BuiltInProfiles
 import com.chromadmx.core.model.Fixture3D
+import com.chromadmx.core.model.Vec3
 import com.chromadmx.core.persistence.FixtureGroup
 import com.chromadmx.ui.components.AudienceView
 import com.chromadmx.ui.components.NodeHealthCompact
@@ -70,6 +71,7 @@ import com.chromadmx.ui.state.NetworkState
 import com.chromadmx.ui.state.PerformanceState
 import com.chromadmx.ui.state.PresetState
 import com.chromadmx.ui.state.StageEvent
+import com.chromadmx.ui.state.StageViewMode
 import com.chromadmx.ui.state.ViewMode
 import com.chromadmx.ui.state.ViewState
 import com.chromadmx.ui.theme.PixelDesign
@@ -115,6 +117,9 @@ fun StageScreen(
     var showSimTooltip by remember { mutableStateOf(false) }
     var showPresetBrowser by remember { mutableStateOf(false) }
 
+    // Room box state (local to the composable, managed via remember)
+    var roomBoxState by remember { mutableStateOf(RoomBoxState()) }
+
     PixelScaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
@@ -135,30 +140,76 @@ fun StageScreen(
                 .fillMaxSize()
                 .padding(padding),
         ) {
-            // Main stage view — switches between modes
-            when (viewState.mode) {
-                ViewMode.TOP_DOWN -> VenueCanvas(
-                    fixtures = fixtureState.fixtures,
-                    fixtureColors = fixtureColors,
-                    selectedFixtureIndex = fixtureState.selectedFixtureIndex,
-                    isEditMode = fixtureState.isEditMode,
-                    onFixtureTapped = { viewModel.onEvent(StageEvent.SelectFixture(it)) },
-                    onBackgroundTapped = { viewModel.onEvent(StageEvent.SelectFixture(null)) },
-                    onFixtureDragged = { idx, pos ->
-                        viewModel.onEvent(StageEvent.UpdateFixturePosition(idx, pos))
-                    },
-                    onDragEnd = { idx ->
-                        viewModel.onEvent(StageEvent.PersistFixturePosition(idx))
-                    },
-                    modifier = Modifier.fillMaxSize(),
-                )
+            // Main stage view — switches between stage view mode and room box
+            when (viewState.stageViewMode) {
+                StageViewMode.STAGE -> {
+                    // Traditional stage views (top-down / audience)
+                    when (viewState.mode) {
+                        ViewMode.TOP_DOWN -> VenueCanvas(
+                            fixtures = fixtureState.fixtures,
+                            fixtureColors = fixtureColors,
+                            selectedFixtureIndex = fixtureState.selectedFixtureIndex,
+                            isEditMode = fixtureState.isEditMode,
+                            onFixtureTapped = { viewModel.onEvent(StageEvent.SelectFixture(it)) },
+                            onBackgroundTapped = { viewModel.onEvent(StageEvent.SelectFixture(null)) },
+                            onFixtureDragged = { idx, pos ->
+                                viewModel.onEvent(StageEvent.UpdateFixturePosition(idx, pos))
+                            },
+                            onDragEnd = { idx ->
+                                viewModel.onEvent(StageEvent.PersistFixturePosition(idx))
+                            },
+                            modifier = Modifier.fillMaxSize(),
+                        )
 
-                ViewMode.AUDIENCE -> AudienceView(
-                    fixtures = fixtureState.fixtures,
-                    fixtureColors = fixtureColors,
-                    onBackgroundTapped = { viewModel.onEvent(StageEvent.SelectFixture(null)) },
-                    modifier = Modifier.fillMaxSize(),
-                )
+                        ViewMode.AUDIENCE -> AudienceView(
+                            fixtures = fixtureState.fixtures,
+                            fixtureColors = fixtureColors,
+                            onBackgroundTapped = { viewModel.onEvent(StageEvent.SelectFixture(null)) },
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
+
+                StageViewMode.ROOM_BOX -> {
+                    // Build fixture color map: fixtureId -> Compose Color
+                    val roomFixtureColorMap = remember(fixtureState.fixtures, fixtureColors) {
+                        fixtureState.fixtures.mapIndexedNotNull { index, fixture3D ->
+                            fixtureColors.getOrNull(index)?.let { dmxColor ->
+                                fixture3D.fixture.fixtureId to Color(
+                                    red = dmxColor.r,
+                                    green = dmxColor.g,
+                                    blue = dmxColor.b,
+                                    alpha = 1f,
+                                )
+                            }
+                        }.toMap()
+                    }
+
+                    // Auto-place fixtures on room faces from their 3D positions
+                    val placedState = remember(fixtureState.fixtures, roomBoxState.rotationX, roomBoxState.rotationY, roomBoxState.zoom, roomBoxState.selectedFace) {
+                        val placements = fixtureState.fixtures.map { f ->
+                            fixtureToRoomPlacement(f)
+                        }
+                        roomBoxState.copy(placements = placements)
+                    }
+
+                    RoomBoxView(
+                        state = placedState,
+                        fixtureColors = roomFixtureColorMap,
+                        onRotate = { dx, dy ->
+                            roomBoxState = roomBoxState.copy(
+                                rotationY = roomBoxState.rotationY + dx,
+                                rotationX = (roomBoxState.rotationX + dy).coerceIn(-89f, 89f),
+                            )
+                        },
+                        onTapFace = { face ->
+                            roomBoxState = roomBoxState.copy(
+                                selectedFace = if (roomBoxState.selectedFace == face) null else face,
+                            )
+                        },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
             }
 
             // --- Overlays ---
@@ -656,29 +707,54 @@ private fun CameraControls(
     onEvent: (StageEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
+    Column(
         modifier = modifier.padding(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        horizontalAlignment = Alignment.End,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        PixelChip(
-            text = "2D",
-            selected = viewState.mode == ViewMode.TOP_DOWN,
-            onClick = {
-                if (viewState.mode != ViewMode.TOP_DOWN) {
-                    onEvent(StageEvent.ToggleViewMode)
-                }
-            },
-        )
-        PixelChip(
-            text = "Front",
-            selected = viewState.mode == ViewMode.AUDIENCE,
-            onClick = {
-                if (viewState.mode != ViewMode.AUDIENCE) {
-                    onEvent(StageEvent.ToggleViewMode)
-                }
-            },
-        )
+        // Stage view mode toggle: Stage vs Room
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            PixelChip(
+                text = "Stage",
+                selected = viewState.stageViewMode == StageViewMode.STAGE,
+                onClick = { onEvent(StageEvent.SetStageViewMode(StageViewMode.STAGE)) },
+            )
+            PixelChip(
+                text = "Room",
+                selected = viewState.stageViewMode == StageViewMode.ROOM_BOX,
+                onClick = { onEvent(StageEvent.SetStageViewMode(StageViewMode.ROOM_BOX)) },
+            )
+        }
+
+        // Sub-mode chips (only shown in Stage mode)
+        if (viewState.stageViewMode == StageViewMode.STAGE) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                PixelChip(
+                    text = "2D",
+                    selected = viewState.mode == ViewMode.TOP_DOWN,
+                    onClick = {
+                        if (viewState.mode != ViewMode.TOP_DOWN) {
+                            onEvent(StageEvent.ToggleViewMode)
+                        }
+                    },
+                )
+                PixelChip(
+                    text = "Front",
+                    selected = viewState.mode == ViewMode.AUDIENCE,
+                    onClick = {
+                        if (viewState.mode != ViewMode.AUDIENCE) {
+                            onEvent(StageEvent.ToggleViewMode)
+                        }
+                    },
+                )
+            }
+        }
     }
 }
 
@@ -918,4 +994,76 @@ private fun InfoLabel(label: String, value: String) {
 // Utility functions
 // ============================================================================
 
+/**
+ * Maps a [Fixture3D] world position to a [RoomFixturePlacement] on the room box.
+ *
+ * Strategy: determine the closest room surface based on the fixture's position,
+ * then project the remaining two axes to normalized UV coordinates (0-1) on that face.
+ *
+ * Rig coordinates use real-world meters:
+ * - x = left/right, y = depth (front/back), z = height
+ *
+ * We compute bounding-box-relative positions so any rig maps into the room.
+ */
+private fun fixtureToRoomPlacement(fixture: Fixture3D): RoomFixturePlacement {
+    val pos = fixture.position
+    // Heuristic: assign face based on which room surface the fixture is closest to.
+    // Low z -> floor, high z -> ceiling, high y -> back wall, low y -> front wall,
+    // extreme x -> side walls.
+    val face: BoxFace
+    val u: Float
+    val v: Float
+
+    when {
+        // Ceiling: z above 2.0m
+        pos.z >= 2.0f -> {
+            face = BoxFace.CEILING
+            u = normalizeAxis(pos.x, -3f, 3f)
+            v = normalizeAxis(pos.y, 0f, 4f)
+        }
+        // Floor: z below 0.15m
+        pos.z <= 0.15f -> {
+            face = BoxFace.FLOOR
+            u = normalizeAxis(pos.x, -3f, 3f)
+            v = normalizeAxis(pos.y, 0f, 4f)
+        }
+        // Right wall: x >= 2.0
+        pos.x >= 2.0f -> {
+            face = BoxFace.RIGHT_WALL
+            u = normalizeAxis(pos.y, 0f, 4f)
+            v = normalizeAxis(pos.z, 0f, 2.5f)
+        }
+        // Left wall: x <= -2.0
+        pos.x <= -2.0f -> {
+            face = BoxFace.LEFT_WALL
+            u = normalizeAxis(pos.y, 0f, 4f)
+            v = normalizeAxis(pos.z, 0f, 2.5f)
+        }
+        // Back wall: high y
+        pos.y >= 2.0f -> {
+            face = BoxFace.BACK_WALL
+            u = normalizeAxis(pos.x, -3f, 3f)
+            v = normalizeAxis(pos.z, 0f, 2.5f)
+        }
+        // Default: back wall (most common for desk/wall setups)
+        else -> {
+            face = BoxFace.BACK_WALL
+            u = normalizeAxis(pos.x, -3f, 3f)
+            v = normalizeAxis(pos.z, 0f, 2.5f)
+        }
+    }
+
+    return RoomFixturePlacement(
+        fixtureId = fixture.fixture.fixtureId,
+        face = face,
+        positionOnFace = Vec3(u.coerceIn(0.05f, 0.95f), v.coerceIn(0.05f, 0.95f), 0f),
+    )
+}
+
+/** Normalize a value from [min, max] to [0, 1]. */
+private fun normalizeAxis(value: Float, min: Float, max: Float): Float {
+    val range = max - min
+    if (range <= 0f) return 0.5f
+    return (value - min) / range
+}
 

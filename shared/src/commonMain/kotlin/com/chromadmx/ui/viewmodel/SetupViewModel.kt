@@ -17,6 +17,7 @@ import com.chromadmx.ui.state.GenreOption
 import com.chromadmx.ui.state.SetupEvent
 import com.chromadmx.ui.state.SetupStep
 import com.chromadmx.ui.state.SetupUiState
+import com.chromadmx.ui.state.UseCase
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
@@ -126,6 +127,7 @@ class SetupViewModel(
             is SetupEvent.SkipToComplete -> skipToComplete()
             is SetupEvent.EnterSimulationMode -> enterSimulationMode()
             is SetupEvent.RetryNetworkScan -> retryNetworkScan()
+            is SetupEvent.SelectUseCase -> selectUseCase(event.useCase)
             is SetupEvent.SelectRigPreset -> selectRigPreset(event.preset)
             is SetupEvent.SelectGenre -> selectGenre(event.genre)
             is SetupEvent.ConfirmGenre -> confirmGenre()
@@ -173,6 +175,7 @@ class SetupViewModel(
     private fun onStepEntered(step: SetupStep) {
         when (step) {
             SetupStep.SPLASH -> { /* no-op, init handles scan */ }
+            SetupStep.USE_CASE_SELECT -> { /* wait for user to pick use case */ }
             SetupStep.NETWORK_DISCOVERY -> { /* scan already running from init */ }
             SetupStep.FIXTURE_SCAN -> { /* wait for user to select rig */ }
             SetupStep.VIBE_CHECK -> { /* wait for user genre selection */ }
@@ -218,6 +221,28 @@ class SetupViewModel(
         fixtureDiscovery.stopScan()
         scanJob?.cancel()
         startScan()
+    }
+
+    // -- Use-Case Selection --
+
+    /**
+     * Handle use-case selection: set a default rig preset based on the
+     * chosen scenario, persist the choice, optionally enter simulation
+     * mode for "Just Exploring", and advance.
+     */
+    private fun selectUseCase(useCase: UseCase) {
+        _state.update { it.copy(selectedUseCase = useCase) }
+        val defaultRig = when (useCase) {
+            UseCase.MY_ROOM -> RigPreset.DESK_STRIP
+            UseCase.A_STAGE -> RigPreset.SMALL_DJ
+            UseCase.JUST_EXPLORING -> RigPreset.ROOM_ACCENT
+        }
+        _state.update { it.copy(selectedRigPreset = defaultRig) }
+        scope.launch { settingsStore.setUseCase(useCase.name) }
+        if (useCase == UseCase.JUST_EXPLORING) {
+            enterSimulationMode()
+        }
+        advance()
     }
 
     // -- Rig Preset --

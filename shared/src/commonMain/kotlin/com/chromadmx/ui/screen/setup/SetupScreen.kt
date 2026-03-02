@@ -51,6 +51,7 @@ import com.chromadmx.ui.state.GenreOption
 import com.chromadmx.ui.state.SetupEvent
 import com.chromadmx.ui.state.SetupStep
 import com.chromadmx.ui.state.SetupUiState
+import com.chromadmx.ui.state.UseCase
 import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.theme.PixelFontFamily
 import com.chromadmx.ui.util.presetDisplayName
@@ -334,6 +335,7 @@ private fun ConfigPhase(
         modifier = modifier.fillMaxSize(),
     ) { step ->
         when (step) {
+            SetupStep.USE_CASE_SELECT -> UseCaseSelectionContent(onEvent = onEvent)
             SetupStep.FIXTURE_SCAN -> FixtureScanContent(state = state, onEvent = onEvent)
             SetupStep.VIBE_CHECK -> VibeCheckContent(state = state, onEvent = onEvent)
             SetupStep.STAGE_PREVIEW -> StagePreviewContent(

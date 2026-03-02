@@ -33,7 +33,7 @@ sealed class PaywallTrigger {
     ) : PaywallTrigger()
 
     data object RealHardwareRequired : PaywallTrigger() {
-        override val requiredTier = SubscriptionTier.PRO
+        override val requiredTier = SubscriptionTier.FREE
     }
 
     data object BleProvisioningRequired : PaywallTrigger() {
@@ -50,6 +50,14 @@ sealed class PaywallTrigger {
 
     data object DataExportRequired : PaywallTrigger() {
         override val requiredTier = SubscriptionTier.ULTIMATE
+    }
+
+    data object WledMultiSegmentRequired : PaywallTrigger() {
+        override val requiredTier = SubscriptionTier.PRO
+    }
+
+    data object StageViewRequired : PaywallTrigger() {
+        override val requiredTier = SubscriptionTier.PRO
     }
 
     data class General(

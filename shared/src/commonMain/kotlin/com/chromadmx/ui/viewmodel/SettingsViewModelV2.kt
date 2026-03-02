@@ -14,6 +14,8 @@ import com.chromadmx.networking.TransportMode
 import com.chromadmx.service.DataExportService
 import com.chromadmx.service.ImportResult
 import com.chromadmx.simulation.fixtures.SimulatedFixtureRig
+import com.chromadmx.ui.navigation.AppScreen
+import com.chromadmx.ui.navigation.AppStateManager
 import com.chromadmx.ui.state.AgentStatus
 import com.chromadmx.ui.theme.PixelColorTheme
 import com.chromadmx.ui.state.DataTransferStatus
@@ -54,6 +56,7 @@ class SettingsViewModelV2(
     private val dataExportService: DataExportService? = null,
     private val subscriptionManager: SubscriptionManager? = null,
     private val subscriptionStore: SubscriptionStore? = null,
+    private val appStateManager: AppStateManager? = null,
 ) {
     private val _state = MutableStateFlow(SettingsUiState())
     val state: StateFlow<SettingsUiState> = _state.asStateFlow()
@@ -223,7 +226,13 @@ class SettingsViewModelV2(
 
     private fun resetOnboarding() {
         scope.launch {
-            withContext(Dispatchers.IO) { settingsRepository.setSetupCompleted(false) }
+            withContext(Dispatchers.IO) {
+                settingsRepository.setSetupCompleted(false)
+                settingsRepository.setUseCase(null)
+                settingsRepository.setIsSimulation(false)
+                fixtureStore?.deleteAll()
+            }
+            appStateManager?.navigateTo(AppScreen.Setup)
         }
     }
 

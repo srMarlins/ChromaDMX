@@ -40,5 +40,26 @@ enum class RigPreset(val networkProfile: NetworkProfile = NetworkProfile.Stable)
      * DMX addresses scrambled to test vision-based position mapping.
      * Total: 8 fixtures (192 pixels), 576 DMX channels, 2 universes.
      */
-    PIXEL_BAR_V
+    PIXEL_BAR_V,
+
+    /**
+     * Desk strip rig: 3 WLED pixel strips (60 pixels each) for a streamer desk.
+     * Back-lower, back-upper, and desk-under strips.
+     * Total: 3 strips (180 pixels), 540 DMX channels, 2 universes.
+     */
+    DESK_STRIP,
+
+    /**
+     * Room accent rig: 4 WLED pixel strips (75 pixels each) on ceiling/floor edges.
+     * Ceiling-back, ceiling-right, floor-left, and floor-front strips.
+     * Total: 4 strips (300 pixels), 900 DMX channels, 2 universes.
+     */
+    ROOM_ACCENT,
+
+    /**
+     * Wall panels rig: 9 hexagonal RGB panels in a honeycomb pattern (Nanoleaf-style).
+     * Each panel is 1 RGB fixture (3 channels) on the wall.
+     * Total: 9 panels, 27 DMX channels, 1 universe.
+     */
+    WALL_PANELS
 }

@@ -36,6 +36,12 @@ class SubscriptionManagerImpl(
             config.capabilityTiers["ai_agent"] ?: SubscriptionTier.ULTIMATE
         Entitlement.DataExport ->
             config.capabilityTiers["data_export"] ?: SubscriptionTier.ULTIMATE
+        Entitlement.WledBasic ->
+            config.capabilityTiers["wled_basic"] ?: SubscriptionTier.FREE
+        Entitlement.WledMultiSegment ->
+            config.capabilityTiers["wled_multi_segment"] ?: SubscriptionTier.PRO
+        Entitlement.StageView ->
+            config.capabilityTiers["stage_view"] ?: SubscriptionTier.PRO
         Entitlement.FixtureLimit -> SubscriptionTier.FREE
         Entitlement.PresetSaves -> SubscriptionTier.FREE
     }

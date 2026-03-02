@@ -33,8 +33,18 @@ class SubscriptionManagerTest {
     }
 
     @Test
-    fun freeUserHasChase() {
-        assertTrue(createManager(SubscriptionTier.FREE).hasEntitlement(Entitlement.Effect("chase-3d")))
+    fun freeUserLacksChase() {
+        assertFalse(createManager(SubscriptionTier.FREE).hasEntitlement(Entitlement.Effect("chase-3d")))
+    }
+
+    @Test
+    fun freeUserHasGradientSweep() {
+        assertTrue(createManager(SubscriptionTier.FREE).hasEntitlement(Entitlement.Effect("gradient-sweep-3d")))
+    }
+
+    @Test
+    fun freeUserHasWave() {
+        assertTrue(createManager(SubscriptionTier.FREE).hasEntitlement(Entitlement.Effect("wave-3d")))
     }
 
     @Test
@@ -67,8 +77,8 @@ class SubscriptionManagerTest {
 
     // Capability entitlements
     @Test
-    fun freeUserLacksRealHardware() {
-        assertFalse(createManager(SubscriptionTier.FREE).hasEntitlement(Entitlement.RealHardware))
+    fun freeUserHasRealHardware() {
+        assertTrue(createManager(SubscriptionTier.FREE).hasEntitlement(Entitlement.RealHardware))
     }
 
     @Test
@@ -119,12 +129,12 @@ class SubscriptionManagerTest {
     // Fixture limits
     @Test
     fun freeFixtureLimit() {
-        assertEquals(4, createManager(SubscriptionTier.FREE).getFixtureLimit())
+        assertEquals(2, createManager(SubscriptionTier.FREE).getFixtureLimit())
     }
 
     @Test
     fun proFixtureLimit() {
-        assertEquals(8, createManager(SubscriptionTier.PRO).getFixtureLimit())
+        assertEquals(10, createManager(SubscriptionTier.PRO).getFixtureLimit())
     }
 
     @Test
@@ -147,7 +157,7 @@ class SubscriptionManagerTest {
     @Test
     fun freeAvailableEffects() {
         val effects = createManager(SubscriptionTier.FREE).getAvailableEffects()
-        assertEquals(setOf("solid-color", "chase-3d", "rainbow-sweep-3d"), effects)
+        assertEquals(setOf("solid-color", "gradient-sweep-3d", "rainbow-sweep-3d", "wave-3d"), effects)
     }
 
     @Test

@@ -1,10 +1,13 @@
 package com.chromadmx.simulation.fixtures
 
 import com.chromadmx.core.model.Fixture3D
+import com.chromadmx.simulation.rigs.DeskStripRig
 import com.chromadmx.simulation.rigs.FestivalStageRig
 import com.chromadmx.simulation.rigs.PixelBarVRig
+import com.chromadmx.simulation.rigs.RoomAccentRig
 import com.chromadmx.simulation.rigs.SmallDjRig
 import com.chromadmx.simulation.rigs.TrussRig
+import com.chromadmx.simulation.rigs.WallPanelsRig
 
 /**
  * Simulated fixture rig providing preset layouts for testing.
@@ -30,6 +33,9 @@ class SimulatedFixtureRig(val preset: RigPreset) {
         RigPreset.TRUSS_RIG -> TrussRig.createFixtures()
         RigPreset.FESTIVAL_STAGE -> FestivalStageRig.createFixtures()
         RigPreset.PIXEL_BAR_V -> PixelBarVRig.createFixtures()
+        RigPreset.DESK_STRIP -> DeskStripRig.createFixtures()
+        RigPreset.ROOM_ACCENT -> RoomAccentRig.createFixtures()
+        RigPreset.WALL_PANELS -> WallPanelsRig.createFixtures()
     }
 
     /** Total number of fixtures in the rig. */

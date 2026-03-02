@@ -7,6 +7,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(project(":shared:core"))
+            api(project(":shared:wled"))
             implementation(project(":shared:engine"))
             implementation(project(":shared:networking"))
             implementation(project(":shared:tempo"))

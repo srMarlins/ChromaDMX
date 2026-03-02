@@ -4,6 +4,7 @@ import com.chromadmx.Greeting
 import com.chromadmx.agent.di.agentModule
 import com.chromadmx.di.chromaDiModule
 import com.chromadmx.di.iosPlatformModule
+import com.chromadmx.subscription.di.subscriptionModule
 import com.chromadmx.ui.di.uiModule
 import org.koin.core.context.startKoin
 
@@ -38,7 +39,7 @@ object IosApp {
      */
     fun initialize() {
         startKoin {
-            modules(chromaDiModule, agentModule, iosPlatformModule, uiModule)
+            modules(chromaDiModule, subscriptionModule, agentModule, iosPlatformModule, uiModule)
         }
     }
 

@@ -222,6 +222,7 @@ class StageViewModelV2(
 
             // View controls
             is StageEvent.ToggleViewMode -> handleToggleViewMode()
+            is StageEvent.SetStageViewMode -> handleSetStageViewMode(event.mode)
             is StageEvent.ToggleEditMode -> handleToggleEditMode()
             is StageEvent.ToggleNodeList -> handleToggleNodeList()
             is StageEvent.DiagnoseNode -> handleDiagnoseNode(event.node)
@@ -469,6 +470,10 @@ class StageViewModelV2(
             }
             state.copy(mode = nextMode)
         }
+    }
+
+    private fun handleSetStageViewMode(mode: StageViewMode) {
+        _viewState.update { it.copy(stageViewMode = mode) }
     }
 
     private fun handleToggleEditMode() {

@@ -1,0 +1,30 @@
+-- Migration from schema version 2 to 3.
+-- Adds subscription tables, WLED device table, and use_case column.
+
+CREATE TABLE IF NOT EXISTS subscription_status (
+    id INTEGER NOT NULL PRIMARY KEY DEFAULT 1,
+    tier TEXT NOT NULL DEFAULT 'FREE',
+    expires_at TEXT,
+    product_id TEXT,
+    is_trial INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS entitlement_config (
+    feature_id TEXT NOT NULL,
+    feature_type TEXT NOT NULL,
+    minimum_tier TEXT NOT NULL DEFAULT 'FREE',
+    PRIMARY KEY (feature_id, feature_type)
+);
+
+CREATE TABLE IF NOT EXISTS wled_device (
+    ip_address TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    mac_address TEXT NOT NULL DEFAULT '',
+    total_leds INTEGER NOT NULL DEFAULT 0,
+    firmware_version TEXT NOT NULL DEFAULT '',
+    assigned_universe INTEGER NOT NULL DEFAULT -1,
+    last_seen_ms INTEGER NOT NULL DEFAULT 0
+);
+
+ALTER TABLE app_settings ADD COLUMN use_case TEXT;

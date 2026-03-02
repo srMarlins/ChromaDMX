@@ -10,4 +10,7 @@ sealed class Entitlement {
     data object CameraMapping : Entitlement()
     data object AiAgent : Entitlement()
     data object DataExport : Entitlement()
+    data object WledBasic : Entitlement()       // Free tier — 2 WLED devices
+    data object WledMultiSegment : Entitlement() // Pro — multi-segment per device
+    data object StageView : Entitlement()        // Pro — full stage editor
 }
