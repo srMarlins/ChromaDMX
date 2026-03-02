@@ -1,0 +1,25 @@
+CREATE TABLE IF NOT EXISTS wled_device (
+    ip_address TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    mac_address TEXT NOT NULL DEFAULT '',
+    total_leds INTEGER NOT NULL DEFAULT 0,
+    firmware_version TEXT NOT NULL DEFAULT '',
+    assigned_universe INTEGER NOT NULL DEFAULT -1,
+    last_seen_ms INTEGER NOT NULL DEFAULT 0
+);
+
+selectAllDevices:
+SELECT * FROM wled_device ORDER BY name;
+
+selectDeviceByIp:
+SELECT * FROM wled_device WHERE ip_address = ?;
+
+upsertDevice:
+INSERT OR REPLACE INTO wled_device (ip_address, name, mac_address, total_leds, firmware_version, assigned_universe, last_seen_ms)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+deleteDevice:
+DELETE FROM wled_device WHERE ip_address = ?;
+
+deviceCount:
+SELECT COUNT(*) FROM wled_device;
