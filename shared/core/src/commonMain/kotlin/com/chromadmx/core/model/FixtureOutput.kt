@@ -90,7 +90,7 @@ data class FixtureOutput(
          * For ADDITIVE mode, the overlay is added as an offset.
          * For other modes, the overlay replaces the base, lerped by opacity.
          */
-        internal fun blendFloat(
+        fun blendFloat(
             base: Float?,
             overlay: Float?,
             mode: BlendMode,

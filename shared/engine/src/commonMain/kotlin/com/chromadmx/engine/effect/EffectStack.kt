@@ -213,8 +213,14 @@ class EffectStack(
             // First evaluate color stack
             val color = evaluate(pos)
 
-            // Start with the color result
-            var result = FixtureOutput(color = color)
+            // Optimization: Avoid allocating intermediate FixtureOutput instances per movement layer
+            // by accumulating properties individually and constructing the final object once.
+            var pan: Float? = null
+            var tilt: Float? = null
+            var gobo: Int? = null
+            var focus: Float? = null
+            var zoom: Float? = null
+            var strobeRate: Float? = null
 
             // Composite movement layers
             for (i in movementLayers.indices) {
@@ -222,14 +228,26 @@ class EffectStack(
                 if (!layer.enabled) continue
 
                 val layerOutput = layer.effect.computeMovement(pos, movementContexts[i])
-                result = result.blendMovementOnly(
-                    other = layerOutput,
-                    mode = layer.blendMode,
-                    opacity = layer.opacity
-                )
+                val mode = layer.blendMode
+                val op = layer.opacity.coerceIn(0f, 1f)
+
+                pan = FixtureOutput.blendFloat(pan, layerOutput.pan, mode, op)
+                tilt = FixtureOutput.blendFloat(tilt, layerOutput.tilt, mode, op)
+                gobo = if (layerOutput.gobo != null && op > 0f) layerOutput.gobo else gobo
+                focus = FixtureOutput.blendFloat(focus, layerOutput.focus, mode, op)
+                zoom = FixtureOutput.blendFloat(zoom, layerOutput.zoom, mode, op)
+                strobeRate = FixtureOutput.blendFloat(strobeRate, layerOutput.strobeRate, mode, op)
             }
 
-            return result
+            return FixtureOutput(
+                color = color,
+                pan = pan,
+                tilt = tilt,
+                gobo = gobo,
+                focus = focus,
+                zoom = zoom,
+                strobeRate = strobeRate
+            )
         }
 
         /** Whether this frame has any movement layers. */
