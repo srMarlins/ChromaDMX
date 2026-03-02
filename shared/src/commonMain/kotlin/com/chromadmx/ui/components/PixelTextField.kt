@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.theme.PixelShape
@@ -38,6 +39,7 @@ fun PixelTextField(
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     singleLine: Boolean = true,
     maxLines: Int = 1,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
@@ -82,6 +84,7 @@ fun PixelTextField(
             keyboardActions = keyboardActions,
             singleLine = singleLine,
             maxLines = maxLines,
+            visualTransformation = visualTransformation,
             interactionSource = interactionSource,
             cursorBrush = SolidColor(PixelDesign.colors.primary),
             decorationBox = { innerTextField ->
