@@ -10,12 +10,12 @@ data class EntitlementConfig(
     companion object {
         val DEFAULT_EFFECT_TIERS = mapOf(
             "solid-color" to SubscriptionTier.FREE,
-            "chase-3d" to SubscriptionTier.FREE,
+            "gradient-sweep-3d" to SubscriptionTier.FREE,
             "rainbow-sweep-3d" to SubscriptionTier.FREE,
+            "wave-3d" to SubscriptionTier.FREE,
+            "chase-3d" to SubscriptionTier.PRO,
             "strobe" to SubscriptionTier.PRO,
-            "gradient-sweep-3d" to SubscriptionTier.PRO,
             "radial-pulse-3d" to SubscriptionTier.PRO,
-            "wave-3d" to SubscriptionTier.PRO,
             "particle-burst-3d" to SubscriptionTier.PRO,
             "perlin-noise-3d" to SubscriptionTier.PRO,
         )
@@ -32,8 +32,8 @@ data class EntitlementConfig(
         )
 
         val DEFAULT_FIXTURE_LIMITS = mapOf(
-            SubscriptionTier.FREE to 4,
-            SubscriptionTier.PRO to 8,
+            SubscriptionTier.FREE to 2,
+            SubscriptionTier.PRO to 10,
             SubscriptionTier.ULTIMATE to Int.MAX_VALUE,
         )
 
@@ -44,7 +44,10 @@ data class EntitlementConfig(
         )
 
         val DEFAULT_CAPABILITY_TIERS = mapOf(
-            "real_hardware" to SubscriptionTier.PRO,
+            "real_hardware" to SubscriptionTier.FREE,
+            "wled_basic" to SubscriptionTier.FREE,
+            "wled_multi_segment" to SubscriptionTier.PRO,
+            "stage_view" to SubscriptionTier.PRO,
             "ble_provisioning" to SubscriptionTier.PRO,
             "camera_mapping" to SubscriptionTier.PRO,
             "ai_agent" to SubscriptionTier.ULTIMATE,
