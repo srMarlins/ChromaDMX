@@ -6,9 +6,14 @@ import com.chromadmx.agent.controller.FixtureController
 import com.chromadmx.agent.controller.NetworkController
 import com.chromadmx.agent.controller.StateController
 import com.chromadmx.engine.preset.PresetLibrary
+import com.chromadmx.wled.WledApiClient
+import com.chromadmx.wled.WledDeviceRegistry
 
 /**
- * Build the Koog ToolRegistry containing all 17 lighting agent tools.
+ * Build the Koog ToolRegistry containing all lighting agent tools.
+ *
+ * WLED tools are conditionally registered when both [wledApiClient] and
+ * [wledDeviceRegistry] are provided.
  */
 fun buildToolRegistry(
     engineController: EngineController,
@@ -16,6 +21,8 @@ fun buildToolRegistry(
     fixtureController: FixtureController,
     stateController: StateController,
     presetLibrary: PresetLibrary,
+    wledApiClient: WledApiClient? = null,
+    wledDeviceRegistry: WledDeviceRegistry? = null,
 ): ToolRegistry {
     return ToolRegistry {
         tool(SetEffectTool(engineController))
@@ -35,5 +42,12 @@ fun buildToolRegistry(
         tool(GetEngineStateTool(stateController))
         tool(GetBeatStateTool(stateController))
         tool(GetNetworkStateTool(stateController))
+
+        if (wledApiClient != null && wledDeviceRegistry != null) {
+            tool(ListWledDevicesTool(wledDeviceRegistry))
+            tool(SetWledBrightnessTool(wledApiClient, wledDeviceRegistry))
+            tool(SetWledColorTool(wledApiClient, wledDeviceRegistry))
+            tool(SetWledPowerTool(wledApiClient, wledDeviceRegistry))
+        }
     }
 }
