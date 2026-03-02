@@ -131,6 +131,9 @@ class SetupViewModelTest {
         override val themePreference: Flow<String> get() = flowOf("MatchaDark")
         override val transportMode: Flow<String> get() = flowOf("Real")
         override val activePresetId: Flow<String?> get() = flowOf(null)
+        override val useCase: Flow<String?> get() = flowOf(_useCase)
+
+        private var _useCase: String? = null
 
         override suspend fun setSetupCompleted(value: Boolean) { _setupCompleted = value }
         override suspend fun setIsSimulation(value: Boolean) { _isSimulation = value }
@@ -138,10 +141,12 @@ class SetupViewModelTest {
         override suspend fun setThemePreference(value: String) {}
         override suspend fun setTransportMode(value: String) {}
         override suspend fun setActivePresetId(value: String?) {}
+        override suspend fun setUseCase(value: String?) { _useCase = value }
 
         // Accessors for test assertions
         val setupCompletedValue get() = _setupCompleted
         val isSimulationValue get() = _isSimulation
+        val useCaseValue get() = _useCase
     }
 
     /**

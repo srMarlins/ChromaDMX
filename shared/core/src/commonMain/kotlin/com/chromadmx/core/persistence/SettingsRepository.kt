@@ -18,6 +18,7 @@ interface SettingsStore {
     val transportMode: Flow<String>
     val activePresetId: Flow<String?>
     val setupCompleted: Flow<Boolean>
+    val useCase: Flow<String?>
 
     suspend fun setMasterDimmer(value: Float)
     suspend fun setThemePreference(value: String)
@@ -25,6 +26,7 @@ interface SettingsStore {
     suspend fun setTransportMode(value: String)
     suspend fun setActivePresetId(value: String?)
     suspend fun setSetupCompleted(value: Boolean)
+    suspend fun setUseCase(value: String?)
 }
 
 /**
@@ -51,6 +53,7 @@ class SettingsRepository(private val db: ChromaDmxDatabase) : SettingsStore {
     override val themePreference: Flow<String> = settingsFlow.map { it.theme_preference }
     override val transportMode: Flow<String> = settingsFlow.map { it.transport_mode }
     override val setupCompleted: Flow<Boolean> = settingsFlow.map { it.setup_completed != 0L }
+    override val useCase: Flow<String?> = settingsFlow.map { it.use_case }
 
     override suspend fun setMasterDimmer(value: Float) = withContext(Dispatchers.Default) {
         queries.updateMasterDimmer(value.toDouble())
@@ -74,5 +77,9 @@ class SettingsRepository(private val db: ChromaDmxDatabase) : SettingsStore {
 
     override suspend fun setSetupCompleted(value: Boolean) = withContext(Dispatchers.Default) {
         queries.updateSetupCompleted(if (value) 1L else 0L)
+    }
+
+    override suspend fun setUseCase(value: String?) = withContext(Dispatchers.Default) {
+        queries.updateUseCase(value)
     }
 }

@@ -32,6 +32,7 @@ data class SetupUiState(
     val selectedRigPreset: RigPreset = RigPreset.SMALL_DJ,
     val simulationFixtureCount: Int = 0,
     val fixturesLoadedCount: Int = 0,
+    val selectedUseCase: UseCase? = null,
     val selectedGenre: GenreOption? = null,
     val availableGenres: ImmutableList<GenreOption> = persistentListOf(),
     val matchingPresetCount: Int = 0,
@@ -48,10 +49,20 @@ data class SetupUiState(
 )
 
 /**
+ * Use-case selection for forking the onboarding experience.
+ */
+enum class UseCase {
+    MY_ROOM,
+    A_STAGE,
+    JUST_EXPLORING,
+}
+
+/**
  * Steps in the setup flow.
  */
 enum class SetupStep {
     SPLASH,
+    USE_CASE_SELECT,
     NETWORK_DISCOVERY,
     FIXTURE_SCAN,
     VIBE_CHECK,
@@ -69,6 +80,7 @@ sealed interface SetupEvent {
     data object EnterSimulationMode : SetupEvent
     data object RetryNetworkScan : SetupEvent
     data class SelectRigPreset(val preset: RigPreset) : SetupEvent
+    data class SelectUseCase(val useCase: UseCase) : SetupEvent
     data class SelectGenre(val genre: GenreOption) : SetupEvent
     data object ConfirmGenre : SetupEvent
     data object SkipStagePreview : SetupEvent

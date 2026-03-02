@@ -263,6 +263,9 @@ private fun RigPreviewCanvas(
             RigPreset.TRUSS_RIG -> 3f
             RigPreset.FESTIVAL_STAGE -> 2f
             RigPreset.PIXEL_BAR_V -> 2.5f
+            RigPreset.DESK_STRIP -> 3f
+            RigPreset.ROOM_ACCENT -> 3f
+            RigPreset.WALL_PANELS -> 4f
         }
 
         for (fixture in fixtures) {

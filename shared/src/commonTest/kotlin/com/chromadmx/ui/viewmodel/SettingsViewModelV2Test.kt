@@ -115,6 +115,7 @@ private class FakeSettingsStore : SettingsStore {
     private val _transportMode = MutableStateFlow("Real")
     private val _activePresetId = MutableStateFlow<String?>(null)
     private val _setupCompleted = MutableStateFlow(false)
+    private val _useCase = MutableStateFlow<String?>(null)
 
     override val masterDimmer: Flow<Float> = _masterDimmer
     override val themePreference: Flow<String> = _themePreference
@@ -122,6 +123,7 @@ private class FakeSettingsStore : SettingsStore {
     override val transportMode: Flow<String> = _transportMode
     override val activePresetId: Flow<String?> = _activePresetId
     override val setupCompleted: Flow<Boolean> = _setupCompleted
+    override val useCase: Flow<String?> = _useCase
 
     override suspend fun setMasterDimmer(value: Float) { _masterDimmer.value = value }
     override suspend fun setThemePreference(value: String) { _themePreference.value = value }
@@ -129,6 +131,7 @@ private class FakeSettingsStore : SettingsStore {
     override suspend fun setTransportMode(value: String) { _transportMode.value = value }
     override suspend fun setActivePresetId(value: String?) { _activePresetId.value = value }
     override suspend fun setSetupCompleted(value: Boolean) { _setupCompleted.value = value }
+    override suspend fun setUseCase(value: String?) { _useCase.value = value }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
