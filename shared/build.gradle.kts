@@ -24,6 +24,7 @@ kotlin {
             api(project(":shared:simulation"))
             api(project(":shared:agent"))
             api(project(":shared:subscription"))
+            api(project(":shared:wled"))
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.kotlinx.coroutines.core)

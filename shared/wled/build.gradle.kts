@@ -8,6 +8,7 @@ kotlin {
         commonMain.dependencies {
             api(project(":shared:core"))
             api(project(":shared:networking"))
+            implementation(libs.koin.core)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.ktor.client.core)

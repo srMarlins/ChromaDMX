@@ -36,6 +36,7 @@ import com.chromadmx.simulation.network.SimulatedDiscovery
 import com.chromadmx.simulation.network.SimulatedTransport
 import com.chromadmx.tempo.clock.BeatClock
 import com.chromadmx.tempo.tap.TapTempoClock
+import com.chromadmx.wled.di.wledModule
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -54,6 +55,8 @@ import org.koin.dsl.module
  * to the routers, giving consumers a single dependency.
  */
 val chromaDiModule = module {
+
+    includes(wledModule)
 
     // --- Coroutine scope ---
     single { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
