@@ -88,9 +88,13 @@ class DmxBridge(
         profile: FixtureProfile,
         color: Color
     ) {
-        val clamped = color.clamped()
+        // Optimization: bypass clamped() to prevent allocating a Color object per fixture per frame
+        val cr = color.r.coerceIn(0f, 1f)
+        val cg = color.g.coerceIn(0f, 1f)
+        val cb = color.b.coerceIn(0f, 1f)
+
         val hasDimmer = profile.channelByType(ChannelType.DIMMER) != null
-        val brightness = maxOf(clamped.r, clamped.g, clamped.b)
+        val brightness = maxOf(cr, cg, cb)
 
         for (channel in profile.channels) {
             val addr = channelStart + channel.offset
@@ -98,15 +102,15 @@ class DmxBridge(
 
             data[addr] = when (channel.type) {
                 ChannelType.RED -> {
-                    val value = if (hasDimmer && brightness > 0f) clamped.r / brightness else clamped.r
+                    val value = if (hasDimmer && brightness > 0f) cr / brightness else cr
                     (value * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
                 }
                 ChannelType.GREEN -> {
-                    val value = if (hasDimmer && brightness > 0f) clamped.g / brightness else clamped.g
+                    val value = if (hasDimmer && brightness > 0f) cg / brightness else cg
                     (value * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
                 }
                 ChannelType.BLUE -> {
-                    val value = if (hasDimmer && brightness > 0f) clamped.b / brightness else clamped.b
+                    val value = if (hasDimmer && brightness > 0f) cb / brightness else cb
                     (value * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
                 }
                 ChannelType.DIMMER -> {
@@ -114,7 +118,7 @@ class DmxBridge(
                 }
                 ChannelType.WHITE -> {
                     // White = minimum of RGB (conservative approach)
-                    val white = minOf(clamped.r, clamped.g, clamped.b)
+                    val white = minOf(cr, cg, cb)
                     (white * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
                 }
                 ChannelType.STROBE -> channel.defaultValue.toByte()
@@ -129,9 +133,13 @@ class DmxBridge(
         profile: FixtureProfile,
         output: FixtureOutput
     ) {
-        val clamped = output.color.clamped()
+        // Optimization: bypass clamped() to prevent allocating a Color object per fixture per frame
+        val cr = output.color.r.coerceIn(0f, 1f)
+        val cg = output.color.g.coerceIn(0f, 1f)
+        val cb = output.color.b.coerceIn(0f, 1f)
+
         val hasDimmer = profile.channelByType(ChannelType.DIMMER) != null
-        val brightness = maxOf(clamped.r, clamped.g, clamped.b)
+        val brightness = maxOf(cr, cg, cb)
 
         for (channel in profile.channels) {
             val addr = channelStart + channel.offset
@@ -139,22 +147,22 @@ class DmxBridge(
 
             data[addr] = when (channel.type) {
                 ChannelType.RED -> {
-                    val value = if (hasDimmer && brightness > 0f) clamped.r / brightness else clamped.r
+                    val value = if (hasDimmer && brightness > 0f) cr / brightness else cr
                     (value * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
                 }
                 ChannelType.GREEN -> {
-                    val value = if (hasDimmer && brightness > 0f) clamped.g / brightness else clamped.g
+                    val value = if (hasDimmer && brightness > 0f) cg / brightness else cg
                     (value * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
                 }
                 ChannelType.BLUE -> {
-                    val value = if (hasDimmer && brightness > 0f) clamped.b / brightness else clamped.b
+                    val value = if (hasDimmer && brightness > 0f) cb / brightness else cb
                     (value * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
                 }
                 ChannelType.DIMMER -> {
                     (brightness * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
                 }
                 ChannelType.WHITE -> {
-                    val white = minOf(clamped.r, clamped.g, clamped.b)
+                    val white = minOf(cr, cg, cb)
                     (white * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
                 }
                 ChannelType.PAN -> {
@@ -206,12 +214,19 @@ class DmxBridge(
     }
 
     private fun writeSimpleRgb(data: ByteArray, channelStart: Int, color: Color) {
-        val bytes = color.toDmxBytes()
-        for (i in bytes.indices) {
-            val addr = channelStart + i
-            if (addr in 0 until 512) {
-                data[addr] = bytes[i]
-            }
+        // Optimization: prevent allocating a ByteArray and Color per fixture per frame by manually coercing
+        val cr = color.r.coerceIn(0f, 1f)
+        val cg = color.g.coerceIn(0f, 1f)
+        val cb = color.b.coerceIn(0f, 1f)
+
+        if (channelStart in 0 until 512) {
+            data[channelStart] = (cr * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
+        }
+        if (channelStart + 1 in 0 until 512) {
+            data[channelStart + 1] = (cg * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
+        }
+        if (channelStart + 2 in 0 until 512) {
+            data[channelStart + 2] = (cb * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
         }
     }
 }
