@@ -42,8 +42,10 @@ data class DMXUniverse(
         require(startChannel in 0..(DMX_CHANNEL_COUNT - 3)) {
             "Cannot write 3-byte color at channel $startChannel"
         }
-        val bytes = color.toDmxBytes()
-        bytes.copyInto(channels, startChannel)
+        // Optimization: avoid allocating an intermediate ByteArray and Color object per call
+        channels[startChannel] = (color.r.coerceIn(0f, 1f) * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
+        channels[startChannel + 1] = (color.g.coerceIn(0f, 1f) * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
+        channels[startChannel + 2] = (color.b.coerceIn(0f, 1f) * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
     }
 
     /** Read an RGB [Color] from [startChannel] (3 consecutive channels). */
