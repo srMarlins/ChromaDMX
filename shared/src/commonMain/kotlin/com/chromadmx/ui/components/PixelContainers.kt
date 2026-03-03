@@ -167,7 +167,10 @@ fun PixelDropdown(
                 .pixelBorder(chamfer = 6.dp)
                 .clip(PixelShape.Small)
                 .background(PixelDesign.colors.surface, PixelShape.Small)
-                .clickable { expanded = true }
+                .clickable(
+                    role = androidx.compose.ui.semantics.Role.DropdownList,
+                    onClick = { expanded = true }
+                )
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
