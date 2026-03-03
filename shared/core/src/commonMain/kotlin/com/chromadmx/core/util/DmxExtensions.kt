@@ -15,8 +15,10 @@ fun ByteArray.packColor(color: Color, offset: Int) {
     require(offset >= 0 && offset + 3 <= size) {
         "Cannot pack 3-byte color at offset $offset in array of size $size"
     }
-    val bytes = color.toDmxBytes()
-    bytes.copyInto(this, offset)
+    // Optimization: avoid allocating an intermediate ByteArray and Color object per call
+    this[offset] = (color.r.coerceIn(0f, 1f) * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
+    this[offset + 1] = (color.g.coerceIn(0f, 1f) * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
+    this[offset + 2] = (color.b.coerceIn(0f, 1f) * 255f + 0.5f).toInt().coerceIn(0, 255).toByte()
 }
 
 /**
