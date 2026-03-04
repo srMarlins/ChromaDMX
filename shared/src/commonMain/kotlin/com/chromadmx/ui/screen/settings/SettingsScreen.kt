@@ -728,21 +728,19 @@ private fun AgentSection(
         Column(
             verticalArrangement = Arrangement.spacedBy(PixelDesign.spacing.medium),
         ) {
-            // API Key (masked display — auto-unmask on edit)
-            var showKey by remember { mutableStateOf(false) }
+            // API Key (masked display — never auto-unmask to prevent shoulder surfing)
             PixelTextField(
                 value = state.agentConfig.apiKey,
                 onValueChange = { newValue ->
-                    if (!showKey) showKey = true
                     onEvent(SettingsEvent.UpdateAgentConfig(state.agentConfig.copy(apiKey = newValue)))
                 },
                 label = "API Key",
                 placeholder = "Enter API key...",
-                visualTransformation = if (showKey || state.agentConfig.apiKey.isEmpty()) {
-                    androidx.compose.ui.text.input.VisualTransformation.None
-                } else {
-                    androidx.compose.ui.text.input.PasswordVisualTransformation()
-                },
+                visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    autoCorrect = false
+                ),
                 modifier = Modifier.fillMaxWidth(),
             )
 
