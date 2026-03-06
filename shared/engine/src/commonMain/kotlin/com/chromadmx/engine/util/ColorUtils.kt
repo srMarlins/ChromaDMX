@@ -22,13 +22,18 @@ object ColorUtils {
         val x = c * (1f - abs((hue / 60f) % 2f - 1f))
         val m = v - c
 
-        val (r1, g1, b1) = when {
-            hue < 60f  -> Triple(c, x, 0f)
-            hue < 120f -> Triple(x, c, 0f)
-            hue < 180f -> Triple(0f, c, x)
-            hue < 240f -> Triple(0f, x, c)
-            hue < 300f -> Triple(x, 0f, c)
-            else       -> Triple(c, 0f, x)
+        // Optimization: avoid Triple allocation in hot path
+        val r1: Float
+        val g1: Float
+        val b1: Float
+
+        when {
+            hue < 60f  -> { r1 = c; g1 = x; b1 = 0f }
+            hue < 120f -> { r1 = x; g1 = c; b1 = 0f }
+            hue < 180f -> { r1 = 0f; g1 = c; b1 = x }
+            hue < 240f -> { r1 = 0f; g1 = x; b1 = c }
+            hue < 300f -> { r1 = x; g1 = 0f; b1 = c }
+            else       -> { r1 = c; g1 = 0f; b1 = x }
         }
 
         return Color(r1 + m, g1 + m, b1 + m)
