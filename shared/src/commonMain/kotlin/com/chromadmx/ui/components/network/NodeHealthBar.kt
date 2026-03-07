@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.theme.PixelFontFamily
@@ -48,7 +49,10 @@ fun NodeHealthBar(
 
     Row(
         modifier = modifier
-            .clickable(onClick = onExpand)
+            .clickable(
+                onClick = onExpand,
+                role = Role.Button,
+            )
             .padding(horizontal = 8.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
