@@ -19,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.chromadmx.ui.theme.NeonMagenta
@@ -54,7 +55,10 @@ fun SimulationBadge(
     Box(
         modifier = modifier
             .alpha(alpha)
-            .clickable(onClick = onTap)
+            .clickable(
+                onClick = onTap,
+                role = Role.Button,
+            )
             .pixelBorder(color = NeonMagenta.copy(alpha = 0.6f), pixelSize = pixelSize)
             .background(NeonMagenta.copy(alpha = 0.25f))
             .padding(horizontal = 8.dp, vertical = 4.dp),
