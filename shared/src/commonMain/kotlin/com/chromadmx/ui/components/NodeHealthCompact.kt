@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.chromadmx.core.model.DmxNode
 import com.chromadmx.ui.screen.network.HealthLevel
@@ -46,7 +47,7 @@ fun NodeHealthCompact(
 
     Row(
         modifier = modifier
-            .clickable { onClick() }
+            .clickable(onClick = onClick, role = Role.Button)
             .padding(4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),

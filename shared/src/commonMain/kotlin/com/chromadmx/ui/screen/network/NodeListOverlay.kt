@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.chromadmx.core.model.DmxNode
@@ -41,7 +42,7 @@ fun NodeListOverlay(
         modifier = modifier
             .fillMaxSize()
             .background(Color.Black.copy(alpha = 0.8f))
-            .clickable { onClose() } // Close when tapping outside
+            .clickable(onClick = onClose, role = Role.Button) // Close when tapping outside
     ) {
         Column(
             modifier = Modifier

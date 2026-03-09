@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.chromadmx.ui.theme.ChromaAnimations
@@ -85,7 +86,7 @@ fun PixelButton(
                 indication = null,
                 enabled = enabled,
                 onClick = onClick,
-                role = androidx.compose.ui.semantics.Role.Button
+                role = Role.Button
             )
             .padding(top = pressDepth) // Reserve space for the "up" state
     ) {
