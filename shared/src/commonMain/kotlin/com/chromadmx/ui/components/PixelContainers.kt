@@ -308,6 +308,7 @@ fun PixelDialog(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
                         onClick = { /* consume click */ },
+                        role = androidx.compose.ui.semantics.Role.Button,
                     )
                     .padding(20.dp),
             ) {
@@ -419,6 +420,7 @@ fun PixelBottomSheet(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                     onClick = onDismiss,
+                    role = androidx.compose.ui.semantics.Role.Button,
                 ),
         )
     }
@@ -459,6 +461,7 @@ fun PixelBottomSheet(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
                         onClick = { /* consume */ },
+                        role = androidx.compose.ui.semantics.Role.Button,
                     ),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {

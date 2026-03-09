@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.chromadmx.ui.theme.PixelDesign
 
@@ -39,7 +40,7 @@ fun SpeechBubbleView(
             .border(2.dp, borderColor)
             .background(colors.surface)
             .padding(8.dp)
-            .clickable { onDismiss() },
+            .clickable(onClick = onDismiss, role = Role.Button),
     ) {
         Text(
             text = bubble.text,
@@ -53,7 +54,7 @@ fun SpeechBubbleView(
                 text = bubble.actionLabel,
                 style = MaterialTheme.typography.labelMedium,
                 color = borderColor,
-                modifier = Modifier.clickable { onAction(bubble.actionId) },
+                modifier = Modifier.clickable(onClick = { onAction(bubble.actionId) }, role = Role.Button),
             )
         }
     }
