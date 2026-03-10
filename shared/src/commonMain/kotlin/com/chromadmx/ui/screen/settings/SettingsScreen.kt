@@ -743,6 +743,11 @@ private fun AgentSection(
                 } else {
                     androidx.compose.ui.text.input.PasswordVisualTransformation()
                 },
+                // SECURITY: Disable dictionary caching and autocomplete for sensitive token
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    autoCorrectEnabled = false
+                ),
                 modifier = Modifier.fillMaxWidth(),
             )
 
