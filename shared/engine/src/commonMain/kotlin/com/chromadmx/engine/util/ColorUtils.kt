@@ -52,6 +52,14 @@ object ColorUtils {
         val hi = (lo + 1).coerceAtMost(maxIdx)
         val frac = scaled - lo
 
-        return palette[lo].lerp(palette[hi], frac)
+        // Optimization: Inline lerp to avoid the redundant .coerceIn(0f, 1f) inside Color.lerp
+        // since `frac` is already mathematically guaranteed to be in [0, 1) range here.
+        val c1 = palette[lo]
+        val c2 = palette[hi]
+        return Color(
+            c1.r + (c2.r - c1.r) * frac,
+            c1.g + (c2.g - c1.g) * frac,
+            c1.b + (c2.b - c1.b) * frac
+        )
     }
 }
