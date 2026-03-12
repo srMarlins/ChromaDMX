@@ -110,5 +110,30 @@ data class FixtureOutput(
                 }
             }
         }
+
+        /**
+         * Primitive-based blend for a nullable float channel, where Float.NaN represents null.
+         * Useful in hot inner-loops to prevent Float auto-boxing allocations.
+         */
+        fun blendPrimitiveFloat(
+            base: Float,
+            overlay: Float?,
+            mode: BlendMode,
+            opacity: Float
+        ): Float {
+            if (overlay == null) return base
+            if (opacity <= 0f) return base
+
+            val b = if (base.isNaN()) 0f else base
+
+            return when (mode) {
+                BlendMode.ADDITIVE -> {
+                    (b + overlay * opacity).coerceIn(0f, 1f)
+                }
+                else -> {
+                    (b + (overlay - b) * opacity).coerceIn(0f, 1f)
+                }
+            }
+        }
     }
 }

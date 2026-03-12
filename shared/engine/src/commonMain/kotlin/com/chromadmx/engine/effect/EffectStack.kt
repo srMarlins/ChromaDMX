@@ -4,6 +4,7 @@ import com.chromadmx.core.model.BeatState
 import com.chromadmx.core.model.Color
 import com.chromadmx.core.model.FixtureOutput
 import com.chromadmx.core.model.Vec3
+import com.chromadmx.core.model.BlendMode
 import com.chromadmx.core.util.ColorBlending
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.locks.SynchronizedObject
@@ -215,12 +216,13 @@ class EffectStack(
 
             // Optimization: Avoid allocating intermediate FixtureOutput instances per movement layer
             // by accumulating properties individually and constructing the final object once.
-            var pan: Float? = null
-            var tilt: Float? = null
-            var gobo: Int? = null
-            var focus: Float? = null
-            var zoom: Float? = null
-            var strobeRate: Float? = null
+            // Also avoid Float? boxing by using Float.NaN and -1 as sentinels.
+            var pan = Float.NaN
+            var tilt = Float.NaN
+            var gobo = -1
+            var focus = Float.NaN
+            var zoom = Float.NaN
+            var strobeRate = Float.NaN
 
             // Composite movement layers
             for (i in movementLayers.indices) {
@@ -231,22 +233,23 @@ class EffectStack(
                 val mode = layer.blendMode
                 val op = layer.opacity.coerceIn(0f, 1f)
 
-                pan = FixtureOutput.blendFloat(pan, layerOutput.pan, mode, op)
-                tilt = FixtureOutput.blendFloat(tilt, layerOutput.tilt, mode, op)
-                gobo = if (layerOutput.gobo != null && op > 0f) layerOutput.gobo else gobo
-                focus = FixtureOutput.blendFloat(focus, layerOutput.focus, mode, op)
-                zoom = FixtureOutput.blendFloat(zoom, layerOutput.zoom, mode, op)
-                strobeRate = FixtureOutput.blendFloat(strobeRate, layerOutput.strobeRate, mode, op)
+                pan = FixtureOutput.blendPrimitiveFloat(pan, layerOutput.pan, mode, op)
+                tilt = FixtureOutput.blendPrimitiveFloat(tilt, layerOutput.tilt, mode, op)
+                val layerGobo = layerOutput.gobo
+                gobo = if (layerGobo != null && op > 0f) layerGobo else gobo
+                focus = FixtureOutput.blendPrimitiveFloat(focus, layerOutput.focus, mode, op)
+                zoom = FixtureOutput.blendPrimitiveFloat(zoom, layerOutput.zoom, mode, op)
+                strobeRate = FixtureOutput.blendPrimitiveFloat(strobeRate, layerOutput.strobeRate, mode, op)
             }
 
             return FixtureOutput(
                 color = color,
-                pan = pan,
-                tilt = tilt,
-                gobo = gobo,
-                focus = focus,
-                zoom = zoom,
-                strobeRate = strobeRate
+                pan = if (pan.isNaN()) null else pan,
+                tilt = if (tilt.isNaN()) null else tilt,
+                gobo = if (gobo == -1) null else gobo,
+                focus = if (focus.isNaN()) null else focus,
+                zoom = if (zoom.isNaN()) null else zoom,
+                strobeRate = if (strobeRate.isNaN()) null else strobeRate
             )
         }
 
