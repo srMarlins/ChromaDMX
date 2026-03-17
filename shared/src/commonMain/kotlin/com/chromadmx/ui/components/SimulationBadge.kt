@@ -54,7 +54,10 @@ fun SimulationBadge(
     Box(
         modifier = modifier
             .alpha(alpha)
-            .clickable(onClick = onTap)
+            .clickable(
+                onClick = onTap,
+                role = androidx.compose.ui.semantics.Role.Button,
+            )
             .pixelBorder(color = NeonMagenta.copy(alpha = 0.6f), pixelSize = pixelSize)
             .background(NeonMagenta.copy(alpha = 0.25f))
             .padding(horizontal = 8.dp, vertical = 4.dp),
