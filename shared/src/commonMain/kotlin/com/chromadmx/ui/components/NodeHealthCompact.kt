@@ -46,7 +46,10 @@ fun NodeHealthCompact(
 
     Row(
         modifier = modifier
-            .clickable { onClick() }
+            .clickable(
+                onClick = onClick,
+                role = androidx.compose.ui.semantics.Role.Button,
+            )
             .padding(4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),

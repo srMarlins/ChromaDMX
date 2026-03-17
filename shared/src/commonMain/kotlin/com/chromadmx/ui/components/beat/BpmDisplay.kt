@@ -76,6 +76,7 @@ fun BpmDisplay(
                 interactionSource = interactionSource,
                 indication = null,
                 onClick = onTap,
+                role = androidx.compose.ui.semantics.Role.Button,
             )
             .padding(horizontal = 4.dp, vertical = 4.dp),
         contentAlignment = Alignment.Center,
