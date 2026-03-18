@@ -30,9 +30,8 @@ class RealStateController(
             masterDimmer = stack.masterDimmer,
             fixtureCount = fixturesProvider().size,
             fps = 0f, // TODO: Wire frame timing measurement from engine
-            effectIds = stack.layers
-                .filter { it.enabled }
-                .map { it.effect.id }
+            // Bolt: Optimized to avoid intermediate collection allocations
+            effectIds = stack.layers.mapNotNull { if (it.enabled) it.effect.id else null }
         )
     }
 
