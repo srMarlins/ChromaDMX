@@ -54,6 +54,8 @@ import com.chromadmx.ui.components.PixelProgressBar
 import com.chromadmx.ui.theme.NeonCyan
 import com.chromadmx.ui.theme.NeonGreen
 import com.chromadmx.ui.viewmodel.ProvisioningViewModel
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 
 @Composable
 fun ProvisioningScreen(
@@ -442,6 +444,7 @@ private fun ConfigFormContent(
                         label = { Text("Wi-Fi Password") },
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false),
                         singleLine = true
                     )
 
