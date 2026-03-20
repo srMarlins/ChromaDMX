@@ -48,7 +48,10 @@ fun NodeHealthBar(
 
     Row(
         modifier = modifier
-            .clickable(onClick = onExpand)
+            .clickable(
+                onClick = onExpand,
+                role = androidx.compose.ui.semantics.Role.Button,
+            )
             .padding(horizontal = 8.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
