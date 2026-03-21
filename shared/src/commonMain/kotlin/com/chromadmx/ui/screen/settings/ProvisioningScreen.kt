@@ -442,6 +442,10 @@ private fun ConfigFormContent(
                         label = { Text("Wi-Fi Password") },
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Password,
+                            autoCorrectEnabled = false
+                        ),
                         singleLine = true
                     )
 
