@@ -61,18 +61,21 @@ class BlobDetector(
             }
         }
 
-        // Convert accumulators to DetectedBlob, filter by min size
+        // Convert accumulators to DetectedBlob, filter by min size.
+        // Optimization: Use a single mapNotNull pass instead of chaining filter().map()
+        // to prevent allocating an intermediate ArrayList on every frame in this hot path.
         return components.values
-            .filter { it.count >= minBlobSize }
-            .map { acc ->
-                DetectedBlob(
-                    centroid = Coord2D(
-                        x = acc.weightedSumX / acc.totalBrightness,
-                        y = acc.weightedSumY / acc.totalBrightness
-                    ),
-                    pixelCount = acc.count,
-                    totalBrightness = acc.totalBrightness
-                )
+            .mapNotNull { acc ->
+                if (acc.count >= minBlobSize) {
+                    DetectedBlob(
+                        centroid = Coord2D(
+                            x = acc.weightedSumX / acc.totalBrightness,
+                            y = acc.weightedSumY / acc.totalBrightness
+                        ),
+                        pixelCount = acc.count,
+                        totalBrightness = acc.totalBrightness
+                    )
+                } else null
             }
             .sortedByDescending { it.totalBrightness }
     }
