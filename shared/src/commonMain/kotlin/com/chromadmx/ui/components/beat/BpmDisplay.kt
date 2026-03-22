@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.chromadmx.ui.theme.PixelDesign
@@ -76,6 +77,7 @@ fun BpmDisplay(
                 interactionSource = interactionSource,
                 indication = null,
                 onClick = onTap,
+                role = Role.Button,
             )
             .padding(horizontal = 4.dp, vertical = 4.dp),
         contentAlignment = Alignment.Center,
