@@ -63,16 +63,19 @@ class BlobDetector(
 
         // Convert accumulators to DetectedBlob, filter by min size
         return components.values
-            .filter { it.count >= minBlobSize }
-            .map { acc ->
-                DetectedBlob(
-                    centroid = Coord2D(
-                        x = acc.weightedSumX / acc.totalBrightness,
-                        y = acc.weightedSumY / acc.totalBrightness
-                    ),
-                    pixelCount = acc.count,
-                    totalBrightness = acc.totalBrightness
-                )
+            .mapNotNull { acc ->
+                if (acc.count >= minBlobSize) {
+                    DetectedBlob(
+                        centroid = Coord2D(
+                            x = acc.weightedSumX / acc.totalBrightness,
+                            y = acc.weightedSumY / acc.totalBrightness
+                        ),
+                        pixelCount = acc.count,
+                        totalBrightness = acc.totalBrightness
+                    )
+                } else {
+                    null
+                }
             }
             .sortedByDescending { it.totalBrightness }
     }
