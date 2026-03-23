@@ -110,5 +110,25 @@ data class FixtureOutput(
                 }
             }
         }
+
+        /**
+         * Allocation-free blending of a primitive float channel, using Float.NaN
+         * to represent a null overlay to prevent auto-boxing.
+         */
+        fun blendPrimitiveFloat(
+            base: Float,
+            overlay: Float,
+            mode: BlendMode,
+            opacity: Float
+        ): Float {
+            if (overlay.isNaN()) return base
+            val b = if (base.isNaN()) 0f else base
+
+            return when (mode) {
+                BlendMode.ADDITIVE -> (b + overlay * opacity).coerceIn(0f, 1f)
+                // NORMAL, MULTIPLY, OVERLAY: lerp from base to overlay
+                else -> (b + (overlay - b) * opacity).coerceIn(0f, 1f)
+            }
+        }
     }
 }
