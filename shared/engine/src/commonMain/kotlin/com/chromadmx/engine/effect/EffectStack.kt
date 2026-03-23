@@ -215,12 +215,12 @@ class EffectStack(
 
             // Optimization: Avoid allocating intermediate FixtureOutput instances per movement layer
             // by accumulating properties individually and constructing the final object once.
-            var pan: Float? = null
-            var tilt: Float? = null
+            var pan: Float = Float.NaN
+            var tilt: Float = Float.NaN
             var gobo: Int? = null
-            var focus: Float? = null
-            var zoom: Float? = null
-            var strobeRate: Float? = null
+            var focus: Float = Float.NaN
+            var zoom: Float = Float.NaN
+            var strobeRate: Float = Float.NaN
 
             // Composite movement layers
             for (i in movementLayers.indices) {
@@ -231,22 +231,22 @@ class EffectStack(
                 val mode = layer.blendMode
                 val op = layer.opacity.coerceIn(0f, 1f)
 
-                pan = FixtureOutput.blendFloat(pan, layerOutput.pan, mode, op)
-                tilt = FixtureOutput.blendFloat(tilt, layerOutput.tilt, mode, op)
+                pan = FixtureOutput.blendPrimitiveFloat(pan, layerOutput.pan ?: Float.NaN, mode, op)
+                tilt = FixtureOutput.blendPrimitiveFloat(tilt, layerOutput.tilt ?: Float.NaN, mode, op)
                 gobo = if (layerOutput.gobo != null && op > 0f) layerOutput.gobo else gobo
-                focus = FixtureOutput.blendFloat(focus, layerOutput.focus, mode, op)
-                zoom = FixtureOutput.blendFloat(zoom, layerOutput.zoom, mode, op)
-                strobeRate = FixtureOutput.blendFloat(strobeRate, layerOutput.strobeRate, mode, op)
+                focus = FixtureOutput.blendPrimitiveFloat(focus, layerOutput.focus ?: Float.NaN, mode, op)
+                zoom = FixtureOutput.blendPrimitiveFloat(zoom, layerOutput.zoom ?: Float.NaN, mode, op)
+                strobeRate = FixtureOutput.blendPrimitiveFloat(strobeRate, layerOutput.strobeRate ?: Float.NaN, mode, op)
             }
 
             return FixtureOutput(
                 color = color,
-                pan = pan,
-                tilt = tilt,
+                pan = if (pan.isNaN()) null else pan,
+                tilt = if (tilt.isNaN()) null else tilt,
                 gobo = gobo,
-                focus = focus,
-                zoom = zoom,
-                strobeRate = strobeRate
+                focus = if (focus.isNaN()) null else focus,
+                zoom = if (zoom.isNaN()) null else zoom,
+                strobeRate = if (strobeRate.isNaN()) null else strobeRate
             )
         }
 
