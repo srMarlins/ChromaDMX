@@ -1,0 +1,3 @@
+## 2024-03-14 - Compose Switch Accessibility with Modifier.toggleable
+**Learning:** In Compose Multiplatform, using `Modifier.clickable(role = Role.Switch)` for switch components (like `PixelSwitch`) is insufficient for screen readers. It fails to correctly announce the "on/off" or "checked/unchecked" state of the switch because `clickable` does not manage a binary value.
+**Action:** Always use `Modifier.toggleable` instead of `Modifier.clickable(role = Role.Switch)` for switch or checkbox-like components. `Modifier.toggleable` intrinsically handles the `value: Boolean` state and correctly interfaces with the semantics tree to announce state changes to screen readers (like TalkBack or VoiceOver).
