@@ -744,6 +744,10 @@ private fun AgentSection(
                     androidx.compose.ui.text.input.PasswordVisualTransformation()
                 },
                 modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    autoCorrectEnabled = false,
+                ),
             )
 
             // Model selector
