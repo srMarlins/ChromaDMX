@@ -1,0 +1,221 @@
+> Task :build-logic:convention:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :build-logic:convention:compileKotlin UP-TO-DATE
+> Task :build-logic:convention:compileJava NO-SOURCE
+> Task :build-logic:convention:pluginDescriptors UP-TO-DATE
+> Task :build-logic:convention:processResources UP-TO-DATE
+> Task :build-logic:convention:classes UP-TO-DATE
+> Task :build-logic:convention:jar UP-TO-DATE
+
+> Configure project :shared:tempo
+w: [33m[1m⚠️ Cross Compilation with Cinterop Not Supported in Project 'tempo'[0m[0m
+In project 'tempo', cross compilation to target 'iosX64' has been disabled because it contains cinterops: 'abletonLink' which cannot be processed on host 'linux_x64'.
+Cinterop libraries require platform-specific native toolchains that aren't available on the current host system.
+[32m[1mSolutions:[0m[0m
+[32m • [3mRemove the cinterop dependencies 'abletonLink' from target 'iosX64'[0m[0m
+[32m • [3mBuild on a compatible host platform for this target/cinterop combination[0m[0m
+[32m • [3mTo disable klib cross compilation entirely, add 'kotlin.native.enableKlibsCrossCompilation=false' to your Gradle properties[0m[0m
+
+w: [33m[1m⚠️ Cross Compilation with Cinterop Not Supported in Project 'tempo'[0m[0m
+In project 'tempo', cross compilation to target 'iosArm64' has been disabled because it contains cinterops: 'abletonLink' which cannot be processed on host 'linux_x64'.
+Cinterop libraries require platform-specific native toolchains that aren't available on the current host system.
+[32m[1mSolutions:[0m[0m
+[32m • [3mRemove the cinterop dependencies 'abletonLink' from target 'iosArm64'[0m[0m
+[32m • [3mBuild on a compatible host platform for this target/cinterop combination[0m[0m
+[32m • [3mTo disable klib cross compilation entirely, add 'kotlin.native.enableKlibsCrossCompilation=false' to your Gradle properties[0m[0m
+
+w: [33m[1m⚠️ Cross Compilation with Cinterop Not Supported in Project 'tempo'[0m[0m
+In project 'tempo', cross compilation to target 'iosSimulatorArm64' has been disabled because it contains cinterops: 'abletonLink' which cannot be processed on host 'linux_x64'.
+Cinterop libraries require platform-specific native toolchains that aren't available on the current host system.
+[32m[1mSolutions:[0m[0m
+[32m • [3mRemove the cinterop dependencies 'abletonLink' from target 'iosSimulatorArm64'[0m[0m
+[32m • [3mBuild on a compatible host platform for this target/cinterop combination[0m[0m
+[32m • [3mTo disable klib cross compilation entirely, add 'kotlin.native.enableKlibsCrossCompilation=false' to your Gradle properties[0m[0m
+
+w: [33m[1m⚠️ CInterop Commonization Disabled[0m[0m
+The project is using Kotlin Multiplatform with hierarchical structure and disabled 'cinterop commonization'
+
+'cinterop commonization' can be enabled in your 'gradle.properties'
+kotlin.mpp.enableCInteropCommonization=true
+
+To hide this message, add to your 'gradle.properties'
+kotlin.mpp.enableCInteropCommonization.nowarn=true
+
+The following source sets are affected:
+[appleMain, iosMain, nativeMain]
+
+The following cinterops are affected:
+[cinterop:compilation/compileKotlinIosArm64/abletonLink, cinterop:compilation/compileKotlinIosSimulatorArm64/abletonLink, cinterop:compilation/compileKotlinIosX64/abletonLink]
+[32m[1mSolution:[0m[0m
+[32m[3mPlease enable 'cinterop commonization' in your 'gradle.properties'[0m[0m
+[36mSee: [0m[34mhttps://kotlinlang.org/docs/mpp-share-on-platforms.html#use-native-libraries-in-the-hierarchical-structure[0m[36m[0m
+
+
+> Task :shared:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:convertXmlValueResourcesForAndroidMain NO-SOURCE
+> Task :shared:copyNonXmlValueResourcesForAndroidMain NO-SOURCE
+> Task :shared:prepareComposeResourcesTaskForAndroidMain NO-SOURCE
+> Task :shared:generateResourceAccessorsForAndroidMain NO-SOURCE
+> Task :shared:convertXmlValueResourcesForCommonMain NO-SOURCE
+> Task :shared:copyNonXmlValueResourcesForCommonMain UP-TO-DATE
+> Task :shared:prepareComposeResourcesTaskForCommonMain UP-TO-DATE
+> Task :shared:generateResourceAccessorsForCommonMain UP-TO-DATE
+> Task :shared:generateActualResourceCollectorsForAndroidMain UP-TO-DATE
+> Task :shared:generateComposeResClass UP-TO-DATE
+> Task :shared:generateExpectResourceCollectorsForCommonMain UP-TO-DATE
+> Task :shared:agent:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:agent:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:core:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:core:generateCommonMainChromaDmxDatabaseInterface UP-TO-DATE
+> Task :shared:core:compileAndroidMain UP-TO-DATE
+> Task :shared:core:androidPreBuild UP-TO-DATE
+> Task :shared:core:preAndroidMainBuild UP-TO-DATE
+> Task :shared:core:bundleAndroidMainClassesToCompileJar UP-TO-DATE
+> Task :shared:engine:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:engine:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:tempo:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:tempo:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:tempo:compileAndroidMain UP-TO-DATE
+> Task :shared:tempo:androidPreBuild UP-TO-DATE
+> Task :shared:tempo:preAndroidMainBuild UP-TO-DATE
+> Task :shared:tempo:bundleAndroidMainClassesToCompileJar UP-TO-DATE
+> Task :shared:engine:compileAndroidMain UP-TO-DATE
+> Task :shared:engine:androidPreBuild UP-TO-DATE
+> Task :shared:engine:preAndroidMainBuild UP-TO-DATE
+> Task :shared:engine:bundleAndroidMainClassesToCompileJar UP-TO-DATE
+> Task :shared:networking:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:networking:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:networking:compileAndroidMain UP-TO-DATE
+> Task :shared:networking:androidPreBuild UP-TO-DATE
+> Task :shared:networking:preAndroidMainBuild UP-TO-DATE
+> Task :shared:networking:bundleAndroidMainClassesToCompileJar UP-TO-DATE
+> Task :shared:wled:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:wled:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:wled:compileAndroidMain UP-TO-DATE
+> Task :shared:wled:androidPreBuild UP-TO-DATE
+> Task :shared:wled:preAndroidMainBuild UP-TO-DATE
+> Task :shared:wled:bundleAndroidMainClassesToCompileJar UP-TO-DATE
+> Task :shared:agent:compileAndroidMain UP-TO-DATE
+> Task :shared:agent:androidPreBuild UP-TO-DATE
+> Task :shared:agent:preAndroidMainBuild UP-TO-DATE
+> Task :shared:agent:bundleAndroidMainClassesToCompileJar UP-TO-DATE
+> Task :shared:simulation:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:simulation:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:vision:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:vision:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:vision:compileAndroidMain UP-TO-DATE
+> Task :shared:vision:androidPreBuild UP-TO-DATE
+> Task :shared:vision:preAndroidMainBuild UP-TO-DATE
+> Task :shared:vision:bundleAndroidMainClassesToCompileJar UP-TO-DATE
+> Task :shared:simulation:compileAndroidMain UP-TO-DATE
+> Task :shared:simulation:androidPreBuild UP-TO-DATE
+> Task :shared:simulation:preAndroidMainBuild UP-TO-DATE
+> Task :shared:simulation:bundleAndroidMainClassesToCompileJar UP-TO-DATE
+> Task :shared:subscription:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:subscription:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:subscription:compileAndroidMain UP-TO-DATE
+> Task :shared:subscription:androidPreBuild UP-TO-DATE
+> Task :shared:subscription:preAndroidMainBuild UP-TO-DATE
+> Task :shared:subscription:bundleAndroidMainClassesToCompileJar UP-TO-DATE
+> Task :shared:compileAndroidMain UP-TO-DATE
+> Task :shared:androidPreBuild UP-TO-DATE
+> Task :shared:preAndroidMainBuild UP-TO-DATE
+> Task :shared:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :shared:androidJar
+> Task :shared:convertXmlValueResourcesForAndroidHostTest NO-SOURCE
+> Task :shared:copyNonXmlValueResourcesForAndroidHostTest NO-SOURCE
+> Task :shared:prepareComposeResourcesTaskForAndroidHostTest NO-SOURCE
+> Task :shared:generateResourceAccessorsForAndroidHostTest NO-SOURCE
+> Task :shared:convertXmlValueResourcesForCommonTest NO-SOURCE
+> Task :shared:copyNonXmlValueResourcesForCommonTest NO-SOURCE
+> Task :shared:prepareComposeResourcesTaskForCommonTest NO-SOURCE
+> Task :shared:generateResourceAccessorsForCommonTest NO-SOURCE
+> Task :shared:preAndroidHostTestBuild UP-TO-DATE
+> Task :shared:processAndroidHostTestJavaRes NO-SOURCE
+> Task :shared:processAndroidMainJavaRes UP-TO-DATE
+> Task :shared:agent:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :shared:agent:processAndroidMainJavaRes UP-TO-DATE
+> Task :shared:core:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :shared:core:processAndroidMainJavaRes UP-TO-DATE
+> Task :shared:engine:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :shared:engine:processAndroidMainJavaRes UP-TO-DATE
+> Task :shared:networking:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :shared:networking:processAndroidMainJavaRes UP-TO-DATE
+> Task :shared:simulation:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :shared:simulation:processAndroidMainJavaRes UP-TO-DATE
+> Task :shared:subscription:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :shared:subscription:processAndroidMainJavaRes UP-TO-DATE
+> Task :shared:tempo:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :shared:tempo:processAndroidMainJavaRes UP-TO-DATE
+> Task :shared:vision:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :shared:bundleAndroidMainClassesToCompileJar
+> Task :shared:vision:processAndroidMainJavaRes UP-TO-DATE
+> Task :shared:wled:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :shared:wled:processAndroidMainJavaRes UP-TO-DATE
+> Task :shared:compileAndroidHostTest
+
+> Task :shared:testAndroidHostTest
+
+MascotViewModelV2Test > sendMessageAddsUserMessageToChatHistory FAILED
+    java.lang.AssertionError at MascotViewModelV2Test.kt:72
+
+MascotViewModelV2Test > agentResponseAppearsInChatWhenNoAgent FAILED
+    java.lang.AssertionError at MascotViewModelV2Test.kt:87
+
+SetupViewModelTest > advancingThroughFullFlowReachesComplete FAILED
+    java.lang.AssertionError at SetupViewModelTest.kt:372
+
+SetupViewModelTest > confirmGenreWithoutSelectionSkipsGeneration FAILED
+    java.lang.AssertionError at SetupViewModelTest.kt:884
+
+SetupViewModelTest > stepsAdvanceInOrder FAILED
+    java.lang.AssertionError at SetupViewModelTest.kt:526
+
+SetupViewModelTest > confirmGenreWithoutServiceStillAdvances FAILED
+    java.lang.AssertionError at SetupViewModelTest.kt:863
+
+SetupViewModelTest > skipStagePreviewAdvancesToComplete FAILED
+    java.lang.AssertionError at SetupViewModelTest.kt:577
+
+SetupViewModelTest > confirmGenreAdvancesStep FAILED
+    java.lang.AssertionError at SetupViewModelTest.kt:558
+
+SetupViewModelTest > advanceFromSplashGoesToNetworkDiscovery FAILED
+    java.lang.AssertionError at SetupViewModelTest.kt:504
+
+SetupViewModelTest > enterSimulationModeSetsFlag FAILED
+    java.lang.AssertionError at SetupViewModelTest.kt:306
+
+SetupViewModelTest > persistSetupCompleteSavesNodeTopology FAILED
+    java.lang.AssertionError at SetupViewModelTest.kt:446
+
+SetupViewModelTest > confirmGenreTriggersPresetGeneration FAILED
+    java.lang.AssertionError at SetupViewModelTest.kt:837
+
+SetupViewModelTest > skipToCompletePersistsSettings FAILED
+    java.lang.AssertionError at SetupViewModelTest.kt:406
+
+219 tests completed, 13 failed
+
+> Task :shared:testAndroidHostTest FAILED
+
+[Incubating] Problems report is available at: file:///app/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':shared:testAndroidHostTest'.
+> There were failing tests. See the report at: file:///app/shared/build/reports/tests/testAndroidHostTest/index.html
+
+* Try:
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.3.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 18s
+64 actionable tasks: 14 executed, 50 up-to-date
