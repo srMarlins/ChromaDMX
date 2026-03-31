@@ -1,0 +1,3 @@
+## 2024-05-24 - Screen Reader Support for Custom Switch Components
+**Learning:** Using `Modifier.clickable(role = Role.Switch)` on a custom switch component identifies the element as a switch to screen readers but does not announce its current 'On' or 'Off' state. This leaves visually impaired users without feedback on the switch's current value.
+**Action:** Always use `Modifier.toggleable(value = checked, ...)` instead of `clickable` for custom switches in Compose. `toggleable` properly sets both the semantic role and the current value state, ensuring screen readers accurately announce the toggle's status.
