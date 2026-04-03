@@ -1,0 +1,161 @@
+Downloading https://services.gradle.org/distributions/gradle-9.3.1-bin.zip
+.............10%.............20%.............30%.............40%.............50%.............60%.............70%.............80%.............90%.............100%
+
+Welcome to Gradle 9.3.1!
+
+Here are the highlights of this release:
+ - Test reporting improvements
+ - Error and warning improvements
+ - Build authoring improvements
+
+For more details see https://docs.gradle.org/9.3.1/release-notes.html
+
+Starting a Gradle Daemon (subsequent builds will be faster)
+> Task :build-logic:convention:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :build-logic:convention:pluginDescriptors
+> Task :build-logic:convention:processResources
+> Task :build-logic:convention:compileKotlin
+> Task :build-logic:convention:compileJava NO-SOURCE
+> Task :build-logic:convention:classes
+> Task :build-logic:convention:jar
+
+> Configure project :shared:tempo
+w: file:///app/shared/tempo/build.gradle.kts:15:17: 'var defFile: File' is deprecated. Deprecated because it is a non-lazy property.
+w: [33m[1m⚠️ Cross Compilation with Cinterop Not Supported in Project 'tempo'[0m[0m
+In project 'tempo', cross compilation to target 'iosX64' has been disabled because it contains cinterops: 'abletonLink' which cannot be processed on host 'linux_x64'.
+Cinterop libraries require platform-specific native toolchains that aren't available on the current host system.
+[32m[1mSolutions:[0m[0m
+[32m • [3mRemove the cinterop dependencies 'abletonLink' from target 'iosX64'[0m[0m
+[32m • [3mBuild on a compatible host platform for this target/cinterop combination[0m[0m
+[32m • [3mTo disable klib cross compilation entirely, add 'kotlin.native.enableKlibsCrossCompilation=false' to your Gradle properties[0m[0m
+
+w: [33m[1m⚠️ Cross Compilation with Cinterop Not Supported in Project 'tempo'[0m[0m
+In project 'tempo', cross compilation to target 'iosArm64' has been disabled because it contains cinterops: 'abletonLink' which cannot be processed on host 'linux_x64'.
+Cinterop libraries require platform-specific native toolchains that aren't available on the current host system.
+[32m[1mSolutions:[0m[0m
+[32m • [3mRemove the cinterop dependencies 'abletonLink' from target 'iosArm64'[0m[0m
+[32m • [3mBuild on a compatible host platform for this target/cinterop combination[0m[0m
+[32m • [3mTo disable klib cross compilation entirely, add 'kotlin.native.enableKlibsCrossCompilation=false' to your Gradle properties[0m[0m
+
+w: [33m[1m⚠️ Cross Compilation with Cinterop Not Supported in Project 'tempo'[0m[0m
+In project 'tempo', cross compilation to target 'iosSimulatorArm64' has been disabled because it contains cinterops: 'abletonLink' which cannot be processed on host 'linux_x64'.
+Cinterop libraries require platform-specific native toolchains that aren't available on the current host system.
+[32m[1mSolutions:[0m[0m
+[32m • [3mRemove the cinterop dependencies 'abletonLink' from target 'iosSimulatorArm64'[0m[0m
+[32m • [3mBuild on a compatible host platform for this target/cinterop combination[0m[0m
+[32m • [3mTo disable klib cross compilation entirely, add 'kotlin.native.enableKlibsCrossCompilation=false' to your Gradle properties[0m[0m
+
+w: [33m[1m⚠️ CInterop Commonization Disabled[0m[0m
+The project is using Kotlin Multiplatform with hierarchical structure and disabled 'cinterop commonization'
+
+'cinterop commonization' can be enabled in your 'gradle.properties'
+kotlin.mpp.enableCInteropCommonization=true
+
+To hide this message, add to your 'gradle.properties'
+kotlin.mpp.enableCInteropCommonization.nowarn=true
+
+The following source sets are affected:
+[appleMain, iosMain, nativeMain]
+
+The following cinterops are affected:
+[cinterop:compilation/compileKotlinIosArm64/abletonLink, cinterop:compilation/compileKotlinIosSimulatorArm64/abletonLink, cinterop:compilation/compileKotlinIosX64/abletonLink]
+[32m[1mSolution:[0m[0m
+[32m[3mPlease enable 'cinterop commonization' in your 'gradle.properties'[0m[0m
+[36mSee: [0m[34mhttps://kotlinlang.org/docs/mpp-share-on-platforms.html#use-native-libraries-in-the-hierarchical-structure[0m[36m[0m
+
+Checking the license for package Android SDK Build-Tools 36 in /opt/android-sdk/licenses
+License for package Android SDK Build-Tools 36 accepted.
+Preparing "Install Android SDK Build-Tools 36 v.36.0.0".
+"Install Android SDK Build-Tools 36 v.36.0.0" ready.
+Installing Android SDK Build-Tools 36 in /opt/android-sdk/build-tools/36.0.0
+"Install Android SDK Build-Tools 36 v.36.0.0" complete.
+"Install Android SDK Build-Tools 36 v.36.0.0" finished.
+[=========                              ] 25%
+> Task :shared:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:convertXmlValueResourcesForAndroidMain NO-SOURCE
+> Task :shared:copyNonXmlValueResourcesForAndroidMain NO-SOURCE
+> Task :shared:prepareComposeResourcesTaskForAndroidMain NO-SOURCE
+> Task :shared:generateResourceAccessorsForAndroidMain NO-SOURCE
+> Task :shared:convertXmlValueResourcesForCommonMain NO-SOURCE
+> Task :shared:copyNonXmlValueResourcesForCommonMain
+> Task :shared:prepareComposeResourcesTaskForCommonMain
+> Task :shared:generateResourceAccessorsForCommonMain
+> Task :shared:generateActualResourceCollectorsForAndroidMain
+> Task :shared:generateComposeResClass
+> Task :shared:generateExpectResourceCollectorsForCommonMain
+> Task :shared:agent:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:agent:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:core:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:core:androidPreBuild UP-TO-DATE
+> Task :shared:core:preAndroidMainBuild UP-TO-DATE
+> Task :shared:engine:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:engine:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:tempo:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:tempo:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:tempo:androidPreBuild UP-TO-DATE
+> Task :shared:tempo:preAndroidMainBuild UP-TO-DATE
+> Task :shared:engine:androidPreBuild UP-TO-DATE
+> Task :shared:engine:preAndroidMainBuild UP-TO-DATE
+> Task :shared:networking:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:networking:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:networking:androidPreBuild UP-TO-DATE
+> Task :shared:networking:preAndroidMainBuild UP-TO-DATE
+> Task :shared:wled:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:wled:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:wled:androidPreBuild UP-TO-DATE
+> Task :shared:wled:preAndroidMainBuild UP-TO-DATE
+> Task :shared:agent:androidPreBuild UP-TO-DATE
+> Task :shared:agent:preAndroidMainBuild UP-TO-DATE
+> Task :shared:simulation:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:simulation:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:vision:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:vision:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:vision:androidPreBuild UP-TO-DATE
+> Task :shared:vision:preAndroidMainBuild UP-TO-DATE
+> Task :shared:simulation:androidPreBuild UP-TO-DATE
+> Task :shared:simulation:preAndroidMainBuild UP-TO-DATE
+> Task :shared:subscription:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:subscription:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:subscription:androidPreBuild UP-TO-DATE
+> Task :shared:subscription:preAndroidMainBuild UP-TO-DATE
+> Task :shared:core:generateCommonMainChromaDmxDatabaseInterface
+> Task :shared:core:compileAndroidMain
+> Task :shared:core:bundleAndroidMainClassesToCompileJar
+> Task :shared:tempo:compileAndroidMain
+> Task :shared:tempo:bundleAndroidMainClassesToCompileJar
+> Task :shared:subscription:compileAndroidMain
+> Task :shared:vision:compileAndroidMain
+> Task :shared:subscription:bundleAndroidMainClassesToCompileJar
+> Task :shared:vision:bundleAndroidMainClassesToCompileJar
+> Task :shared:networking:compileAndroidMain
+> Task :shared:networking:bundleAndroidMainClassesToCompileJar
+> Task :shared:engine:compileAndroidMain
+> Task :shared:engine:bundleAndroidMainClassesToCompileJar
+
+> Task :shared:wled:compileAndroidMain
+w: file:///app/shared/wled/src/androidMain/kotlin/com/chromadmx/wled/WledMdnsBrowserAndroid.kt:41:24 'fun resolveService(p0: NsdServiceInfo!, p1: NsdManager.ResolveListener!): Unit' is deprecated. Deprecated in Java.
+w: file:///app/shared/wled/src/androidMain/kotlin/com/chromadmx/wled/WledMdnsBrowserAndroid.kt:64:34 'var host: InetAddress!' is deprecated. Deprecated in Java.
+
+> Task :shared:wled:bundleAndroidMainClassesToCompileJar
+
+> Task :shared:simulation:compileAndroidMain
+w: file:///app/shared/simulation/src/commonMain/kotlin/com/chromadmx/simulation/camera/SimulatedCamera.kt:155:71 Redundant call of conversion method.
+
+> Task :shared:simulation:bundleAndroidMainClassesToCompileJar
+> Task :shared:agent:compileAndroidMain
+> Task :shared:agent:bundleAndroidMainClassesToCompileJar
+> Task :shared:compileAndroidMain
+
+[Incubating] Problems report is available at: file:///app/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.3.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 6m
+40 actionable tasks: 40 executed
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.3.1/userguide/configuration_cache_enabling.html
