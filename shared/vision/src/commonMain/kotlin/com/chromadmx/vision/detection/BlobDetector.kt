@@ -44,6 +44,7 @@ class BlobDetector(
         // Label array: 0 = unlabeled, >0 = component label
         val labels = IntArray(w * h)
         var nextLabel = 1
+        val stack = IntArray(w * h)
 
         // Accumulator per label: (sumX, sumY, sumBrightness, count)
         val components = mutableMapOf<Int, BlobAccumulator>()
@@ -55,7 +56,7 @@ class BlobDetector(
                 if (pixels[idx] >= brightnessThreshold && labels[idx] == 0) {
                     val label = nextLabel++
                     val acc = BlobAccumulator()
-                    floodFill(pixels, labels, w, h, x, y, label, acc)
+                    floodFill(pixels, labels, w, h, x, y, label, acc, stack)
                     components[label] = acc
                 }
             }
@@ -63,16 +64,17 @@ class BlobDetector(
 
         // Convert accumulators to DetectedBlob, filter by min size
         return components.values
-            .filter { it.count >= minBlobSize }
-            .map { acc ->
-                DetectedBlob(
-                    centroid = Coord2D(
-                        x = acc.weightedSumX / acc.totalBrightness,
-                        y = acc.weightedSumY / acc.totalBrightness
-                    ),
-                    pixelCount = acc.count,
-                    totalBrightness = acc.totalBrightness
-                )
+            .mapNotNull { acc ->
+                if (acc.count >= minBlobSize) {
+                    DetectedBlob(
+                        centroid = Coord2D(
+                            x = acc.weightedSumX / acc.totalBrightness,
+                            y = acc.weightedSumY / acc.totalBrightness
+                        ),
+                        pixelCount = acc.count,
+                        totalBrightness = acc.totalBrightness
+                    )
+                } else null
             }
             .sortedByDescending { it.totalBrightness }
     }
@@ -89,15 +91,16 @@ class BlobDetector(
         startX: Int,
         startY: Int,
         label: Int,
-        acc: BlobAccumulator
+        acc: BlobAccumulator,
+        stack: IntArray
     ) {
-        val stack = ArrayDeque<Int>()
+        var stackSize = 0
         val startIdx = startY * w + startX
-        stack.addLast(startIdx)
+        stack[stackSize++] = startIdx
         labels[startIdx] = label
 
-        while (stack.isNotEmpty()) {
-            val idx = stack.removeLast()
+        while (stackSize > 0) {
+            val idx = stack[--stackSize]
             val x = idx % w
             val y = idx / w
             val brightness = pixels[idx]
@@ -112,28 +115,28 @@ class BlobDetector(
                 val nIdx = idx + 1
                 if (labels[nIdx] == 0 && pixels[nIdx] >= brightnessThreshold) {
                     labels[nIdx] = label
-                    stack.addLast(nIdx)
+                    stack[stackSize++] = nIdx
                 }
             }
             if (x - 1 >= 0) {
                 val nIdx = idx - 1
                 if (labels[nIdx] == 0 && pixels[nIdx] >= brightnessThreshold) {
                     labels[nIdx] = label
-                    stack.addLast(nIdx)
+                    stack[stackSize++] = nIdx
                 }
             }
             if (y + 1 < h) {
                 val nIdx = idx + w
                 if (labels[nIdx] == 0 && pixels[nIdx] >= brightnessThreshold) {
                     labels[nIdx] = label
-                    stack.addLast(nIdx)
+                    stack[stackSize++] = nIdx
                 }
             }
             if (y - 1 >= 0) {
                 val nIdx = idx - w
                 if (labels[nIdx] == 0 && pixels[nIdx] >= brightnessThreshold) {
                     labels[nIdx] = label
-                    stack.addLast(nIdx)
+                    stack[stackSize++] = nIdx
                 }
             }
         }
