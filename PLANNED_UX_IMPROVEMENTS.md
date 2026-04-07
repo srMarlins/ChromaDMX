@@ -5,7 +5,7 @@
 - **Typography Update**: Ensure `PixelFontFamily` is used consistently for headers, while a legible monospace or sans-serif font is used for data/body text.
 - **Component Library**:
     - [ ] Create `PixelScaffold`: A standard layout container with a pixelated top bar and bottom navigation.
-    - [ ] Create `PixelSwitch`: A toggle switch with pixel-art "on/off" states.
+    - [x] Create `PixelSwitch`: A toggle switch with pixel-art "on/off" states.
     - [ ] Create `PixelTextField`: An input field with pixel borders and clear focus states.
     - [ ] Refactor `PixelSlider`: Improve touch targets, add accessibility semantics, and smooth out the thumb dragging.
     - [ ] Refactor `PixelButton`: Add disabled states, loading indicators, and haptic feedback.
