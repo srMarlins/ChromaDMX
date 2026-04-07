@@ -1,0 +1,25 @@
+--- shared/src/commonMain/kotlin/com/chromadmx/ui/components/PixelSwitch.kt
++++ shared/src/commonMain/kotlin/com/chromadmx/ui/components/PixelSwitch.kt
+@@ -10,7 +10,7 @@
+ import androidx.compose.runtime.Composable
+ import androidx.compose.runtime.getValue
+ import androidx.compose.runtime.remember
++import androidx.compose.foundation.selection.toggleable
+ import androidx.compose.ui.Alignment
+ import androidx.compose.ui.Modifier
+ import androidx.compose.ui.draw.clip
+@@ -53,10 +53,11 @@
+     // Track uses chamfered shape; glowing when checked, standard when unchecked
+     val trackModifier = modifier
+         .size(width = trackWidth, height = trackHeight)
+-        .clickable(
++        .toggleable(
++            value = checked,
+             interactionSource = interactionSource,
+             indication = null,
+             enabled = enabled,
+-            onClick = { onCheckedChange?.invoke(!checked) },
++            onValueChange = { onCheckedChange?.invoke(it) },
+             role = Role.Switch
+         )
+         .let { mod ->
