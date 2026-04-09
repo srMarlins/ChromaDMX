@@ -1,5 +1,7 @@
 package com.chromadmx.ui.screen.settings
 
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -442,7 +444,8 @@ private fun ConfigFormContent(
                         label = { Text("Wi-Fi Password") },
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation = PasswordVisualTransformation(),
-                        singleLine = true
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false)
                     )
 
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
