@@ -6,6 +6,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
@@ -54,13 +55,20 @@ fun PixelSwitch(
     // Track uses chamfered shape; glowing when checked, standard when unchecked
     val trackModifier = modifier
         .size(width = trackWidth, height = trackHeight)
-        .clickable(
-            interactionSource = interactionSource,
-            indication = null,
-            enabled = enabled,
-            onClick = { onCheckedChange?.invoke(!checked) },
-            role = Role.Switch
-        )
+        .let { mod ->
+            if (onCheckedChange != null) {
+                mod.toggleable(
+                    value = checked,
+                    interactionSource = interactionSource,
+                    indication = null,
+                    enabled = enabled,
+                    onValueChange = onCheckedChange,
+                    role = Role.Switch
+                )
+            } else {
+                mod
+            }
+        }
         .let { mod ->
             if (checked && enabled) {
                 mod.pixelBorderGlowing(
