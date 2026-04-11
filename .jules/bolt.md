@@ -1,3 +1,3 @@
-## 2025-03-01 - Avoid Intermediate Color Allocations in Hot Paths
-**Learning:** In the DMX engine's rendering hot path (`EffectStack`), even simple operations like `Color * float` or `.clamped()` can create thousands of intermediate `Color` objects per frame, leading to GC pauses and dropped frames.
-**Action:** When working in the inner loop (e.g., `evaluate()` methods), bypass operator overloads that allocate new objects if the inputs are already bounded, and use direct `Color` instantiation with pre-multiplied/clamped values.
+## 2025-05-15 - ArrayDeque boxing in hot loop
+**Learning:** In a high-frequency inner loop (`BlobDetector.floodFill`), `ArrayDeque<Int>` forces primitive auto-boxing and frequent heap allocations, leading to high GC pressure.
+**Action:** Replace `ArrayDeque<Int>` with a pre-allocated primitive `IntArray` stack to achieve zero allocations in the flood-fill path.
