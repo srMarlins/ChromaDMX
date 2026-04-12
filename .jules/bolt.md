@@ -1,3 +1,6 @@
 ## 2025-03-01 - Avoid Intermediate Color Allocations in Hot Paths
 **Learning:** In the DMX engine's rendering hot path (`EffectStack`), even simple operations like `Color * float` or `.clamped()` can create thousands of intermediate `Color` objects per frame, leading to GC pauses and dropped frames.
 **Action:** When working in the inner loop (e.g., `evaluate()` methods), bypass operator overloads that allocate new objects if the inputs are already bounded, and use direct `Color` instantiation with pre-multiplied/clamped values.
+## 2025-04-12 - BlobDetector Hot Path Optimizations
+**Learning:** In `BlobDetector.kt` (used on vision frames), there was a performance bottleneck caused by chained collections operations (`.filter { ... }.map { ... }`) creating intermediate collections, and the use of generic collections like `ArrayDeque<Int>` for primitive types which causes auto-boxing and memory allocations per iteration.
+**Action:** When working with image processing hot loops in vision layers, avoid primitive auto-boxing by substituting collections with pre-allocated primitive arrays (like `IntArray`). Replace chained `filter`/`map` calls with `.mapNotNull { ... }` to achieve single-pass processing without intermediate collection allocations.
