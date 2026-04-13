@@ -1,0 +1,69 @@
+--- ./shared/vision/src/commonMain/kotlin/com/chromadmx/vision/detection/BlobDetector.kt
++++ ./shared/vision/src/commonMain/kotlin/com/chromadmx/vision/detection/BlobDetector.kt
+@@ -49,6 +49,9 @@
+         val components = mutableMapOf<Int, BlobAccumulator>()
+
+         // Single-pass flood-fill CCL with 4-connectivity
++        // Pre-allocate a single stack to avoid auto-boxing and allocations in the hot path
++        val stack = IntArray(w * h)
++
+         for (y in 0 until h) {
+             for (x in 0 until w) {
+                 val idx = y * w + x
+@@ -56,23 +59,23 @@
+                     val label = nextLabel++
+                     val acc = BlobAccumulator()
+-                    floodFill(pixels, labels, w, h, x, y, label, acc)
++                    floodFill(pixels, labels, w, h, x, y, label, acc, stack)
+                     components[label] = acc
+                 }
+             }
+         }
+
+         // Convert accumulators to DetectedBlob, filter by min size
+         return components.values
+-            .filter { it.count >= minBlobSize }
+-            .map { acc ->
+-                DetectedBlob(
+-                    centroid = Coord2D(
+-                        x = acc.weightedSumX / acc.totalBrightness,
+-                        y = acc.weightedSumY / acc.totalBrightness
+-                    ),
+-                    pixelCount = acc.count,
+-                    totalBrightness = acc.totalBrightness
+-                )
++            .mapNotNull { acc ->
++                if (acc.count >= minBlobSize) {
++                    DetectedBlob(
++                        centroid = Coord2D(
++                            x = acc.weightedSumX / acc.totalBrightness,
++                            y = acc.weightedSumY / acc.totalBrightness
++                        ),
++                        pixelCount = acc.count,
++                        totalBrightness = acc.totalBrightness
++                    )
++                } else null
+             }
+             .sortedByDescending { it.totalBrightness }
+@@ -87,20 +90,20 @@
+         startX: Int,
+         startY: Int,
+         label: Int,
+-        acc: BlobAccumulator
++        acc: BlobAccumulator,
++        stack: IntArray
+     ) {
+-        val stack = ArrayDeque<Int>()
++        var stackSize = 0
+         val startIdx = startY * w + startX
+-        stack.addLast(startIdx)
++        stack[stackSize++] = startIdx
+         labels[startIdx] = label
+
+-        while (stack.isNotEmpty()) {
+-            val idx = stack.removeLast()
++        while (stackSize > 0) {
++            val idx = stack[--stackSize]
+             val x = idx % w
+             val y = idx / w
+             val brightness = pixels[idx]
