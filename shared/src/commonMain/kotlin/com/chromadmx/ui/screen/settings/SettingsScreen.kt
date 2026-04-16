@@ -82,7 +82,7 @@ fun SettingsScreen(
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                PixelIconButton(onClick = onBack) {
+                PixelIconButton(onClick = onBack, contentDescription = "Go back") {
                     Text(
                         text = "\u25C0",
                         style = MaterialTheme.typography.bodyLarge,
@@ -547,7 +547,7 @@ private fun FixtureProfileRow(
         )
 
         // Edit button
-        PixelIconButton(onClick = onEdit) {
+        PixelIconButton(onClick = onEdit, contentDescription = "Edit") {
             Text(
                 text = "\u270E",
                 style = MaterialTheme.typography.bodySmall,
@@ -557,7 +557,7 @@ private fun FixtureProfileRow(
 
         // Delete button (only for user-created profiles)
         if (!isBuiltIn) {
-            PixelIconButton(onClick = onDelete) {
+            PixelIconButton(onClick = onDelete, contentDescription = "Delete") {
                 Text(
                     text = "\u2716",
                     style = MaterialTheme.typography.bodySmall,
