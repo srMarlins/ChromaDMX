@@ -37,9 +37,7 @@ class RealEngineController(
         val effect = effectRegistry.get(effectId) ?: return false
 
         // Build EffectParams from the float map
-        val effectParams = params.entries.fold(EffectParams.EMPTY) { acc, (key, value) ->
-            acc.with(key, value)
-        }
+        val effectParams = EffectParams(params)
 
         // Synchronized: layerCount→addLayer→layers[layer]→setLayer must be atomic
         synchronized(lock) {
@@ -109,9 +107,7 @@ class RealEngineController(
         // the engine seeing a partially-applied scene.
         val newLayers = scene.layers.mapNotNull { layerConfig ->
             val effect = effectRegistry.get(layerConfig.effectId) ?: return@mapNotNull null
-            val params = layerConfig.params.entries.fold(EffectParams.EMPTY) { acc, (key, value) ->
-                acc.with(key, value)
-            }
+            val params = EffectParams(layerConfig.params)
             val blendMode = try {
                 BlendMode.valueOf(layerConfig.blendMode)
             } catch (_: IllegalArgumentException) {
