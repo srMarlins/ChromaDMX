@@ -1,0 +1,3 @@
+## 2024-05-14 - Improve PixelSwitch screen reader accessibility
+**Learning:** In Compose Multiplatform, using `Modifier.clickable(role = Role.Switch)` properly identifies the element as a switch but fails to announce its current 'On' or 'Off' state to screen readers. `Modifier.toggleable` must be used instead because it natively manages semantics for both the role and the toggled state.
+**Action:** When implementing custom interactive switch or checkbox components, always use `toggleable(value, onValueChange, role)` rather than a simple `clickable` modifier, wrapping it in a `.let` block if the callback is nullable to properly handle disabled states.
