@@ -112,7 +112,7 @@ class PreGenerationService(
         val layers = template.layers.map { layer ->
             EffectLayerConfig(
                 effectId = layer.effectId,
-                params = layer.params.entries.fold(EffectParams.EMPTY) { acc, (k, v) -> acc.with(k, v) },
+                params = EffectParams(layer.params),
                 blendMode = BlendMode.valueOf(layer.blendMode),
                 opacity = layer.opacity,
                 enabled = true
