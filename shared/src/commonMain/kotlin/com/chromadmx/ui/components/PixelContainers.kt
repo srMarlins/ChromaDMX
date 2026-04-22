@@ -38,6 +38,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -82,6 +85,7 @@ import com.chromadmx.ui.theme.PixelShape
 fun PixelIconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    contentDescription: String? = null,
     glowing: Boolean = false,
     enabled: Boolean = true,
     content: @Composable () -> Unit,
@@ -119,6 +123,13 @@ fun PixelIconButton(
             }
             .clip(shape)
             .background(bgColor, shape)
+            .let { m ->
+                if (contentDescription != null) {
+                    m.semantics { this.contentDescription = contentDescription }
+                } else {
+                    m
+                }
+            }
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
