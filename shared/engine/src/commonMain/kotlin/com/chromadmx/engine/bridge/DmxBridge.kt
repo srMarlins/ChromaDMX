@@ -22,6 +22,31 @@ class DmxBridge(
     private val fixtures: List<Fixture3D>,
     private val profiles: Map<String, FixtureProfile> = emptyMap()
 ) {
+    // Pre-resolved metadata for fast O(1) access during the per-frame loops
+    private val fixtureProfiles = Array<FixtureProfile?>(fixtures.size) { null }
+    private val fixtureUniverses = IntArray(fixtures.size)
+    private val fixtureChannelStarts = IntArray(fixtures.size)
+    private val fixtureHasDimmer = BooleanArray(fixtures.size)
+    private val fixturePanDefaults = FloatArray(fixtures.size)
+    private val fixtureTiltDefaults = FloatArray(fixtures.size)
+
+    init {
+        for (i in fixtures.indices) {
+            val fixture = fixtures[i].fixture
+            fixtureUniverses[i] = fixture.universeId
+            fixtureChannelStarts[i] = fixture.channelStart
+
+            val profile = profiles[fixture.profileId] ?: BuiltInProfiles.findById(fixture.profileId)
+            fixtureProfiles[i] = profile
+
+            if (profile != null) {
+                fixtureHasDimmer[i] = profile.channelByType(ChannelType.DIMMER) != null
+                fixturePanDefaults[i] = profile.channelByType(ChannelType.PAN)?.defaultValue?.let { it / 255f } ?: 0f
+                fixtureTiltDefaults[i] = profile.channelByType(ChannelType.TILT)?.defaultValue?.let { it / 255f } ?: 0f
+            }
+        }
+    }
+
     /**
      * Convert an array of per-fixture colors into per-universe DMX data.
      *
@@ -34,17 +59,17 @@ class DmxBridge(
         val universes = mutableMapOf<Int, ByteArray>()
 
         for (i in fixtures.indices) {
-            val fixture = fixtures[i].fixture
+            val universeId = fixtureUniverses[i]
+            val channelStart = fixtureChannelStarts[i]
             val color = colors.getOrElse(i) { Color.BLACK }
-            val data = universes.getOrPut(fixture.universeId) { ByteArray(512) }
-            val profile = profiles[fixture.profileId]
-                ?: BuiltInProfiles.findById(fixture.profileId)
+            val data = universes.getOrPut(universeId) { ByteArray(512) }
+            val profile = fixtureProfiles[i]
 
             if (profile != null && profile.hasRgb) {
-                writeProfileChannels(data, fixture.channelStart, profile, color)
+                writeProfileChannels(data, channelStart, profile, color, fixtureHasDimmer[i])
             } else {
                 // Fallback: write as simple 3-channel RGB
-                writeSimpleRgb(data, fixture.channelStart, color)
+                writeSimpleRgb(data, channelStart, color)
             }
         }
 
@@ -65,17 +90,25 @@ class DmxBridge(
         val universes = mutableMapOf<Int, ByteArray>()
 
         for (i in fixtures.indices) {
-            val fixture = fixtures[i].fixture
+            val universeId = fixtureUniverses[i]
+            val channelStart = fixtureChannelStarts[i]
             val output = outputs.getOrElse(i) { FixtureOutput.DEFAULT }
-            val data = universes.getOrPut(fixture.universeId) { ByteArray(512) }
-            val profile = profiles[fixture.profileId]
-                ?: BuiltInProfiles.findById(fixture.profileId)
+            val data = universes.getOrPut(universeId) { ByteArray(512) }
+            val profile = fixtureProfiles[i]
 
             if (profile != null) {
-                writeProfileChannelsWithOutput(data, fixture.channelStart, profile, output)
+                writeProfileChannelsWithOutput(
+                    data = data,
+                    channelStart = channelStart,
+                    profile = profile,
+                    output = output,
+                    hasDimmer = fixtureHasDimmer[i],
+                    panDefault = fixturePanDefaults[i],
+                    tiltDefault = fixtureTiltDefaults[i]
+                )
             } else {
                 // Fallback: write color as simple 3-channel RGB
-                writeSimpleRgb(data, fixture.channelStart, output.color)
+                writeSimpleRgb(data, channelStart, output.color)
             }
         }
 
@@ -86,14 +119,14 @@ class DmxBridge(
         data: ByteArray,
         channelStart: Int,
         profile: FixtureProfile,
-        color: Color
+        color: Color,
+        hasDimmer: Boolean
     ) {
         // Optimization: bypass clamped() to prevent allocating a Color object per fixture per frame
         val cr = color.r.coerceIn(0f, 1f)
         val cg = color.g.coerceIn(0f, 1f)
         val cb = color.b.coerceIn(0f, 1f)
 
-        val hasDimmer = profile.channelByType(ChannelType.DIMMER) != null
         val brightness = maxOf(cr, cg, cb)
 
         for (channel in profile.channels) {
@@ -131,14 +164,16 @@ class DmxBridge(
         data: ByteArray,
         channelStart: Int,
         profile: FixtureProfile,
-        output: FixtureOutput
+        output: FixtureOutput,
+        hasDimmer: Boolean,
+        panDefault: Float,
+        tiltDefault: Float
     ) {
         // Optimization: bypass clamped() to prevent allocating a Color object per fixture per frame
         val cr = output.color.r.coerceIn(0f, 1f)
         val cg = output.color.g.coerceIn(0f, 1f)
         val cb = output.color.b.coerceIn(0f, 1f)
 
-        val hasDimmer = profile.channelByType(ChannelType.DIMMER) != null
         val brightness = maxOf(cr, cg, cb)
 
         for (channel in profile.channels) {
@@ -181,15 +216,13 @@ class DmxBridge(
                 }
                 ChannelType.PAN_FINE -> {
                     // Fine channel = LSB of 16-bit value; derive default from coarse PAN channel
-                    val coarseDefault = profile.channelByType(ChannelType.PAN)?.defaultValue?.let { it / 255f } ?: 0f
-                    val value = output.pan ?: coarseDefault
+                    val value = output.pan ?: panDefault
                     val full16 = (value * 65535f + 0.5f).toInt().coerceIn(0, 65535)
                     (full16 and 0xFF).toByte()
                 }
                 ChannelType.TILT_FINE -> {
                     // Fine channel = LSB of 16-bit value; derive default from coarse TILT channel
-                    val coarseDefault = profile.channelByType(ChannelType.TILT)?.defaultValue?.let { it / 255f } ?: 0f
-                    val value = output.tilt ?: coarseDefault
+                    val value = output.tilt ?: tiltDefault
                     val full16 = (value * 65535f + 0.5f).toInt().coerceIn(0, 65535)
                     (full16 and 0xFF).toByte()
                 }
