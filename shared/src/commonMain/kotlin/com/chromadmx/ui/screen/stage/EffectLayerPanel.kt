@@ -251,6 +251,7 @@ private fun LayerPanelHeader(
         // Add button
         PixelIconButton(
             onClick = onAddLayer,
+            contentDescription = "Add layer",
             modifier = Modifier.size(28.dp),
         ) {
             Text(
@@ -450,6 +451,7 @@ private fun LayerActions(
         // Move Up
         PixelIconButton(
             onClick = onMoveUp,
+            contentDescription = "Move layer up",
             enabled = layerIndex > 0,
             modifier = Modifier.size(32.dp),
         ) {
@@ -465,6 +467,7 @@ private fun LayerActions(
         // Move Down
         PixelIconButton(
             onClick = onMoveDown,
+            contentDescription = "Move layer down",
             enabled = layerIndex < layerCount - 1,
             modifier = Modifier.size(32.dp),
         ) {
@@ -480,6 +483,7 @@ private fun LayerActions(
         // Delete
         PixelIconButton(
             onClick = onDelete,
+            contentDescription = "Delete layer",
             modifier = Modifier.size(32.dp),
         ) {
             Text(

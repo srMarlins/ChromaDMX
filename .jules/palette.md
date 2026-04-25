@@ -1,0 +1,3 @@
+## 2025-02-14 - Compose Multiplatform Icon Button Accessibility
+**Learning:** Custom interactive containers or icon-only buttons in Compose Multiplatform must expose a `contentDescription` parameter and apply it via `Modifier.semantics { this.contentDescription = ... }` before the `clickable` modifier. This ensures they are properly announced by screen readers.
+**Action:** When creating or modifying custom interactive components like `PixelIconButton`, require a `contentDescription` in the function signature and apply it to the modifier chain. Also apply semantics for other custom clickable elements like badges or health nodes.
