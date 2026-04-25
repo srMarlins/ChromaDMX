@@ -17,6 +17,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
@@ -54,7 +56,8 @@ fun SimulationBadge(
     Box(
         modifier = modifier
             .alpha(alpha)
-            .clickable(onClick = onTap)
+            .semantics { this.contentDescription = "Simulation Info" }
+            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onTap)
             .pixelBorder(color = NeonMagenta.copy(alpha = 0.6f), pixelSize = pixelSize)
             .background(NeonMagenta.copy(alpha = 0.25f))
             .padding(horizontal = 8.dp, vertical = 4.dp),
