@@ -22,6 +22,20 @@ class DmxBridge(
     private val fixtures: List<Fixture3D>,
     private val profiles: Map<String, FixtureProfile> = emptyMap()
 ) {
+    // Optimization: Pre-resolve metadata into indexed arrays to avoid O(N) map lookups and allocations in the 60Hz hot path.
+    private val universeIds = IntArray(fixtures.size)
+    private val channelStarts = IntArray(fixtures.size)
+    private val resolvedProfiles = Array<FixtureProfile?>(fixtures.size) { null }
+
+    init {
+        for (i in fixtures.indices) {
+            val fixture = fixtures[i].fixture
+            universeIds[i] = fixture.universeId
+            channelStarts[i] = fixture.channelStart
+            resolvedProfiles[i] = profiles[fixture.profileId] ?: BuiltInProfiles.findById(fixture.profileId)
+        }
+    }
+
     /**
      * Convert an array of per-fixture colors into per-universe DMX data.
      *
@@ -34,17 +48,17 @@ class DmxBridge(
         val universes = mutableMapOf<Int, ByteArray>()
 
         for (i in fixtures.indices) {
-            val fixture = fixtures[i].fixture
+            val universeId = universeIds[i]
+            val channelStart = channelStarts[i]
             val color = colors.getOrElse(i) { Color.BLACK }
-            val data = universes.getOrPut(fixture.universeId) { ByteArray(512) }
-            val profile = profiles[fixture.profileId]
-                ?: BuiltInProfiles.findById(fixture.profileId)
+            val data = universes.getOrPut(universeId) { ByteArray(512) }
+            val profile = resolvedProfiles[i]
 
             if (profile != null && profile.hasRgb) {
-                writeProfileChannels(data, fixture.channelStart, profile, color)
+                writeProfileChannels(data, channelStart, profile, color)
             } else {
                 // Fallback: write as simple 3-channel RGB
-                writeSimpleRgb(data, fixture.channelStart, color)
+                writeSimpleRgb(data, channelStart, color)
             }
         }
 
@@ -65,17 +79,17 @@ class DmxBridge(
         val universes = mutableMapOf<Int, ByteArray>()
 
         for (i in fixtures.indices) {
-            val fixture = fixtures[i].fixture
+            val universeId = universeIds[i]
+            val channelStart = channelStarts[i]
             val output = outputs.getOrElse(i) { FixtureOutput.DEFAULT }
-            val data = universes.getOrPut(fixture.universeId) { ByteArray(512) }
-            val profile = profiles[fixture.profileId]
-                ?: BuiltInProfiles.findById(fixture.profileId)
+            val data = universes.getOrPut(universeId) { ByteArray(512) }
+            val profile = resolvedProfiles[i]
 
             if (profile != null) {
-                writeProfileChannelsWithOutput(data, fixture.channelStart, profile, output)
+                writeProfileChannelsWithOutput(data, channelStart, profile, output)
             } else {
                 // Fallback: write color as simple 3-channel RGB
-                writeSimpleRgb(data, fixture.channelStart, output.color)
+                writeSimpleRgb(data, channelStart, output.color)
             }
         }
 
