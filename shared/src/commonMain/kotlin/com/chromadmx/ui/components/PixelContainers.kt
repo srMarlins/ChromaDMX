@@ -53,6 +53,8 @@ import androidx.compose.ui.window.DialogProperties
 import com.chromadmx.ui.theme.ChromaAnimations
 import com.chromadmx.ui.theme.PixelDesign
 import com.chromadmx.ui.theme.PixelShape
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 
 // ============================================================================
 // PixelContainers.kt
@@ -82,6 +84,7 @@ import com.chromadmx.ui.theme.PixelShape
 fun PixelIconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    contentDescription: String? = null,
     glowing: Boolean = false,
     enabled: Boolean = true,
     content: @Composable () -> Unit,
@@ -119,6 +122,9 @@ fun PixelIconButton(
             }
             .clip(shape)
             .background(bgColor, shape)
+            .semantics {
+                contentDescription?.let { this.contentDescription = it }
+            }
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
