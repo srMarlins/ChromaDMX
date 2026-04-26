@@ -194,7 +194,7 @@ fun PixelShowcaseScreen() {
 
                             // Icon buttons
                             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                PixelIconButton(onClick = {}) {
+                                PixelIconButton(onClick = {}, contentDescription = "Showcase default") {
                                     Icon(
                                         imageVector = Icons.Filled.Star,
                                         contentDescription = "Star",
@@ -203,6 +203,7 @@ fun PixelShowcaseScreen() {
                                 }
                                 PixelIconButton(
                                     onClick = {},
+                                    contentDescription = "Showcase glowing",
                                     glowing = true,
                                 ) {
                                     Icon(
