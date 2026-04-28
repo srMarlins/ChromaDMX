@@ -2,3 +2,8 @@
 **Vulnerability:** API keys and sensitive tokens in `SettingsScreen.kt` were manually mutated into strings composed of bullet characters (`\u2022`) to mask them. The underlying logic was vulnerable because it replaced the actual state value and required complicated reconstruction logic on the first keystroke, creating risks of secrets leaking in state updates, logging, or accidentally being saved as dots into storage or the API config.
 **Learning:** For masking secrets like API keys in Compose UI state, custom text fields must support Compose's `VisualTransformation` parameter so that the view can mask the output securely without ever changing the underlying raw string state value.
 **Prevention:** When building custom TextFields (e.g., `PixelTextField`), always expose the `visualTransformation` parameter and pass it to the internal `BasicTextField`. Always use `PasswordVisualTransformation()` to mask sensitive values instead of manipulating strings.
+
+## 2026-03-01 - [Critical] AllowBackup enabled in AndroidManifest.xml
+**Vulnerability:** The `android:allowBackup="true"` attribute was set in `android/app/src/main/AndroidManifest.xml`. This could allow unauthorized extraction of sensitive application data via ADB backups.
+**Learning:** The default for Android apps is to allow backups. For security, this must be explicitly disabled to prevent data leakage. Additionally, sensitive inputs like passwords should explicitly disable autocorrect caching to prevent the OS from storing them in its dictionary.
+**Prevention:** Set `android:allowBackup="false"` in `AndroidManifest.xml`. Ensure `KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false)` is applied to `PixelTextField` usages that handle sensitive values.

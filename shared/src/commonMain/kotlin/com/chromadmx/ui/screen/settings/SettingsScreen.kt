@@ -743,6 +743,11 @@ private fun AgentSection(
                 } else {
                     androidx.compose.ui.text.input.PasswordVisualTransformation()
                 },
+                keyboardOptions = if (showKey || state.agentConfig.apiKey.isEmpty()) {
+                    KeyboardOptions.Default
+                } else {
+                    KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false)
+                },
                 modifier = Modifier.fillMaxWidth(),
             )
 
