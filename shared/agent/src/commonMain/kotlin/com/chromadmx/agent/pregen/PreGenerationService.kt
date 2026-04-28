@@ -112,7 +112,8 @@ class PreGenerationService(
         val layers = template.layers.map { layer ->
             EffectLayerConfig(
                 effectId = layer.effectId,
-                params = layer.params.entries.fold(EffectParams.EMPTY) { acc, (k, v) -> acc.with(k, v) },
+                // Direct constructor call for O(1) allocation; Map covariance allows Map<String, Float> to act as Map<String, Any>
+                params = EffectParams(layer.params),
                 blendMode = BlendMode.valueOf(layer.blendMode),
                 opacity = layer.opacity,
                 enabled = true
