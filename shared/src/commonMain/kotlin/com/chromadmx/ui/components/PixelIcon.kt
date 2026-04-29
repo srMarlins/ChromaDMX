@@ -13,6 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 
 /**
@@ -28,6 +30,13 @@ fun PixelIcon(
 ) {
     Box(
         modifier = modifier
+            .let { mod ->
+                if (contentDescription != null) {
+                    mod.semantics { this.contentDescription = contentDescription }
+                } else {
+                    mod
+                }
+            }
             .size(32.dp)
             .pixelBorder(color = tint.copy(alpha = 0.4f), pixelSize = pixelSize)
             .padding(pixelSize),
