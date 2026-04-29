@@ -320,9 +320,9 @@ fun TopDownEditor(
             }
 
             // Update screen positions for hit testing (transform-adjusted)
+            val pivotX = size.width / 2f
+            val pivotY = size.height / 2f
             fixtureScreenPositions = positions.map { pos ->
-                val pivotX = size.width / 2f
-                val pivotY = size.height / 2f
                 Offset(
                     (pos.x - pivotX) * zoom + pivotX + panOffset.x,
                     (pos.y - pivotY) * zoom + pivotY + panOffset.y,
