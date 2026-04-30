@@ -31,8 +31,7 @@ class RealStateController(
             fixtureCount = fixturesProvider().size,
             fps = 0f, // TODO: Wire frame timing measurement from engine
             effectIds = stack.layers
-                .filter { it.enabled }
-                .map { it.effect.id }
+                .mapNotNull { if (it.enabled) it.effect.id else null }
         )
     }
 
