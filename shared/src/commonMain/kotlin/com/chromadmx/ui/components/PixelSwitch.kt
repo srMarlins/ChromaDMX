@@ -4,7 +4,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
@@ -17,6 +17,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.chromadmx.ui.theme.ChromaAnimations
@@ -54,13 +58,23 @@ fun PixelSwitch(
     // Track uses chamfered shape; glowing when checked, standard when unchecked
     val trackModifier = modifier
         .size(width = trackWidth, height = trackHeight)
-        .clickable(
-            interactionSource = interactionSource,
-            indication = null,
-            enabled = enabled,
-            onClick = { onCheckedChange?.invoke(!checked) },
-            role = Role.Switch
-        )
+        .let { modifier ->
+            if (onCheckedChange != null) {
+                modifier.toggleable(
+                    value = checked,
+                    interactionSource = interactionSource,
+                    indication = null,
+                    enabled = enabled,
+                    onValueChange = onCheckedChange,
+                    role = Role.Switch
+                )
+            } else {
+                modifier.semantics {
+                    role = Role.Switch
+                    toggleableState = if (checked) ToggleableState.On else ToggleableState.Off
+                }
+            }
+        }
         .let { mod ->
             if (checked && enabled) {
                 mod.pixelBorderGlowing(
