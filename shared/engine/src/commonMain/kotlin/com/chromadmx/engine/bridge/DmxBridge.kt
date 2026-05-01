@@ -1,6 +1,7 @@
 package com.chromadmx.engine.bridge
 
 import com.chromadmx.core.model.BuiltInProfiles
+import com.chromadmx.core.model.Channel
 import com.chromadmx.core.model.ChannelType
 import com.chromadmx.core.model.Color
 import com.chromadmx.core.model.Fixture3D
@@ -22,6 +23,26 @@ class DmxBridge(
     private val fixtures: List<Fixture3D>,
     private val profiles: Map<String, FixtureProfile> = emptyMap()
 ) {
+    // Pre-resolved metadata for faster rendering loops
+    private val resolvedProfiles: Array<FixtureProfile?> = Array(fixtures.size) { i ->
+        val profileId = fixtures[i].fixture.profileId
+        profiles[profileId] ?: BuiltInProfiles.findById(profileId)
+    }
+
+    // Convert channel lists to arrays to prevent iterator allocation during loops
+    private val profileChannels: Array<Array<Channel>?> = Array(fixtures.size) { i ->
+        resolvedProfiles[i]?.channels?.toTypedArray()
+    }
+
+    private val resolvedHasRgb: BooleanArray = BooleanArray(fixtures.size) { i ->
+        resolvedProfiles[i]?.hasRgb == true
+    }
+    private val universeIds: IntArray = IntArray(fixtures.size) { i ->
+        fixtures[i].fixture.universeId
+    }
+    private val channelStarts: IntArray = IntArray(fixtures.size) { i ->
+        fixtures[i].fixture.channelStart
+    }
     /**
      * Convert an array of per-fixture colors into per-universe DMX data.
      *
@@ -34,17 +55,16 @@ class DmxBridge(
         val universes = mutableMapOf<Int, ByteArray>()
 
         for (i in fixtures.indices) {
-            val fixture = fixtures[i].fixture
-            val color = colors.getOrElse(i) { Color.BLACK }
-            val data = universes.getOrPut(fixture.universeId) { ByteArray(512) }
-            val profile = profiles[fixture.profileId]
-                ?: BuiltInProfiles.findById(fixture.profileId)
+            val color = if (i < colors.size) colors[i] else Color.BLACK
+            val data = universes.getOrPut(universeIds[i]) { ByteArray(512) }
+            val profile = resolvedProfiles[i]
 
-            if (profile != null && profile.hasRgb) {
-                writeProfileChannels(data, fixture.channelStart, profile, color)
+            val channels = profileChannels[i]
+            if (profile != null && channels != null && resolvedHasRgb[i]) {
+                writeProfileChannels(data, channelStarts[i], profile, channels, color)
             } else {
                 // Fallback: write as simple 3-channel RGB
-                writeSimpleRgb(data, fixture.channelStart, color)
+                writeSimpleRgb(data, channelStarts[i], color)
             }
         }
 
@@ -65,17 +85,16 @@ class DmxBridge(
         val universes = mutableMapOf<Int, ByteArray>()
 
         for (i in fixtures.indices) {
-            val fixture = fixtures[i].fixture
-            val output = outputs.getOrElse(i) { FixtureOutput.DEFAULT }
-            val data = universes.getOrPut(fixture.universeId) { ByteArray(512) }
-            val profile = profiles[fixture.profileId]
-                ?: BuiltInProfiles.findById(fixture.profileId)
+            val output = if (i < outputs.size) outputs[i] else FixtureOutput.DEFAULT
+            val data = universes.getOrPut(universeIds[i]) { ByteArray(512) }
+            val profile = resolvedProfiles[i]
 
-            if (profile != null) {
-                writeProfileChannelsWithOutput(data, fixture.channelStart, profile, output)
+            val channels = profileChannels[i]
+            if (profile != null && channels != null) {
+                writeProfileChannelsWithOutput(data, channelStarts[i], profile, channels, output)
             } else {
                 // Fallback: write color as simple 3-channel RGB
-                writeSimpleRgb(data, fixture.channelStart, output.color)
+                writeSimpleRgb(data, channelStarts[i], output.color)
             }
         }
 
@@ -86,6 +105,7 @@ class DmxBridge(
         data: ByteArray,
         channelStart: Int,
         profile: FixtureProfile,
+        channels: Array<Channel>,
         color: Color
     ) {
         // Optimization: bypass clamped() to prevent allocating a Color object per fixture per frame
@@ -96,7 +116,9 @@ class DmxBridge(
         val hasDimmer = profile.channelByType(ChannelType.DIMMER) != null
         val brightness = maxOf(cr, cg, cb)
 
-        for (channel in profile.channels) {
+        // Optimization: Iterate directly over the pre-calculated channels array.
+        for (i in channels.indices) {
+            val channel = channels[i]
             val addr = channelStart + channel.offset
             if (addr < 0 || addr >= 512) continue
 
@@ -131,6 +153,7 @@ class DmxBridge(
         data: ByteArray,
         channelStart: Int,
         profile: FixtureProfile,
+        channels: Array<Channel>,
         output: FixtureOutput
     ) {
         // Optimization: bypass clamped() to prevent allocating a Color object per fixture per frame
@@ -141,7 +164,9 @@ class DmxBridge(
         val hasDimmer = profile.channelByType(ChannelType.DIMMER) != null
         val brightness = maxOf(cr, cg, cb)
 
-        for (channel in profile.channels) {
+        // Optimization: Iterate directly over the pre-calculated channels array.
+        for (i in channels.indices) {
+            val channel = channels[i]
             val addr = channelStart + channel.offset
             if (addr < 0 || addr >= 512) continue
 
