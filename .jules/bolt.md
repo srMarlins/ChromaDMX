@@ -1,3 +1,6 @@
 ## 2025-03-01 - Avoid Intermediate Color Allocations in Hot Paths
 **Learning:** In the DMX engine's rendering hot path (`EffectStack`), even simple operations like `Color * float` or `.clamped()` can create thousands of intermediate `Color` objects per frame, leading to GC pauses and dropped frames.
 **Action:** When working in the inner loop (e.g., `evaluate()` methods), bypass operator overloads that allocate new objects if the inputs are already bounded, and use direct `Color` instantiation with pre-multiplied/clamped values.
+## 2024-05-15 - Fast Array Lookups in Render Loops
+**Learning:** In 60FPS render loops, map lookups (even optimized ones) inside nested iterations (like `profiles[fixture.profileId]` per fixture, per frame) can cause significant CPU overhead and degrade performance.
+**Action:** When working in critical render paths (like `DmxBridge` or `EffectEngine`), pre-resolve map lookups and metadata into parallel primitive arrays (`IntArray`, `Array`) during initialization. This changes O(N) lookup complexity to O(1) direct array access per iteration.
