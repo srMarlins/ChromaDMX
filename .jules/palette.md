@@ -1,0 +1,3 @@
+## 2025-02-12 - Accessibility of Custom Switch Components
+**Learning:** For custom switch components in Compose Multiplatform, using `.clickable(role = Role.Switch)` is insufficient as it only announces the role but not the true/false boolean state. The component must use `.toggleable(value = checked)` to accurately announce both its role and state to screen readers. If the component needs to be selectively disabled/read-only without a state change callback, `.let { ... }` can be used to conditionally apply `toggleable` only when the callback is not null.
+**Action:** When building interactive binary-state components (switches, checkboxes) in Compose, always prefer the `toggleable` modifier over `clickable` with a role.
