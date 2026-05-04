@@ -22,6 +22,23 @@ class DmxBridge(
     private val fixtures: List<Fixture3D>,
     private val profiles: Map<String, FixtureProfile> = emptyMap()
 ) {
+    // Pre-resolved metadata arrays for O(1) access during high-frequency conversion loops
+    private val resolvedUniverseIds = IntArray(fixtures.size)
+    private val resolvedChannelStarts = IntArray(fixtures.size)
+    private val resolvedProfiles = arrayOfNulls<FixtureProfile>(fixtures.size)
+    private val resolvedHasRgb = BooleanArray(fixtures.size)
+
+    init {
+        for (i in fixtures.indices) {
+            val fixture = fixtures[i].fixture
+            resolvedUniverseIds[i] = fixture.universeId
+            resolvedChannelStarts[i] = fixture.channelStart
+            val profile = profiles[fixture.profileId] ?: BuiltInProfiles.findById(fixture.profileId)
+            resolvedProfiles[i] = profile
+            resolvedHasRgb[i] = profile?.hasRgb == true
+        }
+    }
+
     /**
      * Convert an array of per-fixture colors into per-universe DMX data.
      *
@@ -34,17 +51,19 @@ class DmxBridge(
         val universes = mutableMapOf<Int, ByteArray>()
 
         for (i in fixtures.indices) {
-            val fixture = fixtures[i].fixture
-            val color = colors.getOrElse(i) { Color.BLACK }
-            val data = universes.getOrPut(fixture.universeId) { ByteArray(512) }
-            val profile = profiles[fixture.profileId]
-                ?: BuiltInProfiles.findById(fixture.profileId)
+            val universeId = resolvedUniverseIds[i]
+            val channelStart = resolvedChannelStarts[i]
+            val profile = resolvedProfiles[i]
+            val hasRgb = resolvedHasRgb[i]
 
-            if (profile != null && profile.hasRgb) {
-                writeProfileChannels(data, fixture.channelStart, profile, color)
+            val color = colors.getOrElse(i) { Color.BLACK }
+            val data = universes.getOrPut(universeId) { ByteArray(512) }
+
+            if (profile != null && hasRgb) {
+                writeProfileChannels(data, channelStart, profile, color)
             } else {
                 // Fallback: write as simple 3-channel RGB
-                writeSimpleRgb(data, fixture.channelStart, color)
+                writeSimpleRgb(data, channelStart, color)
             }
         }
 
@@ -65,17 +84,18 @@ class DmxBridge(
         val universes = mutableMapOf<Int, ByteArray>()
 
         for (i in fixtures.indices) {
-            val fixture = fixtures[i].fixture
+            val universeId = resolvedUniverseIds[i]
+            val channelStart = resolvedChannelStarts[i]
+            val profile = resolvedProfiles[i]
+
             val output = outputs.getOrElse(i) { FixtureOutput.DEFAULT }
-            val data = universes.getOrPut(fixture.universeId) { ByteArray(512) }
-            val profile = profiles[fixture.profileId]
-                ?: BuiltInProfiles.findById(fixture.profileId)
+            val data = universes.getOrPut(universeId) { ByteArray(512) }
 
             if (profile != null) {
-                writeProfileChannelsWithOutput(data, fixture.channelStart, profile, output)
+                writeProfileChannelsWithOutput(data, channelStart, profile, output)
             } else {
                 // Fallback: write color as simple 3-channel RGB
-                writeSimpleRgb(data, fixture.channelStart, output.color)
+                writeSimpleRgb(data, channelStart, output.color)
             }
         }
 
