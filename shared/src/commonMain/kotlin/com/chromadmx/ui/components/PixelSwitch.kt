@@ -4,7 +4,10 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
@@ -54,13 +57,23 @@ fun PixelSwitch(
     // Track uses chamfered shape; glowing when checked, standard when unchecked
     val trackModifier = modifier
         .size(width = trackWidth, height = trackHeight)
-        .clickable(
-            interactionSource = interactionSource,
-            indication = null,
-            enabled = enabled,
-            onClick = { onCheckedChange?.invoke(!checked) },
-            role = Role.Switch
-        )
+        .let {
+            if (onCheckedChange != null) {
+                it.toggleable(
+                    value = checked,
+                    interactionSource = interactionSource,
+                    indication = null,
+                    enabled = enabled,
+                    onValueChange = onCheckedChange,
+                    role = Role.Switch
+                )
+            } else {
+                it.semantics {
+                    role = Role.Switch
+                    toggleableState = ToggleableState(checked)
+                }
+            }
+        }
         .let { mod ->
             if (checked && enabled) {
                 mod.pixelBorderGlowing(
